@@ -1,6 +1,7 @@
 package sourcetool
 
 import (
+	"errors"
 	"sync"
 
 	"github.com/gofrs/uuid/v5"
@@ -18,15 +19,13 @@ func NewPageManager(pages map[uuid.UUID]*Page) *PageManager {
 }
 
 func (r *PageManager) Run(ctx *Context, pageID uuid.UUID) error {
-	for _, page := range r.pages {
-		if page.ID != pageID {
-			continue
-		}
-		ctx.context = page.Context
-		if err := page.Handler(ctx); err != nil {
-			return err
-		}
-		break
+	page := r.pages[pageID]
+	if page == nil {
+		return errors.New("page not found")
+	}
+	ctx.context = page.Context
+	if err := page.Handler(ctx); err != nil {
+		return err
 	}
 	return nil
 }
