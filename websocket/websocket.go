@@ -233,29 +233,6 @@ func (c *client) handleMessage(msg *Message) error {
 		if err := c.config.CallHandler(msg); err != nil {
 			return err
 		}
-		// TODO: handle call
-		// var payload map[string]any
-		// if err := json.Unmarshal(msg.Payload, &payload); err != nil {
-		// 	return fmt.Errorf("failed to unmarshal payload: %v", err)
-		// }
-
-		// log.Printf("Received message: %+v", msg)
-		// log.Printf("Received payload: %+v", payload)
-
-		// switch msg.Method {
-		// case MessageMethodInitializeClient:
-		// 	log.Println("Received InitializeClient message")
-		// 	// TODO: Set session
-		// 	// TODO: Run pages
-		// 	// runtime.Runeime.SetSession(&runtime.Session{})
-		// 	return nil
-		// case MessageMethodCloseSession:
-		// 	log.Println("Received InitializeClient message")
-		// 	// TODO: Delete session
-		// 	return nil
-		// default:
-		// 	return fmt.Errorf("unknown message method: %s", msg.Method)
-		// }
 	case MessageKindResponse:
 		c.respMu.RLock()
 		respChan, exists := c.responses[msg.ID]
