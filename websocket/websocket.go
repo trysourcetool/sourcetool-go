@@ -12,8 +12,14 @@ import (
 )
 
 type Client interface {
+	// Message handling
+	RegisterHandler(MessageMethod, MessageHandler)
+
+	// Send message methods
 	Enqueue(string, MessageMethod, any)
 	EnqueueWithResponse(string, MessageMethod, any) (*Message, error)
+
+	// Connection management
 	Close() error
 	Wait() error
 }
@@ -23,20 +29,25 @@ type Config struct {
 	APIKey         string
 	PingInterval   time.Duration
 	ReconnectDelay time.Duration
-	CallHandler    func(*Message) error
 	OnReconnecting func()
 	OnReconnected  func()
 }
 
 type client struct {
-	config       Config
-	conn         *websocket.Conn
+	config Config
+	dialer *websocket.Dialer
+
+	conn   *websocket.Conn
+	connMu sync.RWMutex
+
 	messageQueue chan *Message
 	done         chan error
-	mu           sync.Mutex
-	dialer       *websocket.Dialer
-	responses    map[string]chan *Message
-	respMu       sync.RWMutex
+
+	responses map[string]chan *Message
+	respMu    sync.RWMutex
+
+	handlers  map[MessageMethod]MessageHandler
+	handlerMu sync.RWMutex
 }
 
 func NewClient(config Config) (Client, error) {
@@ -53,6 +64,7 @@ func NewClient(config Config) (Client, error) {
 		done:         make(chan error, 1),
 		dialer:       websocket.DefaultDialer,
 		responses:    make(map[string]chan *Message),
+		handlers:     make(map[MessageMethod]MessageHandler),
 	}
 
 	if err := c.connect(); err != nil {
@@ -64,6 +76,37 @@ func NewClient(config Config) (Client, error) {
 	go c.sendEnqueuedMessagesLoop()
 
 	return c, nil
+}
+
+func (c *client) RegisterHandler(method MessageMethod, handler MessageHandler) {
+	c.handlerMu.Lock()
+	defer c.handlerMu.Unlock()
+	c.handlers[method] = handler
+}
+
+func (c *client) handleMessage(msg *Message) error {
+	// Handle responses
+	if msg.Kind == MessageKindResponse {
+		c.respMu.RLock()
+		respChan, exists := c.responses[msg.ID]
+		c.respMu.RUnlock()
+
+		if exists {
+			respChan <- msg
+			return nil
+		}
+	}
+
+	// Handle calls
+	c.handlerMu.RLock()
+	handler, exists := c.handlers[msg.Method]
+	c.handlerMu.RUnlock()
+
+	if !exists {
+		return fmt.Errorf("%w: %s", ErrUnknownMethod, msg.Method)
+	}
+
+	return handler.Handle(msg)
 }
 
 func (c *client) connect() error {
@@ -79,9 +122,9 @@ func (c *client) connect() error {
 		return conn.SetReadDeadline(time.Now().Add(c.config.PingInterval * 2))
 	})
 
-	c.mu.Lock()
+	c.connMu.Lock()
 	c.conn = conn
-	c.mu.Unlock()
+	c.connMu.Unlock()
 
 	return nil
 }
@@ -111,9 +154,9 @@ func (c *client) pingPongLoop() {
 
 	for {
 		<-ticker.C
-		c.mu.Lock()
+		c.connMu.RLock()
 		conn := c.conn
-		c.mu.Unlock()
+		c.connMu.RUnlock()
 
 		if conn == nil {
 			return
@@ -121,10 +164,10 @@ func (c *client) pingPongLoop() {
 
 		if err := conn.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(10*time.Second)); err != nil {
 			log.Printf("ping failed: %v", err)
-			c.mu.Lock()
+			c.connMu.Lock()
 			conn.Close()
 			c.conn = nil
-			c.mu.Unlock()
+			c.connMu.Unlock()
 
 			go func() {
 				if err := c.reconnect(); err != nil {
@@ -139,9 +182,9 @@ func (c *client) pingPongLoop() {
 func (c *client) readMessages() {
 	for {
 		var msg *Message
-		c.mu.Lock()
+		c.connMu.RLock()
 		conn := c.conn
-		c.mu.Unlock()
+		c.connMu.RUnlock()
 
 		if conn == nil {
 			time.Sleep(time.Second)
@@ -156,10 +199,10 @@ func (c *client) readMessages() {
 			}
 
 			log.Printf("read error: %v", err)
-			c.mu.Lock()
+			c.connMu.Lock()
 			conn.Close()
 			c.conn = nil
-			c.mu.Unlock()
+			c.connMu.Unlock()
 
 			go func() {
 				if err := c.reconnect(); err != nil {
@@ -198,9 +241,9 @@ func (c *client) sendEnqueuedMessagesLoop() {
 			messageBuffer = append(messageBuffer, msg)
 		default:
 			if len(messageBuffer) > 0 {
-				c.mu.Lock()
+				c.connMu.RLock()
 				conn := c.conn
-				c.mu.Unlock()
+				c.connMu.RUnlock()
 
 				if conn == nil {
 					time.Sleep(time.Second)
@@ -225,25 +268,6 @@ func (c *client) sendEnqueuedMessagesLoop() {
 			}
 		}
 	}
-}
-
-func (c *client) handleMessage(msg *Message) error {
-	switch msg.Kind {
-	case MessageKindCall:
-		if err := c.config.CallHandler(msg); err != nil {
-			return err
-		}
-	case MessageKindResponse:
-		c.respMu.RLock()
-		respChan, exists := c.responses[msg.ID]
-		c.respMu.RUnlock()
-
-		if exists {
-			respChan <- msg
-			return nil
-		}
-	}
-	return nil
 }
 
 func (c *client) send(msg *Message) error {
@@ -292,18 +316,10 @@ func (c *client) Wait() error {
 }
 
 func (c *client) Close() error {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+	c.connMu.Lock()
+	defer c.connMu.Unlock()
 
 	if c.conn != nil {
-		// if err := c.conn.WriteControl(
-		// 	websocket.CloseMessage,
-		// 	websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""),
-		// 	time.Now().Add(time.Second),
-		// ); err != nil {
-		// 	log.Printf("error sending close message: %v", err)
-		// 	return err
-		// }
 		if err := c.conn.Close(); err != nil {
 			log.Printf("error closing connection: %v", err)
 			return err
@@ -312,6 +328,5 @@ func (c *client) Close() error {
 	}
 
 	c.done <- nil
-
 	return nil
 }

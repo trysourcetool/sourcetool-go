@@ -1,5 +1,7 @@
 package websocket
 
+import "errors"
+
 type MessageKind string
 
 const (
@@ -14,6 +16,16 @@ const (
 	MessageMethodInitializeClient MessageMethod = "INITIALIZE_CLIENT"
 	MessageMethodRenderWidget     MessageMethod = "RENDER_WIDGET"
 	MessageMethodCloseSession     MessageMethod = "CLOSE_SESSION"
+)
+
+// MessageHandler handles websocket messages
+type MessageHandler interface {
+	Handle(*Message) error
+}
+
+// Common errors
+var (
+	ErrUnknownMethod = errors.New("unknown message method")
 )
 
 type Message struct {
