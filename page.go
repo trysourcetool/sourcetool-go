@@ -1,7 +1,6 @@
 package sourcetool
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/gofrs/uuid/v5"
@@ -10,19 +9,17 @@ import (
 type Page struct {
 	ID      uuid.UUID
 	Name    string
-	Handler func(*Context) error
-	Context context.Context
+	Handler func(UIBuilder) error
 }
 
-func (p *Page) Run(ctx *Context) error {
-	ctx.context = p.Context
-	if err := p.Handler(ctx); err != nil {
+func (p *Page) Run(ui UIBuilder) error {
+	if err := p.Handler(ui); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (s *Sourcetool) Page(ctx context.Context, name string, handler func(*Context) error) {
+func (s *Sourcetool) Page(name string, handler func(UIBuilder) error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -30,7 +27,6 @@ func (s *Sourcetool) Page(ctx context.Context, name string, handler func(*Contex
 		ID:      s.generatePageID(name),
 		Name:    name,
 		Handler: handler,
-		Context: ctx,
 	}
 
 	s.pages[p.ID] = p

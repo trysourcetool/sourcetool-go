@@ -40,14 +40,14 @@ func (h *initializeClientHandler) Handle(msg *ws.Message) error {
 		return fmt.Errorf("page not found: %s", pageID)
 	}
 
-	ctx := &Context{
+	ui := &uiBuilder{
 		context: context.Background(),
 		session: session,
 		page:    page,
 		cursor:  NewCursor(MAIN),
 	}
 
-	if err := page.Run(ctx); err != nil {
+	if err := page.Run(ui); err != nil {
 		return fmt.Errorf("failed to run page: %v", err)
 	}
 
