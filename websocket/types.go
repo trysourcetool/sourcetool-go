@@ -12,6 +12,7 @@ type MessageMethod string
 const (
 	MessageMethodInitializeHost   MessageMethod = "INITIALIZE_HOST"
 	MessageMethodInitializeClient MessageMethod = "INITIALIZE_CLIENT"
+	MessageMethodRenderWidget     MessageMethod = "RENDER_WIDGET"
 	MessageMethodCloseSession     MessageMethod = "CLOSE_SESSION"
 )
 
@@ -38,6 +39,13 @@ type InitializeHostPayload struct {
 type InitializeHostPagePayload struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
+}
+
+type RenderWidgetPayload struct {
+	WidgetID  string `json:"widgetId"`
+	SessionID string `json:"sessionId"`
+	PageID    string `json:"pageId"`
+	Data      any    `json:"data"`
 }
 
 type InitializeClientPayload struct {
