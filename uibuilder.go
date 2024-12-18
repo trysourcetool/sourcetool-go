@@ -3,12 +3,14 @@ package sourcetool
 import (
 	"context"
 
+	"github.com/trysourcetool/sourcetool-go/table"
 	"github.com/trysourcetool/sourcetool-go/textinput"
 )
 
 type UIBuilder interface {
 	Context() context.Context
 	TextInput(string, ...textinput.Option) string
+	Table(any, ...table.Option) table.ReturnValue
 }
 
 type uiBuilder struct {

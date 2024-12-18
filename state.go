@@ -5,6 +5,7 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 
+	"github.com/trysourcetool/sourcetool-go/table"
 	"github.com/trysourcetool/sourcetool-go/textinput"
 )
 
@@ -30,6 +31,16 @@ func (s *State) GetTextInput(id uuid.UUID) *textinput.State {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	state, ok := s.data[id].(*textinput.State)
+	if !ok {
+		return nil
+	}
+	return state
+}
+
+func (s *State) GetTable(id uuid.UUID) *table.State {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	state, ok := s.data[id].(*table.State)
 	if !ok {
 		return nil
 	}

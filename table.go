@@ -7,14 +7,12 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 
-	"github.com/trysourcetool/sourcetool-go/textinput"
+	"github.com/trysourcetool/sourcetool-go/table"
 	ws "github.com/trysourcetool/sourcetool-go/websocket"
 )
 
-func (b *uiBuilder) TextInput(label string, options ...textinput.Option) string {
-	opts := &textinput.Options{
-		Label: label,
-	}
+func (b *uiBuilder) Table(data any, options ...table.Option) table.ReturnValue {
+	opts := &table.Options{}
 
 	for _, option := range options {
 		option(opts)
@@ -22,15 +20,15 @@ func (b *uiBuilder) TextInput(label string, options ...textinput.Option) string 
 
 	sess := b.session
 	if sess == nil {
-		return ""
+		return table.ReturnValue{}
 	}
 	page := b.page
 	if page == nil {
-		return ""
+		return table.ReturnValue{}
 	}
 	cursor := b.cursor
 	if cursor == nil {
-		return ""
+		return table.ReturnValue{}
 	}
 	path := cursor.GetDeltaPath()
 
@@ -38,22 +36,20 @@ func (b *uiBuilder) TextInput(label string, options ...textinput.Option) string 
 	log.Printf("Page ID: %s", page.ID.String())
 	log.Printf("Path: %v\n", path)
 
-	widgetID := b.generateTextInputID(label, path)
+	widgetID := b.generateTableID(path)
 
-	log.Printf("Text Input ID: %s\n", widgetID.String())
+	log.Printf("Table ID: %s\n", widgetID.String())
 
-	var returnValue textinput.ReturnValue
-	state := sess.State.GetTextInput(widgetID)
+	var returnValue table.ReturnValue
+	state := sess.State.GetTable(widgetID)
 	if state == nil {
 		// Set initial state
-		state = &textinput.State{
-			ID:           widgetID,
-			Label:        opts.Label,
-			Placeholder:  opts.Placeholder,
-			DefaultValue: opts.DefaultValue,
-			Required:     opts.Required,
-			MaxLength:    opts.MaxLength,
-			MinLength:    opts.MinLength,
+		state = &table.State{
+			ID:          widgetID,
+			Data:        data,
+			Header:      opts.Header,
+			Description: opts.Description,
+			OnSelect:    opts.OnSelect.String(),
 		}
 		sess.State.Set(widgetID, state)
 	} else {
@@ -69,11 +65,11 @@ func (b *uiBuilder) TextInput(label string, options ...textinput.Option) string 
 
 	cursor.Next()
 
-	return string(returnValue)
+	return returnValue
 }
 
-func (b *uiBuilder) generateTextInputID(label string, path []int) uuid.UUID {
-	const widgetType = "textinput"
+func (b *uiBuilder) generateTableID(path []int) uuid.UUID {
+	const widgetType = "table"
 	page := b.page
 	if page == nil {
 		return uuid.Nil
@@ -82,5 +78,5 @@ func (b *uiBuilder) generateTextInputID(label string, path []int) uuid.UUID {
 	for i, num := range path {
 		strPath[i] = fmt.Sprint(num)
 	}
-	return uuid.NewV5(page.ID, widgetType+"-"+label+"-"+strings.Join(strPath, ""))
+	return uuid.NewV5(page.ID, widgetType+"-"+strings.Join(strPath, ""))
 }
