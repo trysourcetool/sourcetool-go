@@ -4,6 +4,8 @@ import (
 	"sync"
 
 	"github.com/gofrs/uuid/v5"
+
+	"github.com/trysourcetool/sourcetool-go/textinput"
 )
 
 type State struct {
@@ -22,6 +24,16 @@ func (s *State) Get(id uuid.UUID) any {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return s.data[id]
+}
+
+func (s *State) GetTextInput(id uuid.UUID) *textinput.State {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	state, ok := s.data[id].(*textinput.State)
+	if !ok {
+		return nil
+	}
+	return state
 }
 
 // SetState sets the state for the given UI component ID

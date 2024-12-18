@@ -54,9 +54,9 @@ type InitializeHostPagePayload struct {
 }
 
 type RenderWidgetPayload struct {
-	WidgetID  string `json:"widgetId"`
 	SessionID string `json:"sessionId"`
 	PageID    string `json:"pageId"`
+	WidgetID  string `json:"widgetId"`
 	Data      any    `json:"data"`
 }
 

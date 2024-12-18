@@ -42,22 +42,33 @@ func (ui *uiBuilder) TextInput(label string, options ...textinput.Option) string
 
 	log.Printf("Text Input ID: %s\n", id.String())
 
+	var returnValue string
+	state := sess.State.GetTextInput(id)
+	if state == nil {
+		// Set initial state
+		state = &textinput.State{
+			ID:           id,
+			Label:        opts.Label,
+			Placeholder:  opts.Placeholder,
+			DefaultValue: opts.DefaultValue,
+			Required:     opts.Required,
+			MaxLength:    opts.MaxLength,
+			MinLength:    opts.MinLength,
+		}
+		sess.State.Set(id, state)
+	} else {
+		returnValue = state.Value
+	}
+
 	if Runtime == nil {
 		return ""
 	}
 
-	var returnValue string
-	if val := sess.State.Get(id); val != nil {
-		if opt, ok := val.(*textinput.State); ok {
-			returnValue = opt.Value
-		}
-	}
-
 	Runtime.EnqueueMessage(uuid.Must(uuid.NewV4()).String(), ws.MessageMethodRenderWidget, &ws.RenderWidgetPayload{
-		WidgetID:  id.String(),
 		SessionID: sess.ID.String(),
 		PageID:    page.ID.String(),
-		Data:      opts,
+		WidgetID:  id.String(),
+		Data:      state,
 	})
 
 	cursor.Next()

@@ -1,12 +1,12 @@
 package textinput
 
 type Options struct {
-	Label        string `json:"label"`
-	Placeholder  string `json:"placeholder"`
-	DefaultValue string `json:"defaultValue"`
-	Required     bool   `json:"required"`
-	MaxLength    int    `json:"maxLength"`
-	MinLength    int    `json:"minLength"`
+	Label        string
+	Placeholder  string
+	DefaultValue string
+	Required     bool
+	MaxLength    int
+	MinLength    int
 }
 
 type Option func(*Options)
