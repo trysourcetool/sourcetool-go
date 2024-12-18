@@ -40,21 +40,20 @@ func (b *uiBuilder) Table(data any, options ...table.Option) table.ReturnValue {
 
 	log.Printf("Table ID: %s\n", widgetID.String())
 
-	var returnValue table.ReturnValue
 	state := sess.State.GetTable(widgetID)
 	if state == nil {
 		// Set initial state
 		state = &table.State{
 			ID:          widgetID,
+			Value:       table.ReturnValue{},
 			Data:        data,
 			Header:      opts.Header,
 			Description: opts.Description,
 			OnSelect:    opts.OnSelect.String(),
 		}
 		sess.State.Set(widgetID, state)
-	} else {
-		returnValue = state.Value
 	}
+	returnValue := state.Value
 
 	b.runtime.EnqueueMessage(uuid.Must(uuid.NewV4()).String(), ws.MessageMethodRenderWidget, &ws.RenderWidgetPayload{
 		SessionID: sess.ID.String(),

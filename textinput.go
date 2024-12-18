@@ -42,13 +42,13 @@ func (b *uiBuilder) TextInput(label string, options ...textinput.Option) string 
 
 	log.Printf("Text Input ID: %s\n", widgetID.String())
 
-	var returnValue textinput.ReturnValue
 	state := sess.State.GetTextInput(widgetID)
 	if state == nil {
 		// Set initial state
 		state = &textinput.State{
 			ID:           widgetID,
 			Label:        opts.Label,
+			Value:        textinput.ReturnValue(opts.DefaultValue),
 			Placeholder:  opts.Placeholder,
 			DefaultValue: opts.DefaultValue,
 			Required:     opts.Required,
@@ -56,9 +56,8 @@ func (b *uiBuilder) TextInput(label string, options ...textinput.Option) string 
 			MinLength:    opts.MinLength,
 		}
 		sess.State.Set(widgetID, state)
-	} else {
-		returnValue = state.Value
 	}
+	returnValue := state.Value
 
 	b.runtime.EnqueueMessage(uuid.Must(uuid.NewV4()).String(), ws.MessageMethodRenderWidget, &ws.RenderWidgetPayload{
 		SessionID: sess.ID.String(),
