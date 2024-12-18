@@ -11,7 +11,7 @@ import (
 	ws "github.com/trysourcetool/sourcetool-go/websocket"
 )
 
-func (ui *uiBuilder) TextInput(label string, options ...textinput.Option) string {
+func (b *uiBuilder) TextInput(label string, options ...textinput.Option) string {
 	opts := &textinput.Options{
 		Label: label,
 	}
@@ -20,15 +20,15 @@ func (ui *uiBuilder) TextInput(label string, options ...textinput.Option) string
 		option(opts)
 	}
 
-	sess := ui.session
+	sess := b.session
 	if sess == nil {
 		return ""
 	}
-	page := ui.page
+	page := b.page
 	if page == nil {
 		return ""
 	}
-	cursor := ui.cursor
+	cursor := b.cursor
 	if cursor == nil {
 		return ""
 	}
