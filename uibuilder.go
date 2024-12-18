@@ -12,6 +12,7 @@ type UIBuilder interface {
 }
 
 type uiBuilder struct {
+	runtime *runtime
 	context context.Context
 	cursor  *Cursor
 	session *Session

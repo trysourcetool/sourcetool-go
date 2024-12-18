@@ -12,6 +12,7 @@ type Sourcetool struct {
 	apiKey      string
 	endpoint    string
 	subdomain   string
+	runtime     *runtime
 	navigations []*Navigation
 	pages       map[uuid.UUID]*Page
 	mu          sync.RWMutex
@@ -30,12 +31,14 @@ func New(apiKey string) *Sourcetool {
 }
 
 func (s *Sourcetool) Listen() error {
-	StartRuntime(s.apiKey, s.endpoint, s.pages)
-	defer Runtime.CloseConnection()
+	r := StartRuntime(s.apiKey, s.endpoint, s.pages)
+	defer r.CloseConnection()
 
-	return Runtime.Wait()
+	s.runtime = r
+
+	return r.Wait()
 }
 
 func (s *Sourcetool) Close() error {
-	return Runtime.CloseConnection()
+	return s.runtime.CloseConnection()
 }

@@ -38,16 +38,16 @@ func (b *uiBuilder) TextInput(label string, options ...textinput.Option) string 
 	log.Printf("Page ID: %s", page.ID.String())
 	log.Printf("Path: %v\n", path)
 
-	id := generateTextInputID(page.ID, label, path)
+	widgetID := b.generateTextInputID(label, path)
 
-	log.Printf("Text Input ID: %s\n", id.String())
+	log.Printf("Text Input ID: %s\n", widgetID.String())
 
 	var returnValue string
-	state := sess.State.GetTextInput(id)
+	state := sess.State.GetTextInput(widgetID)
 	if state == nil {
 		// Set initial state
 		state = &textinput.State{
-			ID:           id,
+			ID:           widgetID,
 			Label:        opts.Label,
 			Placeholder:  opts.Placeholder,
 			DefaultValue: opts.DefaultValue,
@@ -55,19 +55,15 @@ func (b *uiBuilder) TextInput(label string, options ...textinput.Option) string 
 			MaxLength:    opts.MaxLength,
 			MinLength:    opts.MinLength,
 		}
-		sess.State.Set(id, state)
+		sess.State.Set(widgetID, state)
 	} else {
 		returnValue = state.Value
 	}
 
-	if Runtime == nil {
-		return ""
-	}
-
-	Runtime.EnqueueMessage(uuid.Must(uuid.NewV4()).String(), ws.MessageMethodRenderWidget, &ws.RenderWidgetPayload{
+	b.runtime.EnqueueMessage(uuid.Must(uuid.NewV4()).String(), ws.MessageMethodRenderWidget, &ws.RenderWidgetPayload{
 		SessionID: sess.ID.String(),
 		PageID:    page.ID.String(),
-		WidgetID:  id.String(),
+		WidgetID:  widgetID.String(),
 		Data:      state,
 	})
 
@@ -76,10 +72,14 @@ func (b *uiBuilder) TextInput(label string, options ...textinput.Option) string 
 	return returnValue
 }
 
-func generateTextInputID(pageID uuid.UUID, label string, path []int) uuid.UUID {
+func (b *uiBuilder) generateTextInputID(label string, path []int) uuid.UUID {
+	page := b.page
+	if page == nil {
+		return uuid.Nil
+	}
 	strPath := make([]string, len(path))
 	for i, num := range path {
 		strPath[i] = fmt.Sprint(num)
 	}
-	return uuid.NewV5(pageID, label+"-"+strings.Join(strPath, ""))
+	return uuid.NewV5(page.ID, label+"-"+strings.Join(strPath, ""))
 }

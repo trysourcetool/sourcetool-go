@@ -42,6 +42,7 @@ func (h *initializeClientHandler) Handle(msg *ws.Message) error {
 
 	ui := &uiBuilder{
 		context: context.Background(),
+		runtime: h.r,
 		session: session,
 		page:    page,
 		cursor:  NewCursor(MAIN),

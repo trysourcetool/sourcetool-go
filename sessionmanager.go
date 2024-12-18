@@ -15,7 +15,8 @@ type SessionManager struct {
 
 func NewSessionManager() *SessionManager {
 	return &SessionManager{
-		activeSessions: make(map[uuid.UUID]*Session),
+		activeSessions:       make(map[uuid.UUID]*Session),
+		disconnectedSessions: make(map[uuid.UUID]*Session),
 	}
 }
 
