@@ -23,7 +23,7 @@ func New(apiKey string) *Sourcetool {
 	s := &Sourcetool{
 		apiKey:      apiKey,
 		subdomain:   subdomain,
-		endpoint:    fmt.Sprintf("ws://%s.localhost:8080/ws", subdomain),
+		endpoint:    fmt.Sprintf("ws://%s.local.trysourcetool.com:8080/ws", subdomain),
 		navigations: make([]*Navigation, 0),
 		pages:       make(map[uuid.UUID]*Page),
 	}
