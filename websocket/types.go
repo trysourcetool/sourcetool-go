@@ -54,10 +54,11 @@ type InitializeHostPagePayload struct {
 }
 
 type RenderWidgetPayload struct {
-	SessionID string `json:"sessionId"`
-	PageID    string `json:"pageId"`
-	WidgetID  string `json:"widgetId"`
-	Data      any    `json:"data"`
+	SessionID  string `json:"sessionId"`
+	PageID     string `json:"pageId"`
+	WidgetID   string `json:"widgetId"`
+	WidgetType string `json:"widgetType"`
+	Data       any    `json:"data"`
 }
 
 type InitializeClientPayload struct {

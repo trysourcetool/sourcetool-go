@@ -11,6 +11,8 @@ import (
 	ws "github.com/trysourcetool/sourcetool-go/websocket"
 )
 
+const widgetTypeTextInput = "textInput"
+
 func (b *uiBuilder) TextInput(label string, options ...textinput.Option) string {
 	opts := &textinput.Options{
 		Label: label,
@@ -60,10 +62,11 @@ func (b *uiBuilder) TextInput(label string, options ...textinput.Option) string 
 	returnValue := state.Value
 
 	b.runtime.EnqueueMessage(uuid.Must(uuid.NewV4()).String(), ws.MessageMethodRenderWidget, &ws.RenderWidgetPayload{
-		SessionID: sess.ID.String(),
-		PageID:    page.ID.String(),
-		WidgetID:  widgetID.String(),
-		Data:      state,
+		SessionID:  sess.ID.String(),
+		PageID:     page.ID.String(),
+		WidgetID:   widgetID.String(),
+		WidgetType: widgetTypeTextInput,
+		Data:       state,
 	})
 
 	cursor.Next()
@@ -72,7 +75,6 @@ func (b *uiBuilder) TextInput(label string, options ...textinput.Option) string 
 }
 
 func (b *uiBuilder) generateTextInputID(label string, path []int) uuid.UUID {
-	const widgetType = "textinput"
 	page := b.page
 	if page == nil {
 		return uuid.Nil
@@ -81,5 +83,5 @@ func (b *uiBuilder) generateTextInputID(label string, path []int) uuid.UUID {
 	for i, num := range path {
 		strPath[i] = fmt.Sprint(num)
 	}
-	return uuid.NewV5(page.ID, widgetType+"-"+label+"-"+strings.Join(strPath, ""))
+	return uuid.NewV5(page.ID, widgetTypeTextInput+"-"+label+"-"+strings.Join(strPath, ""))
 }

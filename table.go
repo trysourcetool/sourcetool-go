@@ -11,6 +11,8 @@ import (
 	ws "github.com/trysourcetool/sourcetool-go/websocket"
 )
 
+const widgetTypeTable = "table"
+
 func (b *uiBuilder) Table(data any, options ...table.Option) table.ReturnValue {
 	opts := &table.Options{}
 
@@ -56,10 +58,11 @@ func (b *uiBuilder) Table(data any, options ...table.Option) table.ReturnValue {
 	returnValue := state.Value
 
 	b.runtime.EnqueueMessage(uuid.Must(uuid.NewV4()).String(), ws.MessageMethodRenderWidget, &ws.RenderWidgetPayload{
-		SessionID: sess.ID.String(),
-		PageID:    page.ID.String(),
-		WidgetID:  widgetID.String(),
-		Data:      state,
+		SessionID:  sess.ID.String(),
+		PageID:     page.ID.String(),
+		WidgetID:   widgetID.String(),
+		WidgetType: widgetTypeTable,
+		Data:       state,
 	})
 
 	cursor.Next()
@@ -68,7 +71,6 @@ func (b *uiBuilder) Table(data any, options ...table.Option) table.ReturnValue {
 }
 
 func (b *uiBuilder) generateTableID(path []int) uuid.UUID {
-	const widgetType = "table"
 	page := b.page
 	if page == nil {
 		return uuid.Nil
@@ -77,5 +79,5 @@ func (b *uiBuilder) generateTableID(path []int) uuid.UUID {
 	for i, num := range path {
 		strPath[i] = fmt.Sprint(num)
 	}
-	return uuid.NewV5(page.ID, widgetType+"-"+strings.Join(strPath, ""))
+	return uuid.NewV5(page.ID, widgetTypeTable+"-"+strings.Join(strPath, ""))
 }
