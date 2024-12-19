@@ -31,3 +31,9 @@ func (s *SessionManager) GetSession(id uuid.UUID) *Session {
 	defer s.mu.RUnlock()
 	return s.activeSessions[id]
 }
+
+func (s *SessionManager) DeleteSession(id uuid.UUID) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	delete(s.activeSessions, id)
+}

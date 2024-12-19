@@ -56,13 +56,22 @@ func (h *initializeClientHandler) Handle(msg *ws.Message) error {
 }
 
 // closeSessionHandler handles CLOSE_SESSION messages
-type closeSessionHandler struct{}
+type closeSessionHandler struct {
+	r *runtime
+}
 
 func (h *closeSessionHandler) Handle(msg *ws.Message) error {
 	var p ws.CloseSessionPayload
 	if err := json.Unmarshal(msg.Payload, &p); err != nil {
 		return fmt.Errorf("failed to unmarshal payload: %v", err)
 	}
-	// Session cleanup is handled by the session manager
+
+	sessionID, err := uuid.FromString(p.SessionID)
+	if err != nil {
+		return err
+	}
+
+	h.r.sessionManager.DeleteSession(sessionID)
+
 	return nil
 }

@@ -44,8 +44,8 @@ func StartRuntime(apiKey, endpoint string, pages map[uuid.UUID]*Page) *runtime {
 		}
 
 		r.wsClient = wsClient
-		wsClient.RegisterHandler(ws.MessageMethodInitializeClient, &initializeClientHandler{r: r})
-		wsClient.RegisterHandler(ws.MessageMethodCloseSession, &closeSessionHandler{})
+		wsClient.RegisterHandler(ws.MessageMethodInitializeClient, &initializeClientHandler{r})
+		wsClient.RegisterHandler(ws.MessageMethodCloseSession, &closeSessionHandler{r})
 
 		r.initializeHost(apiKey, pages)
 	})
