@@ -1,6 +1,9 @@
 package websocket
 
-import "errors"
+import (
+	"encoding/json"
+	"errors"
+)
 
 type MessageKind string
 
@@ -29,11 +32,11 @@ var (
 )
 
 type Message struct {
-	ID      string        `json:"id"`
-	Kind    MessageKind   `json:"kind"`
-	Method  MessageMethod `json:"method"`
-	Payload []byte        `json:"payload"`
-	Error   *MessageError `json:"error"`
+	ID      string          `json:"id"`
+	Kind    MessageKind     `json:"kind"`
+	Method  MessageMethod   `json:"method"`
+	Payload json.RawMessage `json:"payload"`
+	Error   *MessageError   `json:"error"`
 }
 
 type MessageError struct {
