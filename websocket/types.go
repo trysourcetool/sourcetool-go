@@ -18,6 +18,7 @@ const (
 	MessageMethodInitializeHost   MessageMethod = "INITIALIZE_HOST"
 	MessageMethodInitializeClient MessageMethod = "INITIALIZE_CLIENT"
 	MessageMethodRenderWidget     MessageMethod = "RENDER_WIDGET"
+	MessageMethodRerunPage        MessageMethod = "RERUN_PAGE"
 	MessageMethodCloseSession     MessageMethod = "CLOSE_SESSION"
 )
 
@@ -67,6 +68,12 @@ type RenderWidgetPayload struct {
 type InitializeClientPayload struct {
 	SessionID string `json:"sessionId"`
 	PageID    string `json:"pageId"`
+}
+
+type RerunPagePayload struct {
+	SessionID string          `json:"sessionId"`
+	PageID    string          `json:"pageId"`
+	State     json.RawMessage `json:"state"`
 }
 
 type CloseSessionPayload struct {

@@ -64,3 +64,11 @@ func (s *State) Set(id uuid.UUID, state any) {
 	defer s.mu.Unlock()
 	s.data[id] = state
 }
+
+func (s *State) SetStates(states map[uuid.UUID]any) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for id, state := range states {
+		s.data[id] = state
+	}
+}
