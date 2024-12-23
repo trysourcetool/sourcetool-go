@@ -14,7 +14,7 @@ import (
 const widgetTypeTable = "table"
 
 func (b *uiBuilder) Table(data any, options ...table.Option) table.ReturnValue {
-	opts := &table.Options{}
+	opts := table.DefaultOptions()
 
 	for _, option := range options {
 		option(opts)

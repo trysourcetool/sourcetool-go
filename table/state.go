@@ -12,10 +12,11 @@ type Selection struct {
 }
 
 type State struct {
-	ID          uuid.UUID   `json:"-"`
-	Value       ReturnValue `json:"value"`
-	Header      string      `json:"header"`
-	Description string      `json:"description"`
-	OnSelect    string      `json:"onSelect"`
-	Data        any         `json:"data"`
+	ID           uuid.UUID   `json:"-"`
+	Data         any         `json:"data"`
+	Value        ReturnValue `json:"value"`
+	Header       string      `json:"header"`
+	Description  string      `json:"description"`
+	OnSelect     string      `json:"onSelect"`
+	RowSelection string      `json:"rowSelection"`
 }

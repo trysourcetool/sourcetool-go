@@ -14,9 +14,7 @@ import (
 const widgetTypeTextInput = "textInput"
 
 func (b *uiBuilder) TextInput(label string, options ...textinput.Option) string {
-	opts := &textinput.Options{
-		Label: label,
-	}
+	opts := textinput.DefaultOptions(label)
 
 	for _, option := range options {
 		option(opts)

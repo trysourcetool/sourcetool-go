@@ -11,6 +11,6 @@ type State struct {
 	Placeholder  string      `json:"placeholder"`
 	DefaultValue string      `json:"defaultValue"`
 	Required     bool        `json:"required"`
-	MaxLength    int         `json:"maxLength"`
-	MinLength    int         `json:"minLength"`
+	MaxLength    *int        `json:"maxLength"`
+	MinLength    *int        `json:"minLength"`
 }

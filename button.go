@@ -13,9 +13,7 @@ import (
 const widgetTypeButton = "button"
 
 func (b *uiBuilder) Button(label string, options ...button.Option) bool {
-	opts := &button.Options{
-		Label: label,
-	}
+	opts := button.DefaultOptions(label)
 
 	for _, option := range options {
 		option(opts)
