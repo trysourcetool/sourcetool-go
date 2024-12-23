@@ -5,6 +5,7 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 
+	"github.com/trysourcetool/sourcetool-go/button"
 	"github.com/trysourcetool/sourcetool-go/table"
 	"github.com/trysourcetool/sourcetool-go/textinput"
 )
@@ -41,6 +42,16 @@ func (s *State) GetTable(id uuid.UUID) *table.State {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	state, ok := s.data[id].(*table.State)
+	if !ok {
+		return nil
+	}
+	return state
+}
+
+func (s *State) GetButton(id uuid.UUID) *button.State {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	state, ok := s.data[id].(*button.State)
 	if !ok {
 		return nil
 	}
