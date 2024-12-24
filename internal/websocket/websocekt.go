@@ -103,7 +103,7 @@ func (c *client) handleMessage(msg *Message) error {
 	c.handlerMu.RUnlock()
 
 	if !exists {
-		return fmt.Errorf("%w: %s", ErrUnknownMethod, msg.Method)
+		return fmt.Errorf("unknown method: %s", msg.Method)
 	}
 
 	return handler(msg)

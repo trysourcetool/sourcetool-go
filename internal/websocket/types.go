@@ -2,7 +2,6 @@ package websocket
 
 import (
 	"encoding/json"
-	"errors"
 )
 
 type MessageKind string
@@ -23,11 +22,6 @@ const (
 )
 
 type MessageHandlerFunc func(*Message) error
-
-// Common errors
-var (
-	ErrUnknownMethod = errors.New("unknown message method")
-)
 
 type Message struct {
 	ID      string          `json:"id"`
