@@ -41,7 +41,7 @@ func (b *uiBuilder) TextInput(label string, options ...textinput.Option) string 
 	}
 	path := cursor.getDeltaPath()
 
-	log.Printf("Session ID: %s", sess.id.String())
+	log.Printf("Session ID: %s", sess.ID.String())
 	log.Printf("Page ID: %s", page.id.String())
 	log.Printf("Path: %v\n", path)
 
@@ -49,7 +49,7 @@ func (b *uiBuilder) TextInput(label string, options ...textinput.Option) string 
 
 	log.Printf("Text Input ID: %s\n", widgetID.String())
 
-	state := sess.state.getTextInput(widgetID)
+	state := sess.State.GetTextInput(widgetID)
 	if state == nil {
 		// Set initial state
 		state = &textinput.State{
@@ -62,12 +62,12 @@ func (b *uiBuilder) TextInput(label string, options ...textinput.Option) string 
 			MaxLength:    opts.MaxLength,
 			MinLength:    opts.MinLength,
 		}
-		sess.state.set(widgetID, state)
+		sess.State.Set(widgetID, state)
 	}
 	returnValue := state.Value
 
 	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), websocket.MessageMethodRenderWidget, &websocket.RenderWidgetPayload{
-		SessionID:  sess.id.String(),
+		SessionID:  sess.ID.String(),
 		PageID:     page.id.String(),
 		WidgetID:   widgetID.String(),
 		WidgetType: widgetTypeTextInput,

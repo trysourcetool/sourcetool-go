@@ -8,6 +8,7 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 
+	"github.com/trysourcetool/sourcetool-go/internal/session"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 )
 
@@ -31,8 +32,8 @@ func (h *messageHandler) initializeCilent(msg *websocket.Message) error {
 	}
 
 	log.Println("Creating new session with ID:", sessionID)
-	session := newSession(sessionID)
-	h.r.sessionManager.setSession(session)
+	session := session.New(sessionID)
+	h.r.sessionManager.SetSession(session)
 
 	page := h.r.pageManager.getPage(pageID)
 	if page == nil {
@@ -64,7 +65,7 @@ func (h *messageHandler) rerunPage(msg *websocket.Message) error {
 	if err != nil {
 		return err
 	}
-	sess := h.r.sessionManager.getSession(sessionID)
+	sess := h.r.sessionManager.GetSession(sessionID)
 	if sess == nil {
 		return fmt.Errorf("session not found: %s", sessionID)
 	}
@@ -82,7 +83,7 @@ func (h *messageHandler) rerunPage(msg *websocket.Message) error {
 	if err := json.Unmarshal(p.State, &states); err != nil {
 		return fmt.Errorf("failed to unmarshal state: %v", err)
 	}
-	sess.state.setStates(states)
+	sess.State.SetStates(states)
 
 	ui := &uiBuilder{
 		context: context.Background(),
@@ -96,7 +97,7 @@ func (h *messageHandler) rerunPage(msg *websocket.Message) error {
 		return fmt.Errorf("failed to run page: %v", err)
 	}
 
-	sess.state.resetButtons()
+	sess.State.ResetButtons()
 
 	return nil
 }
@@ -112,7 +113,7 @@ func (h *messageHandler) closeSession(msg *websocket.Message) error {
 		return err
 	}
 
-	h.r.sessionManager.deleteSession(sessionID)
+	h.r.sessionManager.DeleteSession(sessionID)
 
 	return nil
 }

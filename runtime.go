@@ -7,6 +7,7 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 
+	"github.com/trysourcetool/sourcetool-go/internal/session"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 )
 
@@ -14,7 +15,7 @@ var once sync.Once
 
 type runtime struct {
 	wsClient       websocket.Client
-	sessionManager *sessionManager
+	sessionManager *session.SessionManager
 	pageManager    *pageManager
 }
 
@@ -22,7 +23,7 @@ func startRuntime(apiKey, endpoint string, pages map[uuid.UUID]*page) *runtime {
 	var r *runtime
 	once.Do(func() {
 		r = &runtime{
-			sessionManager: newSessionManager(),
+			sessionManager: session.NewSessionManager(),
 			pageManager:    newPageManager(pages),
 		}
 

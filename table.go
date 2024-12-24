@@ -39,7 +39,7 @@ func (b *uiBuilder) Table(data any, options ...table.Option) table.ReturnValue {
 	}
 	path := cursor.getDeltaPath()
 
-	log.Printf("Session ID: %s", sess.id.String())
+	log.Printf("Session ID: %s", sess.ID.String())
 	log.Printf("Page ID: %s", page.id.String())
 	log.Printf("Path: %v\n", path)
 
@@ -47,7 +47,7 @@ func (b *uiBuilder) Table(data any, options ...table.Option) table.ReturnValue {
 
 	log.Printf("Table ID: %s\n", widgetID.String())
 
-	state := sess.state.getTable(widgetID)
+	state := sess.State.GetTable(widgetID)
 	if state == nil {
 		// Set initial state
 		state = &table.State{
@@ -58,12 +58,12 @@ func (b *uiBuilder) Table(data any, options ...table.Option) table.ReturnValue {
 			Description: opts.Description,
 			OnSelect:    opts.OnSelect.String(),
 		}
-		sess.state.set(widgetID, state)
+		sess.State.Set(widgetID, state)
 	}
 	returnValue := state.Value
 
 	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), websocket.MessageMethodRenderWidget, &websocket.RenderWidgetPayload{
-		SessionID:  sess.id.String(),
+		SessionID:  sess.ID.String(),
 		PageID:     page.id.String(),
 		WidgetID:   widgetID.String(),
 		WidgetType: widgetTypeTable,

@@ -36,7 +36,7 @@ func (b *uiBuilder) Button(label string, options ...button.Option) bool {
 	}
 	path := cursor.getDeltaPath()
 
-	log.Printf("Session ID: %s", sess.id.String())
+	log.Printf("Session ID: %s", sess.ID.String())
 	log.Printf("Page ID: %s", page.id.String())
 	log.Printf("Path: %v\n", path)
 
@@ -44,7 +44,7 @@ func (b *uiBuilder) Button(label string, options ...button.Option) bool {
 
 	log.Printf("Button ID: %s\n", widgetID.String())
 
-	state := sess.state.getButton(widgetID)
+	state := sess.State.GetButton(widgetID)
 	if state == nil {
 		// Set initial state
 		state = &button.State{
@@ -52,12 +52,12 @@ func (b *uiBuilder) Button(label string, options ...button.Option) bool {
 			Label:    opts.Label,
 			Disabled: opts.Disabled,
 		}
-		sess.state.set(widgetID, state)
+		sess.State.Set(widgetID, state)
 	}
 	returnValue := state.Value
 
 	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), websocket.MessageMethodRenderWidget, &websocket.RenderWidgetPayload{
-		SessionID:  sess.id.String(),
+		SessionID:  sess.ID.String(),
 		PageID:     page.id.String(),
 		WidgetID:   widgetID.String(),
 		WidgetType: widgetTypeButton,
