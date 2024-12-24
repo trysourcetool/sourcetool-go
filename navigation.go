@@ -1,16 +1,16 @@
 package sourcetool
 
-type Navigation struct {
-	Name  string
-	Pages []*Page
+type navigation struct {
+	name  string
+	pages []*page
 }
 
 func (s *Sourcetool) Navigation(name string, handler func()) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	currentNav := &Navigation{
-		Name: name,
+	currentNav := &navigation{
+		name: name,
 	}
 	s.navigations = append(s.navigations, currentNav)
 

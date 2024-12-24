@@ -15,7 +15,7 @@ type messageHandler struct {
 	r *runtime
 }
 
-func (h *messageHandler) InitializeCilent(msg *ws.Message) error {
+func (h *messageHandler) initializeCilent(msg *ws.Message) error {
 	var p ws.InitializeClientPayload
 	if err := json.Unmarshal(msg.Payload, &p); err != nil {
 		return fmt.Errorf("failed to unmarshal payload: %v", err)
@@ -31,10 +31,10 @@ func (h *messageHandler) InitializeCilent(msg *ws.Message) error {
 	}
 
 	log.Println("Creating new session with ID:", sessionID)
-	session := NewSession(sessionID)
-	h.r.sessionManager.SetSession(session)
+	session := newSession(sessionID)
+	h.r.sessionManager.setSession(session)
 
-	page := h.r.pageManager.GetPage(pageID)
+	page := h.r.pageManager.getPage(pageID)
 	if page == nil {
 		return fmt.Errorf("page not found: %s", pageID)
 	}
@@ -44,17 +44,17 @@ func (h *messageHandler) InitializeCilent(msg *ws.Message) error {
 		runtime: h.r,
 		session: session,
 		page:    page,
-		cursor:  NewCursor(MAIN),
+		cursor:  newCursor(main),
 	}
 
-	if err := page.Run(ui); err != nil {
+	if err := page.run(ui); err != nil {
 		return fmt.Errorf("failed to run page: %v", err)
 	}
 
 	return nil
 }
 
-func (h *messageHandler) RerunPage(msg *ws.Message) error {
+func (h *messageHandler) rerunPage(msg *ws.Message) error {
 	var p ws.RerunPagePayload
 	if err := json.Unmarshal(msg.Payload, &p); err != nil {
 		return fmt.Errorf("failed to unmarshal payload: %v", err)
@@ -64,7 +64,7 @@ func (h *messageHandler) RerunPage(msg *ws.Message) error {
 	if err != nil {
 		return err
 	}
-	sess := h.r.sessionManager.GetSession(sessionID)
+	sess := h.r.sessionManager.getSession(sessionID)
 	if sess == nil {
 		return fmt.Errorf("session not found: %s", sessionID)
 	}
@@ -73,7 +73,7 @@ func (h *messageHandler) RerunPage(msg *ws.Message) error {
 	if err != nil {
 		return err
 	}
-	page := h.r.pageManager.GetPage(pageID)
+	page := h.r.pageManager.getPage(pageID)
 	if page == nil {
 		return fmt.Errorf("page not found: %s", pageID)
 	}
@@ -82,26 +82,26 @@ func (h *messageHandler) RerunPage(msg *ws.Message) error {
 	if err := json.Unmarshal(p.State, &states); err != nil {
 		return fmt.Errorf("failed to unmarshal state: %v", err)
 	}
-	sess.State.SetStates(states)
+	sess.state.setStates(states)
 
 	ui := &uiBuilder{
 		context: context.Background(),
 		runtime: h.r,
 		session: sess,
 		page:    page,
-		cursor:  NewCursor(MAIN),
+		cursor:  newCursor(main),
 	}
 
-	if err := page.Run(ui); err != nil {
+	if err := page.run(ui); err != nil {
 		return fmt.Errorf("failed to run page: %v", err)
 	}
 
-	sess.State.ResetButtons()
+	sess.state.resetButtons()
 
 	return nil
 }
 
-func (h *messageHandler) CloseSession(msg *ws.Message) error {
+func (h *messageHandler) closeSession(msg *ws.Message) error {
 	var p ws.CloseSessionPayload
 	if err := json.Unmarshal(msg.Payload, &p); err != nil {
 		return fmt.Errorf("failed to unmarshal payload: %v", err)
@@ -112,7 +112,7 @@ func (h *messageHandler) CloseSession(msg *ws.Message) error {
 		return err
 	}
 
-	h.r.sessionManager.DeleteSession(sessionID)
+	h.r.sessionManager.deleteSession(sessionID)
 
 	return nil
 }

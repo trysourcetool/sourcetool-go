@@ -9,17 +9,6 @@ type Options struct {
 	MinLength    *int
 }
 
-func DefaultOptions(label string) *Options {
-	return &Options{
-		Label:        label,
-		Placeholder:  "",
-		DefaultValue: "",
-		Required:     false,
-		MaxLength:    nil,
-		MinLength:    nil,
-	}
-}
-
 type Option func(*Options)
 
 func Placeholder(placeholder string) Option {

@@ -14,16 +14,16 @@ var once sync.Once
 
 type runtime struct {
 	wsClient       ws.Client
-	sessionManager *SessionManager
-	pageManager    *PageManager
+	sessionManager *sessionManager
+	pageManager    *pageManager
 }
 
-func StartRuntime(apiKey, endpoint string, pages map[uuid.UUID]*Page) *runtime {
+func startRuntime(apiKey, endpoint string, pages map[uuid.UUID]*page) *runtime {
 	var r *runtime
 	once.Do(func() {
 		r = &runtime{
-			sessionManager: NewSessionManager(),
-			pageManager:    NewPageManager(pages),
+			sessionManager: newSessionManager(),
+			pageManager:    newPageManager(pages),
 		}
 
 		wsClient, err := ws.NewClient(ws.Config{
@@ -45,9 +45,9 @@ func StartRuntime(apiKey, endpoint string, pages map[uuid.UUID]*Page) *runtime {
 
 		r.wsClient = wsClient
 		msgHandler := &messageHandler{r}
-		wsClient.RegisterHandler(ws.MessageMethodInitializeClient, msgHandler.InitializeCilent)
-		wsClient.RegisterHandler(ws.MessageMethodRerunPage, msgHandler.RerunPage)
-		wsClient.RegisterHandler(ws.MessageMethodCloseSession, msgHandler.CloseSession)
+		wsClient.RegisterHandler(ws.MessageMethodInitializeClient, msgHandler.initializeCilent)
+		wsClient.RegisterHandler(ws.MessageMethodRerunPage, msgHandler.rerunPage)
+		wsClient.RegisterHandler(ws.MessageMethodCloseSession, msgHandler.closeSession)
 
 		r.initializeHost(apiKey, pages)
 	})
@@ -55,16 +55,16 @@ func StartRuntime(apiKey, endpoint string, pages map[uuid.UUID]*Page) *runtime {
 	return r
 }
 
-func (r *runtime) initializeHost(apiKey string, pages map[uuid.UUID]*Page) {
+func (r *runtime) initializeHost(apiKey string, pages map[uuid.UUID]*page) {
 	pagesPayload := make([]*ws.InitializeHostPagePayload, 0, len(pages))
 	for _, page := range pages {
 		pagesPayload = append(pagesPayload, &ws.InitializeHostPagePayload{
-			ID:   page.ID.String(),
-			Name: page.Name,
+			ID:   page.id.String(),
+			Name: page.name,
 		})
 	}
 
-	resp, err := r.EnqueueMessageWithResponse(uuid.Must(uuid.NewV4()).String(), ws.MessageMethodInitializeHost, ws.InitializeHostPayload{
+	resp, err := r.wsClient.EnqueueWithResponse(uuid.Must(uuid.NewV4()).String(), ws.MessageMethodInitializeHost, ws.InitializeHostPayload{
 		APIKey:     apiKey,
 		SDKName:    "sourcetool-go",
 		SDKVersion: "0.1.0",
@@ -78,32 +78,4 @@ func (r *runtime) initializeHost(apiKey string, pages map[uuid.UUID]*Page) {
 	}
 
 	log.Printf("initialize host message sent: %v", resp)
-}
-
-func (r *runtime) CloseConnection() error {
-	return r.wsClient.Close()
-}
-
-func (r *runtime) EnqueueMessage(id string, method ws.MessageMethod, data any) {
-	r.wsClient.Enqueue(id, method, data)
-}
-
-func (r *runtime) EnqueueMessageWithResponse(id string, method ws.MessageMethod, data any) (*ws.Message, error) {
-	resp, err := r.wsClient.EnqueueWithResponse(id, method, data)
-	if err != nil {
-		return nil, err
-	}
-	return resp, nil
-}
-
-func (r *runtime) Wait() error {
-	return r.wsClient.Wait()
-}
-
-func (r *runtime) SetSession(s *Session) {
-	r.sessionManager.SetSession(s)
-}
-
-func (r *runtime) GetPage(id uuid.UUID) *Page {
-	return r.pageManager.GetPage(id)
 }

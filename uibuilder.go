@@ -18,9 +18,9 @@ type UIBuilder interface {
 type uiBuilder struct {
 	runtime *runtime
 	context context.Context
-	cursor  *Cursor
-	session *Session
-	page    *Page
+	cursor  *cursor
+	session *session
+	page    *page
 }
 
 func (b *uiBuilder) Context() context.Context {

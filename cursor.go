@@ -1,44 +1,30 @@
 package sourcetool
 
-type ContainerType int
+type containerType int
 
-const MAIN ContainerType = iota
+const main containerType = iota
 
-type DeltaPath struct {
-	Container  int
-	ParentPath []int
-	Index      int
-}
-
-type Cursor struct {
-	rootContainer ContainerType
+type cursor struct {
+	rootContainer containerType
 	parentPath    []int
 	index         int
 }
 
-func NewCursor(container ContainerType) *Cursor {
-	return &Cursor{
+func newCursor(container containerType) *cursor {
+	return &cursor{
 		rootContainer: container,
 		parentPath:    []int{},
 		index:         0,
 	}
 }
 
-func (c *Cursor) GetDeltaPath() []int {
+func (c *cursor) getDeltaPath() []int {
 	path := []int{int(c.rootContainer)}
 	path = append(path, c.parentPath...)
 	path = append(path, c.index)
 	return path
 }
 
-func (c *Cursor) Next() {
+func (c *cursor) next() {
 	c.index++
-}
-
-func (c *Cursor) EnterBlock() *Cursor {
-	return &Cursor{
-		rootContainer: c.rootContainer,
-		parentPath:    append(c.parentPath, c.index),
-		index:         0,
-	}
 }

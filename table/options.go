@@ -29,15 +29,6 @@ type Options struct {
 	RowSelection rowSelection
 }
 
-func DefaultOptions() *Options {
-	return &Options{
-		Header:       "",
-		Description:  "",
-		OnSelect:     OnSelectIgnore,
-		RowSelection: RowSelectionSingle,
-	}
-}
-
 type Option func(*Options)
 
 func Header(header string) Option {

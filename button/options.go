@@ -5,13 +5,6 @@ type Options struct {
 	Disabled bool
 }
 
-func DefaultOptions(label string) *Options {
-	return &Options{
-		Label:    label,
-		Disabled: false,
-	}
-}
-
 type Option func(*Options)
 
 func Disabled(disabled bool) Option {

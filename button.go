@@ -13,7 +13,10 @@ import (
 const widgetTypeButton = "button"
 
 func (b *uiBuilder) Button(label string, options ...button.Option) bool {
-	opts := button.DefaultOptions(label)
+	opts := &button.Options{
+		Label:    label,
+		Disabled: false,
+	}
 
 	for _, option := range options {
 		option(opts)
@@ -31,17 +34,17 @@ func (b *uiBuilder) Button(label string, options ...button.Option) bool {
 	if cursor == nil {
 		return false
 	}
-	path := cursor.GetDeltaPath()
+	path := cursor.getDeltaPath()
 
-	log.Printf("Session ID: %s", sess.ID.String())
-	log.Printf("Page ID: %s", page.ID.String())
+	log.Printf("Session ID: %s", sess.id.String())
+	log.Printf("Page ID: %s", page.id.String())
 	log.Printf("Path: %v\n", path)
 
 	widgetID := b.generateButtonInputID(label, path)
 
 	log.Printf("Button ID: %s\n", widgetID.String())
 
-	state := sess.State.GetButton(widgetID)
+	state := sess.state.getButton(widgetID)
 	if state == nil {
 		// Set initial state
 		state = &button.State{
@@ -49,19 +52,19 @@ func (b *uiBuilder) Button(label string, options ...button.Option) bool {
 			Label:    opts.Label,
 			Disabled: opts.Disabled,
 		}
-		sess.State.Set(widgetID, state)
+		sess.state.set(widgetID, state)
 	}
 	returnValue := state.Value
 
-	b.runtime.EnqueueMessage(uuid.Must(uuid.NewV4()).String(), ws.MessageMethodRenderWidget, &ws.RenderWidgetPayload{
-		SessionID:  sess.ID.String(),
-		PageID:     page.ID.String(),
+	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), ws.MessageMethodRenderWidget, &ws.RenderWidgetPayload{
+		SessionID:  sess.id.String(),
+		PageID:     page.id.String(),
 		WidgetID:   widgetID.String(),
 		WidgetType: widgetTypeButton,
 		Data:       state,
 	})
 
-	cursor.Next()
+	cursor.next()
 
 	return bool(returnValue)
 }
@@ -75,5 +78,5 @@ func (b *uiBuilder) generateButtonInputID(label string, path []int) uuid.UUID {
 	for i, num := range path {
 		strPath[i] = fmt.Sprint(num)
 	}
-	return uuid.NewV5(page.ID, widgetTypeTextInput+"-"+label+"-"+strings.Join(strPath, ""))
+	return uuid.NewV5(page.id, widgetTypeTextInput+"-"+label+"-"+strings.Join(strPath, ""))
 }

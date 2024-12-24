@@ -14,7 +14,12 @@ import (
 const widgetTypeTable = "table"
 
 func (b *uiBuilder) Table(data any, options ...table.Option) table.ReturnValue {
-	opts := table.DefaultOptions()
+	opts := &table.Options{
+		Header:       "",
+		Description:  "",
+		OnSelect:     table.OnSelectIgnore,
+		RowSelection: table.RowSelectionSingle,
+	}
 
 	for _, option := range options {
 		option(opts)
@@ -32,17 +37,17 @@ func (b *uiBuilder) Table(data any, options ...table.Option) table.ReturnValue {
 	if cursor == nil {
 		return table.ReturnValue{}
 	}
-	path := cursor.GetDeltaPath()
+	path := cursor.getDeltaPath()
 
-	log.Printf("Session ID: %s", sess.ID.String())
-	log.Printf("Page ID: %s", page.ID.String())
+	log.Printf("Session ID: %s", sess.id.String())
+	log.Printf("Page ID: %s", page.id.String())
 	log.Printf("Path: %v\n", path)
 
 	widgetID := b.generateTableID(path)
 
 	log.Printf("Table ID: %s\n", widgetID.String())
 
-	state := sess.State.GetTable(widgetID)
+	state := sess.state.getTable(widgetID)
 	if state == nil {
 		// Set initial state
 		state = &table.State{
@@ -53,19 +58,19 @@ func (b *uiBuilder) Table(data any, options ...table.Option) table.ReturnValue {
 			Description: opts.Description,
 			OnSelect:    opts.OnSelect.String(),
 		}
-		sess.State.Set(widgetID, state)
+		sess.state.set(widgetID, state)
 	}
 	returnValue := state.Value
 
-	b.runtime.EnqueueMessage(uuid.Must(uuid.NewV4()).String(), ws.MessageMethodRenderWidget, &ws.RenderWidgetPayload{
-		SessionID:  sess.ID.String(),
-		PageID:     page.ID.String(),
+	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), ws.MessageMethodRenderWidget, &ws.RenderWidgetPayload{
+		SessionID:  sess.id.String(),
+		PageID:     page.id.String(),
 		WidgetID:   widgetID.String(),
 		WidgetType: widgetTypeTable,
 		Data:       state,
 	})
 
-	cursor.Next()
+	cursor.next()
 
 	return returnValue
 }
@@ -79,5 +84,5 @@ func (b *uiBuilder) generateTableID(path []int) uuid.UUID {
 	for i, num := range path {
 		strPath[i] = fmt.Sprint(num)
 	}
-	return uuid.NewV5(page.ID, widgetTypeTable+"-"+strings.Join(strPath, ""))
+	return uuid.NewV5(page.id, widgetTypeTable+"-"+strings.Join(strPath, ""))
 }

@@ -13,8 +13,8 @@ type Sourcetool struct {
 	endpoint    string
 	subdomain   string
 	runtime     *runtime
-	navigations []*Navigation
-	pages       map[uuid.UUID]*Page
+	navigations []*navigation
+	pages       map[uuid.UUID]*page
 	mu          sync.RWMutex
 }
 
@@ -24,21 +24,21 @@ func New(apiKey string) *Sourcetool {
 		apiKey:      apiKey,
 		subdomain:   subdomain,
 		endpoint:    fmt.Sprintf("ws://%s.local.trysourcetool.com:8080/ws", subdomain),
-		navigations: make([]*Navigation, 0),
-		pages:       make(map[uuid.UUID]*Page),
+		navigations: make([]*navigation, 0),
+		pages:       make(map[uuid.UUID]*page),
 	}
 	return s
 }
 
 func (s *Sourcetool) Listen() error {
-	r := StartRuntime(s.apiKey, s.endpoint, s.pages)
-	defer r.CloseConnection()
+	r := startRuntime(s.apiKey, s.endpoint, s.pages)
+	defer r.wsClient.Close()
 
 	s.runtime = r
 
-	return r.Wait()
+	return r.wsClient.Wait()
 }
 
 func (s *Sourcetool) Close() error {
-	return s.runtime.CloseConnection()
+	return s.runtime.wsClient.Close()
 }

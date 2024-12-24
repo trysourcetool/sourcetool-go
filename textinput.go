@@ -14,7 +14,14 @@ import (
 const widgetTypeTextInput = "textInput"
 
 func (b *uiBuilder) TextInput(label string, options ...textinput.Option) string {
-	opts := textinput.DefaultOptions(label)
+	opts := &textinput.Options{
+		Label:        label,
+		Placeholder:  "",
+		DefaultValue: "",
+		Required:     false,
+		MaxLength:    nil,
+		MinLength:    nil,
+	}
 
 	for _, option := range options {
 		option(opts)
@@ -32,17 +39,17 @@ func (b *uiBuilder) TextInput(label string, options ...textinput.Option) string 
 	if cursor == nil {
 		return ""
 	}
-	path := cursor.GetDeltaPath()
+	path := cursor.getDeltaPath()
 
-	log.Printf("Session ID: %s", sess.ID.String())
-	log.Printf("Page ID: %s", page.ID.String())
+	log.Printf("Session ID: %s", sess.id.String())
+	log.Printf("Page ID: %s", page.id.String())
 	log.Printf("Path: %v\n", path)
 
 	widgetID := b.generateTextInputID(label, path)
 
 	log.Printf("Text Input ID: %s\n", widgetID.String())
 
-	state := sess.State.GetTextInput(widgetID)
+	state := sess.state.getTextInput(widgetID)
 	if state == nil {
 		// Set initial state
 		state = &textinput.State{
@@ -55,19 +62,19 @@ func (b *uiBuilder) TextInput(label string, options ...textinput.Option) string 
 			MaxLength:    opts.MaxLength,
 			MinLength:    opts.MinLength,
 		}
-		sess.State.Set(widgetID, state)
+		sess.state.set(widgetID, state)
 	}
 	returnValue := state.Value
 
-	b.runtime.EnqueueMessage(uuid.Must(uuid.NewV4()).String(), ws.MessageMethodRenderWidget, &ws.RenderWidgetPayload{
-		SessionID:  sess.ID.String(),
-		PageID:     page.ID.String(),
+	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), ws.MessageMethodRenderWidget, &ws.RenderWidgetPayload{
+		SessionID:  sess.id.String(),
+		PageID:     page.id.String(),
 		WidgetID:   widgetID.String(),
 		WidgetType: widgetTypeTextInput,
 		Data:       state,
 	})
 
-	cursor.Next()
+	cursor.next()
 
 	return string(returnValue)
 }
@@ -81,5 +88,5 @@ func (b *uiBuilder) generateTextInputID(label string, path []int) uuid.UUID {
 	for i, num := range path {
 		strPath[i] = fmt.Sprint(num)
 	}
-	return uuid.NewV5(page.ID, widgetTypeTextInput+"-"+label+"-"+strings.Join(strPath, ""))
+	return uuid.NewV5(page.id, widgetTypeTextInput+"-"+label+"-"+strings.Join(strPath, ""))
 }
