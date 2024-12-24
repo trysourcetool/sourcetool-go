@@ -7,8 +7,8 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 
+	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 	"github.com/trysourcetool/sourcetool-go/table"
-	ws "github.com/trysourcetool/sourcetool-go/websocket"
 )
 
 const widgetTypeTable = "table"
@@ -62,7 +62,7 @@ func (b *uiBuilder) Table(data any, options ...table.Option) table.ReturnValue {
 	}
 	returnValue := state.Value
 
-	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), ws.MessageMethodRenderWidget, &ws.RenderWidgetPayload{
+	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), websocket.MessageMethodRenderWidget, &websocket.RenderWidgetPayload{
 		SessionID:  sess.id.String(),
 		PageID:     page.id.String(),
 		WidgetID:   widgetID.String(),

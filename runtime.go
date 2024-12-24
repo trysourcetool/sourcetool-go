@@ -7,13 +7,13 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 
-	ws "github.com/trysourcetool/sourcetool-go/websocket"
+	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 )
 
 var once sync.Once
 
 type runtime struct {
-	wsClient       ws.Client
+	wsClient       websocket.Client
 	sessionManager *sessionManager
 	pageManager    *pageManager
 }
@@ -26,7 +26,7 @@ func startRuntime(apiKey, endpoint string, pages map[uuid.UUID]*page) *runtime {
 			pageManager:    newPageManager(pages),
 		}
 
-		wsClient, err := ws.NewClient(ws.Config{
+		wsClient, err := websocket.NewClient(websocket.Config{
 			URL:            endpoint,
 			APIKey:         apiKey,
 			PingInterval:   1 * time.Second,
@@ -45,9 +45,9 @@ func startRuntime(apiKey, endpoint string, pages map[uuid.UUID]*page) *runtime {
 
 		r.wsClient = wsClient
 		msgHandler := &messageHandler{r}
-		wsClient.RegisterHandler(ws.MessageMethodInitializeClient, msgHandler.initializeCilent)
-		wsClient.RegisterHandler(ws.MessageMethodRerunPage, msgHandler.rerunPage)
-		wsClient.RegisterHandler(ws.MessageMethodCloseSession, msgHandler.closeSession)
+		wsClient.RegisterHandler(websocket.MessageMethodInitializeClient, msgHandler.initializeCilent)
+		wsClient.RegisterHandler(websocket.MessageMethodRerunPage, msgHandler.rerunPage)
+		wsClient.RegisterHandler(websocket.MessageMethodCloseSession, msgHandler.closeSession)
 
 		r.initializeHost(apiKey, pages)
 	})
@@ -56,15 +56,15 @@ func startRuntime(apiKey, endpoint string, pages map[uuid.UUID]*page) *runtime {
 }
 
 func (r *runtime) initializeHost(apiKey string, pages map[uuid.UUID]*page) {
-	pagesPayload := make([]*ws.InitializeHostPagePayload, 0, len(pages))
+	pagesPayload := make([]*websocket.InitializeHostPagePayload, 0, len(pages))
 	for _, page := range pages {
-		pagesPayload = append(pagesPayload, &ws.InitializeHostPagePayload{
+		pagesPayload = append(pagesPayload, &websocket.InitializeHostPagePayload{
 			ID:   page.id.String(),
 			Name: page.name,
 		})
 	}
 
-	resp, err := r.wsClient.EnqueueWithResponse(uuid.Must(uuid.NewV4()).String(), ws.MessageMethodInitializeHost, ws.InitializeHostPayload{
+	resp, err := r.wsClient.EnqueueWithResponse(uuid.Must(uuid.NewV4()).String(), websocket.MessageMethodInitializeHost, websocket.InitializeHostPayload{
 		APIKey:     apiKey,
 		SDKName:    "sourcetool-go",
 		SDKVersion: "0.1.0",

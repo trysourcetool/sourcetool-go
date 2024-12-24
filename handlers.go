@@ -8,15 +8,15 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 
-	ws "github.com/trysourcetool/sourcetool-go/websocket"
+	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 )
 
 type messageHandler struct {
 	r *runtime
 }
 
-func (h *messageHandler) initializeCilent(msg *ws.Message) error {
-	var p ws.InitializeClientPayload
+func (h *messageHandler) initializeCilent(msg *websocket.Message) error {
+	var p websocket.InitializeClientPayload
 	if err := json.Unmarshal(msg.Payload, &p); err != nil {
 		return fmt.Errorf("failed to unmarshal payload: %v", err)
 	}
@@ -54,8 +54,8 @@ func (h *messageHandler) initializeCilent(msg *ws.Message) error {
 	return nil
 }
 
-func (h *messageHandler) rerunPage(msg *ws.Message) error {
-	var p ws.RerunPagePayload
+func (h *messageHandler) rerunPage(msg *websocket.Message) error {
+	var p websocket.RerunPagePayload
 	if err := json.Unmarshal(msg.Payload, &p); err != nil {
 		return fmt.Errorf("failed to unmarshal payload: %v", err)
 	}
@@ -101,8 +101,8 @@ func (h *messageHandler) rerunPage(msg *ws.Message) error {
 	return nil
 }
 
-func (h *messageHandler) closeSession(msg *ws.Message) error {
-	var p ws.CloseSessionPayload
+func (h *messageHandler) closeSession(msg *websocket.Message) error {
+	var p websocket.CloseSessionPayload
 	if err := json.Unmarshal(msg.Payload, &p); err != nil {
 		return fmt.Errorf("failed to unmarshal payload: %v", err)
 	}
