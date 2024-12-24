@@ -21,13 +21,6 @@ func NewState() *State {
 	}
 }
 
-// GetState returns the state for the given UI component ID
-func (s *State) Get(id uuid.UUID) any {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	return s.data[id]
-}
-
 func (s *State) GetTextInput(id uuid.UUID) *textinput.State {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -58,7 +51,6 @@ func (s *State) GetButton(id uuid.UUID) *button.State {
 	return state
 }
 
-// SetState sets the state for the given UI component ID
 func (s *State) Set(id uuid.UUID, state any) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
