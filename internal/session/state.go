@@ -5,9 +5,9 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 
-	"github.com/trysourcetool/sourcetool-go/button"
-	"github.com/trysourcetool/sourcetool-go/table"
-	"github.com/trysourcetool/sourcetool-go/textinput"
+	"github.com/trysourcetool/sourcetool-go/internal/button"
+	"github.com/trysourcetool/sourcetool-go/internal/table"
+	"github.com/trysourcetool/sourcetool-go/internal/textinput"
 )
 
 type State struct {

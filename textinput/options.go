@@ -1,42 +1,33 @@
 package textinput
 
-type Options struct {
-	Label        string
-	Placeholder  string
-	DefaultValue string
-	Required     bool
-	MaxLength    *int
-	MinLength    *int
-}
+import "github.com/trysourcetool/sourcetool-go/internal/textinput"
 
-type Option func(*Options)
-
-func Placeholder(placeholder string) Option {
-	return func(opts *Options) {
+func Placeholder(placeholder string) textinput.Option {
+	return func(opts *textinput.Options) {
 		opts.Placeholder = placeholder
 	}
 }
 
-func DefaultValue(value string) Option {
-	return func(opts *Options) {
+func DefaultValue(value string) textinput.Option {
+	return func(opts *textinput.Options) {
 		opts.DefaultValue = value
 	}
 }
 
-func Required(required bool) Option {
-	return func(opts *Options) {
+func Required(required bool) textinput.Option {
+	return func(opts *textinput.Options) {
 		opts.Required = required
 	}
 }
 
-func MaxLength(length int) Option {
-	return func(opts *Options) {
+func MaxLength(length int) textinput.Option {
+	return func(opts *textinput.Options) {
 		opts.MaxLength = &length
 	}
 }
 
-func MinLength(length int) Option {
-	return func(opts *Options) {
+func MinLength(length int) textinput.Option {
+	return func(opts *textinput.Options) {
 		opts.MinLength = &length
 	}
 }

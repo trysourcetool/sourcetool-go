@@ -7,8 +7,9 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 
+	"github.com/trysourcetool/sourcetool-go/internal/table"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket"
-	"github.com/trysourcetool/sourcetool-go/table"
+	tbl "github.com/trysourcetool/sourcetool-go/table"
 )
 
 const widgetTypeTable = "table"
@@ -17,8 +18,8 @@ func (b *uiBuilder) Table(data any, options ...table.Option) table.ReturnValue {
 	opts := &table.Options{
 		Header:       "",
 		Description:  "",
-		OnSelect:     table.OnSelectIgnore,
-		RowSelection: table.RowSelectionSingle,
+		OnSelect:     tbl.OnSelectIgnore,
+		RowSelection: tbl.RowSelectionSingle,
 	}
 
 	for _, option := range options {

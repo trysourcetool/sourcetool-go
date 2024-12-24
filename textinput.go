@@ -7,8 +7,8 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 
+	"github.com/trysourcetool/sourcetool-go/internal/textinput"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket"
-	"github.com/trysourcetool/sourcetool-go/textinput"
 )
 
 const widgetTypeTextInput = "textInput"

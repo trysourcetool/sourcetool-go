@@ -1,14 +1,9 @@
 package button
 
-type Options struct {
-	Label    string
-	Disabled bool
-}
+import "github.com/trysourcetool/sourcetool-go/internal/button"
 
-type Option func(*Options)
-
-func Disabled(disabled bool) Option {
-	return func(opts *Options) {
+func Disabled(disabled bool) button.Option {
+	return func(opts *button.Options) {
 		opts.Disabled = disabled
 	}
 }

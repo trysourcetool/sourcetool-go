@@ -3,10 +3,10 @@ package sourcetool
 import (
 	"context"
 
-	"github.com/trysourcetool/sourcetool-go/button"
+	"github.com/trysourcetool/sourcetool-go/internal/button"
 	"github.com/trysourcetool/sourcetool-go/internal/session"
-	"github.com/trysourcetool/sourcetool-go/table"
-	"github.com/trysourcetool/sourcetool-go/textinput"
+	"github.com/trysourcetool/sourcetool-go/internal/table"
+	"github.com/trysourcetool/sourcetool-go/internal/textinput"
 )
 
 type UIBuilder interface {

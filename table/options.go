@@ -1,56 +1,37 @@
 package table
 
-type onSelect string
+import "github.com/trysourcetool/sourcetool-go/internal/table"
 
 const (
-	OnSelectIgnore onSelect = "ignore"
-	OnSelectRerun  onSelect = "rerun"
+	OnSelectIgnore table.OnSelect = "ignore"
+	OnSelectRerun  table.OnSelect = "rerun"
 )
-
-func (o onSelect) String() string {
-	return string(o)
-}
-
-type rowSelection string
 
 const (
-	RowSelectionSingle   rowSelection = "single"
-	RowSelectionMultiple rowSelection = "multiple"
+	RowSelectionSingle   table.RowSelection = "single"
+	RowSelectionMultiple table.RowSelection = "multiple"
 )
 
-func (r rowSelection) String() string {
-	return string(r)
-}
-
-type Options struct {
-	Header       string
-	Description  string
-	OnSelect     onSelect
-	RowSelection rowSelection
-}
-
-type Option func(*Options)
-
-func Header(header string) Option {
-	return func(opts *Options) {
+func Header(header string) table.Option {
+	return func(opts *table.Options) {
 		opts.Header = header
 	}
 }
 
-func Description(description string) Option {
-	return func(opts *Options) {
+func Description(description string) table.Option {
+	return func(opts *table.Options) {
 		opts.Description = description
 	}
 }
 
-func OnSelect(onSelect onSelect) Option {
-	return func(opts *Options) {
+func OnSelect(onSelect table.OnSelect) table.Option {
+	return func(opts *table.Options) {
 		opts.OnSelect = onSelect
 	}
 }
 
-func RowSelection(rowSelection rowSelection) Option {
-	return func(opts *Options) {
+func RowSelection(rowSelection table.RowSelection) table.Option {
+	return func(opts *table.Options) {
 		opts.RowSelection = rowSelection
 	}
 }
