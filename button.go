@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/gofrs/uuid/v5"
+
 	"github.com/trysourcetool/sourcetool-go/internal/button"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 )
