@@ -101,6 +101,8 @@ func (h *rerunPageHandler) Handle(msg *ws.Message) error {
 		return fmt.Errorf("failed to run page: %v", err)
 	}
 
+	sess.State.ResetButtons()
+
 	return nil
 }
 

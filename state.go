@@ -51,6 +51,16 @@ func (s *State) GetButton(id uuid.UUID) *button.State {
 	return state
 }
 
+func (s *State) ResetButtons() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for _, state := range s.data {
+		if buttonState, ok := state.(*button.State); ok {
+			buttonState.Value = false
+		}
+	}
+}
+
 func (s *State) Set(id uuid.UUID, state any) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
