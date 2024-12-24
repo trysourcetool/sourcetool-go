@@ -22,31 +22,31 @@ func DefaultOptions(label string) *Options {
 
 type Option func(*Options)
 
-func WithPlaceholder(placeholder string) Option {
+func Placeholder(placeholder string) Option {
 	return func(opts *Options) {
 		opts.Placeholder = placeholder
 	}
 }
 
-func WithDefaultValue(value string) Option {
+func DefaultValue(value string) Option {
 	return func(opts *Options) {
 		opts.DefaultValue = value
 	}
 }
 
-func WithRequired(required bool) Option {
+func Required(required bool) Option {
 	return func(opts *Options) {
 		opts.Required = required
 	}
 }
 
-func WithMaxLength(length int) Option {
+func MaxLength(length int) Option {
 	return func(opts *Options) {
 		opts.MaxLength = &length
 	}
 }
 
-func WithMinLength(length int) Option {
+func MinLength(length int) Option {
 	return func(opts *Options) {
 		opts.MinLength = &length
 	}

@@ -14,7 +14,7 @@ func DefaultOptions(label string) *Options {
 
 type Option func(*Options)
 
-func WithDisabled(disabled bool) Option {
+func Disabled(disabled bool) Option {
 	return func(opts *Options) {
 		opts.Disabled = disabled
 	}

@@ -40,25 +40,25 @@ func DefaultOptions() *Options {
 
 type Option func(*Options)
 
-func WithHeader(header string) Option {
+func Header(header string) Option {
 	return func(opts *Options) {
 		opts.Header = header
 	}
 }
 
-func WithDescription(description string) Option {
+func Description(description string) Option {
 	return func(opts *Options) {
 		opts.Description = description
 	}
 }
 
-func WithOnSelect(onSelect onSelect) Option {
+func OnSelect(onSelect onSelect) Option {
 	return func(opts *Options) {
 		opts.OnSelect = onSelect
 	}
 }
 
-func WithRowSelection(rowSelection rowSelection) Option {
+func RowSelection(rowSelection rowSelection) Option {
 	return func(opts *Options) {
 		opts.RowSelection = rowSelection
 	}
