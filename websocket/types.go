@@ -22,10 +22,7 @@ const (
 	MessageMethodCloseSession     MessageMethod = "CLOSE_SESSION"
 )
 
-// MessageHandler handles websocket messages
-type MessageHandler interface {
-	Handle(*Message) error
-}
+type MessageHandlerFunc func(*Message) error
 
 // Common errors
 var (

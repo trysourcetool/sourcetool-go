@@ -13,7 +13,7 @@ import (
 
 type Client interface {
 	// Message handling
-	RegisterHandler(MessageMethod, MessageHandler)
+	RegisterHandler(MessageMethod, MessageHandlerFunc)
 
 	// Send message methods
 	Enqueue(string, MessageMethod, any)
@@ -46,7 +46,7 @@ type client struct {
 	responses map[string]chan *Message
 	respMu    sync.RWMutex
 
-	handlers  map[MessageMethod]MessageHandler
+	handlers  map[MessageMethod]MessageHandlerFunc
 	handlerMu sync.RWMutex
 }
 
@@ -64,7 +64,7 @@ func NewClient(config Config) (Client, error) {
 		done:         make(chan error, 1),
 		dialer:       websocket.DefaultDialer,
 		responses:    make(map[string]chan *Message),
-		handlers:     make(map[MessageMethod]MessageHandler),
+		handlers:     make(map[MessageMethod]MessageHandlerFunc),
 	}
 
 	if err := c.connect(); err != nil {
@@ -78,7 +78,7 @@ func NewClient(config Config) (Client, error) {
 	return c, nil
 }
 
-func (c *client) RegisterHandler(method MessageMethod, handler MessageHandler) {
+func (c *client) RegisterHandler(method MessageMethod, handler MessageHandlerFunc) {
 	c.handlerMu.Lock()
 	defer c.handlerMu.Unlock()
 	c.handlers[method] = handler
@@ -106,7 +106,7 @@ func (c *client) handleMessage(msg *Message) error {
 		return fmt.Errorf("%w: %s", ErrUnknownMethod, msg.Method)
 	}
 
-	return handler.Handle(msg)
+	return handler(msg)
 }
 
 func (c *client) connect() error {

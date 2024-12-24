@@ -11,12 +11,11 @@ import (
 	ws "github.com/trysourcetool/sourcetool-go/websocket"
 )
 
-// initializeClientHandler handles INITIALIZE_CLIENT messages
-type initializeClientHandler struct {
+type messageHandler struct {
 	r *runtime
 }
 
-func (h *initializeClientHandler) Handle(msg *ws.Message) error {
+func (h *messageHandler) InitializeCilent(msg *ws.Message) error {
 	var p ws.InitializeClientPayload
 	if err := json.Unmarshal(msg.Payload, &p); err != nil {
 		return fmt.Errorf("failed to unmarshal payload: %v", err)
@@ -55,11 +54,7 @@ func (h *initializeClientHandler) Handle(msg *ws.Message) error {
 	return nil
 }
 
-type rerunPageHandler struct {
-	r *runtime
-}
-
-func (h *rerunPageHandler) Handle(msg *ws.Message) error {
+func (h *messageHandler) RerunPage(msg *ws.Message) error {
 	var p ws.RerunPagePayload
 	if err := json.Unmarshal(msg.Payload, &p); err != nil {
 		return fmt.Errorf("failed to unmarshal payload: %v", err)
@@ -106,12 +101,7 @@ func (h *rerunPageHandler) Handle(msg *ws.Message) error {
 	return nil
 }
 
-// closeSessionHandler handles CLOSE_SESSION messages
-type closeSessionHandler struct {
-	r *runtime
-}
-
-func (h *closeSessionHandler) Handle(msg *ws.Message) error {
+func (h *messageHandler) CloseSession(msg *ws.Message) error {
 	var p ws.CloseSessionPayload
 	if err := json.Unmarshal(msg.Payload, &p); err != nil {
 		return fmt.Errorf("failed to unmarshal payload: %v", err)
