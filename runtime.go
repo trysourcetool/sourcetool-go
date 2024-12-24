@@ -40,7 +40,7 @@ func startRuntime(apiKey, endpoint string, pages map[uuid.UUID]*page) *runtime {
 			},
 			OnReconnected: func() {
 				log.Println("Reconnected!")
-				r.initializeHost(apiKey, pages)
+				r.sendInitializeHost(apiKey, pages)
 			},
 		})
 		if err != nil {
@@ -48,17 +48,17 @@ func startRuntime(apiKey, endpoint string, pages map[uuid.UUID]*page) *runtime {
 		}
 
 		r.wsClient = wsClient
-		wsClient.RegisterHandler(websocket.MessageMethodInitializeClient, r.initializeCilent)
-		wsClient.RegisterHandler(websocket.MessageMethodRerunPage, r.rerunPage)
-		wsClient.RegisterHandler(websocket.MessageMethodCloseSession, r.closeSession)
+		wsClient.RegisterHandler(websocket.MessageMethodInitializeClient, r.handleInitializeCilent)
+		wsClient.RegisterHandler(websocket.MessageMethodRerunPage, r.handleRerunPage)
+		wsClient.RegisterHandler(websocket.MessageMethodCloseSession, r.handleCloseSession)
 
-		r.initializeHost(apiKey, pages)
+		r.sendInitializeHost(apiKey, pages)
 	})
 
 	return r
 }
 
-func (r *runtime) initializeHost(apiKey string, pages map[uuid.UUID]*page) {
+func (r *runtime) sendInitializeHost(apiKey string, pages map[uuid.UUID]*page) {
 	pagesPayload := make([]*websocket.InitializeHostPagePayload, 0, len(pages))
 	for _, page := range pages {
 		pagesPayload = append(pagesPayload, &websocket.InitializeHostPagePayload{
@@ -83,7 +83,7 @@ func (r *runtime) initializeHost(apiKey string, pages map[uuid.UUID]*page) {
 	log.Printf("initialize host message sent: %v", resp)
 }
 
-func (r *runtime) initializeCilent(msg *websocket.Message) error {
+func (r *runtime) handleInitializeCilent(msg *websocket.Message) error {
 	var p websocket.InitializeClientPayload
 	if err := json.Unmarshal(msg.Payload, &p); err != nil {
 		return fmt.Errorf("failed to unmarshal payload: %v", err)
@@ -122,7 +122,7 @@ func (r *runtime) initializeCilent(msg *websocket.Message) error {
 	return nil
 }
 
-func (r *runtime) rerunPage(msg *websocket.Message) error {
+func (r *runtime) handleRerunPage(msg *websocket.Message) error {
 	var p websocket.RerunPagePayload
 	if err := json.Unmarshal(msg.Payload, &p); err != nil {
 		return fmt.Errorf("failed to unmarshal payload: %v", err)
@@ -169,7 +169,7 @@ func (r *runtime) rerunPage(msg *websocket.Message) error {
 	return nil
 }
 
-func (r *runtime) closeSession(msg *websocket.Message) error {
+func (r *runtime) handleCloseSession(msg *websocket.Message) error {
 	var p websocket.CloseSessionPayload
 	if err := json.Unmarshal(msg.Payload, &p); err != nil {
 		return fmt.Errorf("failed to unmarshal payload: %v", err)
