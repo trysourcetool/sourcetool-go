@@ -245,9 +245,12 @@ func (s *State) ResetButtons() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	for _, state := range s.data {
-		buttonState := anyToButtonState(state)
-		if buttonState != nil {
+		if buttonState := anyToButtonState(state); buttonState != nil {
 			buttonState.Value = false
+			continue
+		}
+		if formState := anyToFormState(state); formState != nil {
+			formState.Value = false
 		}
 	}
 }

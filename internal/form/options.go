@@ -1,7 +1,9 @@
 package form
 
 type Options struct {
-	ClearOnSubmit bool
+	ButtonLabel    string
+	ButtonDisabled bool
+	ClearOnSubmit  bool
 }
 
 type Option func(*Options)

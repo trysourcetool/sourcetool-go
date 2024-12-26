@@ -18,7 +18,7 @@ type UIBuilder interface {
 	TextInput(string, ...textinput.Option) string
 	Table(any, ...table.Option) table.ReturnValue
 	Button(string, ...button.Option) bool
-	Form(...form.Option) UIBuilder
+	Form(string, ...form.Option) (UIBuilder, bool)
 	Columns(int, ...columns.Option) []UIBuilder
 }
 

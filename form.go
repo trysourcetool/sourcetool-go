@@ -8,9 +8,11 @@ import (
 
 const widgetTypeForm = "form"
 
-func (b *uiBuilder) Form(options ...form.Option) UIBuilder {
+func (b *uiBuilder) Form(buttonLabel string, options ...form.Option) (UIBuilder, bool) {
 	opts := &form.Options{
-		ClearOnSubmit: false,
+		ButtonLabel:    buttonLabel,
+		ButtonDisabled: false,
+		ClearOnSubmit:  false,
 	}
 
 	for _, option := range options {
@@ -19,15 +21,15 @@ func (b *uiBuilder) Form(options ...form.Option) UIBuilder {
 
 	sess := b.session
 	if sess == nil {
-		return b
+		return b, false
 	}
 	page := b.page
 	if page == nil {
-		return b
+		return b, false
 	}
 	cursor := b.cursor
 	if cursor == nil {
-		return b
+		return b, false
 	}
 	path := cursor.getPath()
 
@@ -35,11 +37,14 @@ func (b *uiBuilder) Form(options ...form.Option) UIBuilder {
 	state := sess.State.GetForm(widgetID)
 	if state == nil {
 		state = &form.State{
-			ID:            widgetID,
-			ClearOnSubmit: opts.ClearOnSubmit,
+			ID:             widgetID,
+			ButtonLabel:    opts.ButtonLabel,
+			ButtonDisabled: opts.ButtonDisabled,
+			ClearOnSubmit:  opts.ClearOnSubmit,
 		}
 		sess.State.Set(widgetID, state)
 	}
+	returnValue := state.Value
 
 	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), websocket.MessageMethodRenderWidget, &websocket.RenderWidgetPayload{
 		SessionID:  sess.ID.String(),
@@ -62,7 +67,7 @@ func (b *uiBuilder) Form(options ...form.Option) UIBuilder {
 		cursor:  childCursor,
 	}
 
-	return childBuilder
+	return childBuilder, bool(returnValue)
 }
 
 func (b *uiBuilder) generateFormID(path path) uuid.UUID {
