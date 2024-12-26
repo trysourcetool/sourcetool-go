@@ -112,7 +112,7 @@ func (r *runtime) handleInitializeCilent(msg *websocket.Message) error {
 		runtime: r,
 		session: session,
 		page:    page,
-		cursor:  newCursor(main),
+		cursor:  newCursor(),
 	}
 
 	if err := page.run(ui); err != nil {
@@ -162,7 +162,7 @@ func (r *runtime) handleRerunPage(msg *websocket.Message) error {
 		runtime: r,
 		session: sess,
 		page:    page,
-		cursor:  newCursor(main),
+		cursor:  newCursor(),
 	}
 
 	if err := page.run(ui); err != nil {

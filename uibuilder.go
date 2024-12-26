@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/trysourcetool/sourcetool-go/internal/button"
+	"github.com/trysourcetool/sourcetool-go/internal/columns"
 	"github.com/trysourcetool/sourcetool-go/internal/session"
 	"github.com/trysourcetool/sourcetool-go/internal/table"
 	"github.com/trysourcetool/sourcetool-go/internal/textinput"
@@ -16,6 +17,7 @@ type UIBuilder interface {
 	TextInput(string, ...textinput.Option) string
 	Table(any, ...table.Option) table.ReturnValue
 	Button(string, ...button.Option) bool
+	Columns(int, ...columns.Option) []UIBuilder
 }
 
 type uiBuilder struct {
@@ -30,10 +32,6 @@ func (b *uiBuilder) Context() context.Context {
 	return b.context
 }
 
-type containerType int
-
-const main containerType = iota
-
 type path []int
 
 func (p path) String() string {
@@ -45,22 +43,20 @@ func (p path) String() string {
 }
 
 type cursor struct {
-	rootContainer containerType
-	parentPath    []int
-	index         int
+	parentPath []int
+	index      int
 }
 
-func newCursor(container containerType) *cursor {
+func newCursor() *cursor {
 	return &cursor{
-		rootContainer: container,
-		parentPath:    []int{},
-		index:         0,
+		parentPath: []int{},
+		index:      0,
 	}
 }
 
 func (c *cursor) getPath() path {
-	path := []int{int(c.rootContainer)}
-	path = append(path, c.parentPath...)
+	path := make([]int, len(c.parentPath))
+	copy(path, c.parentPath)
 	path = append(path, c.index)
 	return path
 }

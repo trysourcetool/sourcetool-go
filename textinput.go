@@ -66,6 +66,7 @@ func (b *uiBuilder) TextInput(label string, options ...textinput.Option) string 
 		PageID:     page.id.String(),
 		WidgetID:   widgetID.String(),
 		WidgetType: widgetTypeTextInput,
+		Path:       path,
 		Data:       state,
 	})
 

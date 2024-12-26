@@ -7,6 +7,7 @@ import (
 	"github.com/gofrs/uuid/v5"
 
 	"github.com/trysourcetool/sourcetool-go/internal/button"
+	"github.com/trysourcetool/sourcetool-go/internal/columns"
 	"github.com/trysourcetool/sourcetool-go/internal/markdown"
 	"github.com/trysourcetool/sourcetool-go/internal/numberinput"
 	"github.com/trysourcetool/sourcetool-go/internal/table"
@@ -153,6 +154,32 @@ func anyToButtonState(a any) *button.State {
 	}
 
 	return &buttonState
+}
+
+func (s *State) GetColumns(id uuid.UUID) *columns.State {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	state, ok := s.data[id]
+	if !ok {
+		return nil
+	}
+
+	return anyToColumnsState(state)
+}
+
+func anyToColumnsState(a any) *columns.State {
+	bytes, err := json.Marshal(a)
+	if err != nil {
+		return nil
+	}
+
+	var columnsState columns.State
+	if err := json.Unmarshal(bytes, &columnsState); err != nil {
+		return nil
+	}
+
+	return &columnsState
 }
 
 func (s *State) GetMarkdown(id uuid.UUID) *markdown.State {
