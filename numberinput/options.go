@@ -20,14 +20,14 @@ func Required(required bool) numberinput.Option {
 	}
 }
 
-func MaxValue(minval float64) numberinput.Option {
+func MaxValue(value float64) numberinput.Option {
 	return func(opts *numberinput.Options) {
-		opts.MinValue = &minval
+		opts.MinValue = &value
 	}
 }
 
-func MinLength(maxval float64) numberinput.Option {
+func MinLength(value float64) numberinput.Option {
 	return func(opts *numberinput.Options) {
-		opts.MaxValue = &maxval
+		opts.MaxValue = &value
 	}
 }

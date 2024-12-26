@@ -8,6 +8,7 @@ import (
 
 	"github.com/trysourcetool/sourcetool-go/internal/button"
 	"github.com/trysourcetool/sourcetool-go/internal/columns"
+	"github.com/trysourcetool/sourcetool-go/internal/dateinput"
 	"github.com/trysourcetool/sourcetool-go/internal/form"
 	"github.com/trysourcetool/sourcetool-go/internal/markdown"
 	"github.com/trysourcetool/sourcetool-go/internal/numberinput"
@@ -77,6 +78,32 @@ func anyToNumberInputState(a any) *numberinput.State {
 	}
 
 	return &numberInputState
+}
+
+func (s *State) GetDateInput(id uuid.UUID) *dateinput.State {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	state, ok := s.data[id]
+	if !ok {
+		return nil
+	}
+
+	return anyToDateInputState(state)
+}
+
+func anyToDateInputState(a any) *dateinput.State {
+	bytes, err := json.Marshal(a)
+	if err != nil {
+		return nil
+	}
+
+	var dateInputState dateinput.State
+	if err := json.Unmarshal(bytes, &dateInputState); err != nil {
+		return nil
+	}
+
+	return &dateInputState
 }
 
 func (s *State) GetTextArea(id uuid.UUID) *textarea.State {

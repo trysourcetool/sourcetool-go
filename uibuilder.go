@@ -4,18 +4,25 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/trysourcetool/sourcetool-go/internal/button"
 	"github.com/trysourcetool/sourcetool-go/internal/columns"
+	"github.com/trysourcetool/sourcetool-go/internal/dateinput"
 	"github.com/trysourcetool/sourcetool-go/internal/form"
+	"github.com/trysourcetool/sourcetool-go/internal/numberinput"
 	"github.com/trysourcetool/sourcetool-go/internal/session"
 	"github.com/trysourcetool/sourcetool-go/internal/table"
+	"github.com/trysourcetool/sourcetool-go/internal/textarea"
 	"github.com/trysourcetool/sourcetool-go/internal/textinput"
 )
 
 type UIBuilder interface {
 	Context() context.Context
 	TextInput(string, ...textinput.Option) string
+	NumberInput(string, ...numberinput.Option) float64
+	DateInput(string, ...dateinput.Option) time.Time
+	TextArea(string, ...textarea.Option) string
 	Table(any, ...table.Option) table.ReturnValue
 	Button(string, ...button.Option) bool
 	Form(string, ...form.Option) (UIBuilder, bool)
