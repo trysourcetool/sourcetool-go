@@ -7,6 +7,7 @@ import (
 	"github.com/gofrs/uuid/v5"
 
 	"github.com/trysourcetool/sourcetool-go/internal/button"
+	"github.com/trysourcetool/sourcetool-go/internal/numberinput"
 	"github.com/trysourcetool/sourcetool-go/internal/table"
 	"github.com/trysourcetool/sourcetool-go/internal/textinput"
 )
@@ -46,6 +47,32 @@ func anyToTextInputState(a any) *textinput.State {
 	}
 
 	return &textInputState
+}
+
+func (s *State) GetNumberInput(id uuid.UUID) *numberinput.State {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	state, ok := s.data[id]
+	if !ok {
+		return nil
+	}
+
+	return anyToNumberInputState(state)
+}
+
+func anyToNumberInputState(a any) *numberinput.State {
+	bytes, err := json.Marshal(a)
+	if err != nil {
+		return nil
+	}
+
+	var numberInputState numberinput.State
+	if err := json.Unmarshal(bytes, &numberInputState); err != nil {
+		return nil
+	}
+
+	return &numberInputState
 }
 
 func (s *State) GetTable(id uuid.UUID) *table.State {
