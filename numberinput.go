@@ -48,7 +48,7 @@ func (b *uiBuilder) NumberInput(label string, options ...numberinput.Option) flo
 	if state == nil {
 		state = &numberinput.State{
 			ID:    widgetID,
-			Value: numberinput.ReturnValue(opts.DefaultValue),
+			Value: opts.DefaultValue,
 		}
 	}
 	state.Label = opts.Label
@@ -58,8 +58,6 @@ func (b *uiBuilder) NumberInput(label string, options ...numberinput.Option) flo
 	state.MaxValue = opts.MaxValue
 	state.MinValue = opts.MinValue
 	sess.State.Set(widgetID, state)
-
-	returnValue := state.Value
 
 	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), websocket.MessageMethodRenderWidget, &websocket.RenderWidgetPayload{
 		SessionID:  sess.ID.String(),
@@ -72,7 +70,7 @@ func (b *uiBuilder) NumberInput(label string, options ...numberinput.Option) flo
 
 	cursor.next()
 
-	return float64(returnValue)
+	return state.Value
 }
 
 func (b *uiBuilder) generateNumberInputID(label string, path path) uuid.UUID {

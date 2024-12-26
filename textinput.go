@@ -48,7 +48,7 @@ func (b *uiBuilder) TextInput(label string, options ...textinput.Option) string 
 	if state == nil {
 		state = &textinput.State{
 			ID:    widgetID,
-			Value: textinput.ReturnValue(opts.DefaultValue),
+			Value: opts.DefaultValue,
 		}
 	}
 	state.Label = opts.Label
@@ -58,8 +58,6 @@ func (b *uiBuilder) TextInput(label string, options ...textinput.Option) string 
 	state.MaxLength = opts.MaxLength
 	state.MinLength = opts.MinLength
 	sess.State.Set(widgetID, state)
-
-	returnValue := state.Value
 
 	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), websocket.MessageMethodRenderWidget, &websocket.RenderWidgetPayload{
 		SessionID:  sess.ID.String(),
@@ -72,7 +70,7 @@ func (b *uiBuilder) TextInput(label string, options ...textinput.Option) string 
 
 	cursor.next()
 
-	return string(returnValue)
+	return state.Value
 }
 
 func (b *uiBuilder) generateTextInputID(label string, path path) uuid.UUID {

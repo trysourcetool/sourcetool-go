@@ -12,7 +12,7 @@ import (
 
 const widgetTypeTable = "table"
 
-func (b *uiBuilder) Table(data any, options ...table.Option) table.ReturnValue {
+func (b *uiBuilder) Table(data any, options ...table.Option) table.Value {
 	opts := &table.Options{
 		Header:       "",
 		Description:  "",
@@ -26,15 +26,15 @@ func (b *uiBuilder) Table(data any, options ...table.Option) table.ReturnValue {
 
 	sess := b.session
 	if sess == nil {
-		return table.ReturnValue{}
+		return table.Value{}
 	}
 	page := b.page
 	if page == nil {
-		return table.ReturnValue{}
+		return table.Value{}
 	}
 	cursor := b.cursor
 	if cursor == nil {
-		return table.ReturnValue{}
+		return table.Value{}
 	}
 	path := cursor.getPath()
 
@@ -47,7 +47,7 @@ func (b *uiBuilder) Table(data any, options ...table.Option) table.ReturnValue {
 	if state == nil {
 		state = &table.State{
 			ID:    widgetID,
-			Value: table.ReturnValue{},
+			Value: table.Value{},
 		}
 	}
 	state.Data = data
@@ -55,8 +55,6 @@ func (b *uiBuilder) Table(data any, options ...table.Option) table.ReturnValue {
 	state.Description = opts.Description
 	state.OnSelect = opts.OnSelect.String()
 	sess.State.Set(widgetID, state)
-
-	returnValue := state.Value
 
 	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), websocket.MessageMethodRenderWidget, &websocket.RenderWidgetPayload{
 		SessionID:  sess.ID.String(),
@@ -69,7 +67,7 @@ func (b *uiBuilder) Table(data any, options ...table.Option) table.ReturnValue {
 
 	cursor.next()
 
-	return returnValue
+	return state.Value
 }
 
 func (b *uiBuilder) generateTableID(path path) uuid.UUID {

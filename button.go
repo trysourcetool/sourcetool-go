@@ -44,14 +44,12 @@ func (b *uiBuilder) Button(label string, options ...button.Option) bool {
 	if state == nil {
 		state = &button.State{
 			ID:    widgetID,
-			Value: button.ReturnValue(false),
+			Value: false,
 		}
 	}
 	state.Label = opts.Label
 	state.Disabled = opts.Disabled
 	sess.State.Set(widgetID, state)
-
-	returnValue := state.Value
 
 	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), websocket.MessageMethodRenderWidget, &websocket.RenderWidgetPayload{
 		SessionID:  sess.ID.String(),
@@ -64,7 +62,7 @@ func (b *uiBuilder) Button(label string, options ...button.Option) bool {
 
 	cursor.next()
 
-	return bool(returnValue)
+	return state.Value
 }
 
 func (b *uiBuilder) generateButtonInputID(label string, path path) uuid.UUID {

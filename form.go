@@ -38,15 +38,13 @@ func (b *uiBuilder) Form(buttonLabel string, options ...form.Option) (UIBuilder,
 	if state == nil {
 		state = &form.State{
 			ID:    widgetID,
-			Value: form.ReturnValue(false),
+			Value: false,
 		}
 	}
 	state.ButtonLabel = opts.ButtonLabel
 	state.ButtonDisabled = opts.ButtonDisabled
 	state.ClearOnSubmit = opts.ClearOnSubmit
 	sess.State.Set(widgetID, state)
-
-	returnValue := state.Value
 
 	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), websocket.MessageMethodRenderWidget, &websocket.RenderWidgetPayload{
 		SessionID:  sess.ID.String(),
@@ -69,7 +67,7 @@ func (b *uiBuilder) Form(buttonLabel string, options ...form.Option) (UIBuilder,
 		cursor:  childCursor,
 	}
 
-	return childBuilder, bool(returnValue)
+	return childBuilder, state.Value
 }
 
 func (b *uiBuilder) generateFormID(path path) uuid.UUID {

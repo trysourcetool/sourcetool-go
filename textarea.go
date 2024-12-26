@@ -52,7 +52,7 @@ func (b *uiBuilder) TextArea(label string, options ...textarea.Option) string {
 	if state == nil {
 		state = &textarea.State{
 			ID:    widgetID,
-			Value: textarea.ReturnValue(opts.DefaultValue),
+			Value: opts.DefaultValue,
 		}
 	}
 	state.Label = opts.Label
@@ -66,8 +66,6 @@ func (b *uiBuilder) TextArea(label string, options ...textarea.Option) string {
 	state.AutoResize = opts.AutoResize
 	sess.State.Set(widgetID, state)
 
-	returnValue := state.Value
-
 	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), websocket.MessageMethodRenderWidget, &websocket.RenderWidgetPayload{
 		SessionID:  sess.ID.String(),
 		PageID:     page.id.String(),
@@ -79,7 +77,7 @@ func (b *uiBuilder) TextArea(label string, options ...textarea.Option) string {
 
 	cursor.next()
 
-	return string(returnValue)
+	return state.Value
 }
 
 func (b *uiBuilder) generateTextAreaID(label string, path path) uuid.UUID {

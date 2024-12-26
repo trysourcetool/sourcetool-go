@@ -23,7 +23,7 @@ type UIBuilder interface {
 	NumberInput(string, ...numberinput.Option) float64
 	DateInput(string, ...dateinput.Option) time.Time
 	TextArea(string, ...textarea.Option) string
-	Table(any, ...table.Option) table.ReturnValue
+	Table(any, ...table.Option) table.Value
 	Button(string, ...button.Option) bool
 	Form(string, ...form.Option) (UIBuilder, bool)
 	Columns(int, ...columns.Option) []UIBuilder

@@ -2,7 +2,7 @@ package table
 
 import "github.com/gofrs/uuid/v5"
 
-type ReturnValue struct {
+type Value struct {
 	Selection *Selection `json:"selection"`
 }
 
@@ -12,11 +12,11 @@ type Selection struct {
 }
 
 type State struct {
-	ID           uuid.UUID   `json:"-"`
-	Data         any         `json:"data"`
-	Value        ReturnValue `json:"value"`
-	Header       string      `json:"header"`
-	Description  string      `json:"description"`
-	OnSelect     string      `json:"onSelect"`
-	RowSelection string      `json:"rowSelection"`
+	ID           uuid.UUID `json:"-"`
+	Data         any       `json:"data"`
+	Value        Value     `json:"value"`
+	Header       string    `json:"header"`
+	Description  string    `json:"description"`
+	OnSelect     string    `json:"onSelect"`
+	RowSelection string    `json:"rowSelection"`
 }
