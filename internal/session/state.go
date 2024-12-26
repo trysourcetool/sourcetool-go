@@ -1,6 +1,7 @@
 package session
 
 import (
+	"encoding/json"
 	"sync"
 
 	"github.com/gofrs/uuid/v5"
@@ -24,31 +25,79 @@ func newState() *State {
 func (s *State) GetTextInput(id uuid.UUID) *textinput.State {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	state, ok := s.data[id].(*textinput.State)
+
+	state, ok := s.data[id]
 	if !ok {
 		return nil
 	}
-	return state
+
+	return anyToTextInputState(state)
+}
+
+func anyToTextInputState(a any) *textinput.State {
+	bytes, err := json.Marshal(a)
+	if err != nil {
+		return nil
+	}
+
+	var textInputState textinput.State
+	if err := json.Unmarshal(bytes, &textInputState); err != nil {
+		return nil
+	}
+
+	return &textInputState
 }
 
 func (s *State) GetTable(id uuid.UUID) *table.State {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	state, ok := s.data[id].(*table.State)
+
+	state, ok := s.data[id]
 	if !ok {
 		return nil
 	}
-	return state
+
+	return anyToTableState(state)
+}
+
+func anyToTableState(a any) *table.State {
+	bytes, err := json.Marshal(a)
+	if err != nil {
+		return nil
+	}
+
+	var tableState table.State
+	if err := json.Unmarshal(bytes, &tableState); err != nil {
+		return nil
+	}
+
+	return &tableState
 }
 
 func (s *State) GetButton(id uuid.UUID) *button.State {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	state, ok := s.data[id].(*button.State)
+
+	state, ok := s.data[id]
 	if !ok {
 		return nil
 	}
-	return state
+
+	return anyToButtonState(state)
+}
+
+func anyToButtonState(a any) *button.State {
+	bytes, err := json.Marshal(a)
+	if err != nil {
+		return nil
+	}
+
+	var buttonState button.State
+	if err := json.Unmarshal(bytes, &buttonState); err != nil {
+		return nil
+	}
+
+	return &buttonState
 }
 
 func (s *State) ResetStates() {
@@ -61,7 +110,8 @@ func (s *State) ResetButtons() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	for _, state := range s.data {
-		if buttonState, ok := state.(*button.State); ok {
+		buttonState := anyToButtonState(state)
+		if buttonState != nil {
 			buttonState.Value = false
 		}
 	}
