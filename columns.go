@@ -5,6 +5,7 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 
+	"github.com/trysourcetool/sourcetool-go/internal/columnitem"
 	"github.com/trysourcetool/sourcetool-go/internal/columns"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 )
@@ -43,6 +44,29 @@ func (b *uiBuilder) Columns(cols int, options ...columns.Option) []UIBuilder {
 	}
 
 	widgetID := generateColumnsID(page.id, path)
+	weights := opts.Weight
+	if len(weights) == 0 || len(weights) != cols {
+		weights = make([]int, cols)
+		for i := range weights {
+			weights[i] = 1
+		}
+	}
+
+	for _, w := range weights {
+		if w <= 0 {
+			weights = make([]int, cols)
+			for i := range weights {
+				weights[i] = 1
+			}
+			break
+		}
+	}
+
+	totalWeight := 0
+	for _, w := range weights {
+		totalWeight += w
+	}
+
 	containerState := &columns.State{
 		ID:      widgetID,
 		Columns: cols,
@@ -65,9 +89,9 @@ func (b *uiBuilder) Columns(cols int, options ...columns.Option) []UIBuilder {
 
 		columnPath := append(path, i)
 		widgetID := generateColumnItemID(page.id, columnPath)
-		columnItemState := &columns.ItemState{
+		columnItemState := &columnitem.State{
 			ID:     widgetID,
-			Weight: 1.0 / float64(cols),
+			Weight: float64(weights[i]) / float64(totalWeight),
 		}
 		sess.State.Set(widgetID, columnItemState)
 
