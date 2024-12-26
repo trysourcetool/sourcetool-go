@@ -1,7 +1,6 @@
 package sourcetool
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/gofrs/uuid/v5"
@@ -80,10 +79,6 @@ func (b *uiBuilder) generateNumberInputID(label string, path path) uuid.UUID {
 	page := b.page
 	if page == nil {
 		return uuid.Nil
-	}
-	strPath := make([]string, len(path))
-	for i, num := range path {
-		strPath[i] = fmt.Sprint(num)
 	}
 	return uuid.NewV5(page.id, widgetTypeNumberInput+"-"+label+"-"+path.String())
 }

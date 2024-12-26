@@ -7,6 +7,7 @@ import (
 
 	"github.com/trysourcetool/sourcetool-go/internal/button"
 	"github.com/trysourcetool/sourcetool-go/internal/columns"
+	"github.com/trysourcetool/sourcetool-go/internal/form"
 	"github.com/trysourcetool/sourcetool-go/internal/session"
 	"github.com/trysourcetool/sourcetool-go/internal/table"
 	"github.com/trysourcetool/sourcetool-go/internal/textinput"
@@ -17,6 +18,7 @@ type UIBuilder interface {
 	TextInput(string, ...textinput.Option) string
 	Table(any, ...table.Option) table.ReturnValue
 	Button(string, ...button.Option) bool
+	Form(...form.Option) UIBuilder
 	Columns(int, ...columns.Option) []UIBuilder
 }
 

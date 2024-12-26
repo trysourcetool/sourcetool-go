@@ -8,6 +8,7 @@ import (
 
 	"github.com/trysourcetool/sourcetool-go/internal/button"
 	"github.com/trysourcetool/sourcetool-go/internal/columns"
+	"github.com/trysourcetool/sourcetool-go/internal/form"
 	"github.com/trysourcetool/sourcetool-go/internal/markdown"
 	"github.com/trysourcetool/sourcetool-go/internal/numberinput"
 	"github.com/trysourcetool/sourcetool-go/internal/table"
@@ -206,6 +207,32 @@ func anyToMarkdownState(a any) *markdown.State {
 	}
 
 	return &markdownState
+}
+
+func (s *State) GetForm(id uuid.UUID) *form.State {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	state, ok := s.data[id]
+	if !ok {
+		return nil
+	}
+
+	return anyToFormState(state)
+}
+
+func anyToFormState(a any) *form.State {
+	bytes, err := json.Marshal(a)
+	if err != nil {
+		return nil
+	}
+
+	var formState form.State
+	if err := json.Unmarshal(bytes, &formState); err != nil {
+		return nil
+	}
+
+	return &formState
 }
 
 func (s *State) ResetStates() {

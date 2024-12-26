@@ -43,7 +43,7 @@ func (b *uiBuilder) Columns(cols int, options ...columns.Option) []UIBuilder {
 		option(opts)
 	}
 
-	widgetID := generateColumnsID(page.id, path)
+	widgetID := b.generateColumnsID(path)
 	weights := opts.Weight
 	if len(weights) == 0 || len(weights) != cols {
 		weights = make([]int, cols)
@@ -88,7 +88,7 @@ func (b *uiBuilder) Columns(cols int, options ...columns.Option) []UIBuilder {
 		columnCursor.parentPath = append(path, i)
 
 		columnPath := append(path, i)
-		widgetID := generateColumnItemID(page.id, columnPath)
+		widgetID := b.generateColumnItemID(columnPath)
 		columnItemState := &columnitem.State{
 			ID:     widgetID,
 			Weight: float64(weights[i]) / float64(totalWeight),
@@ -120,10 +120,18 @@ func (b *uiBuilder) Columns(cols int, options ...columns.Option) []UIBuilder {
 	return builders
 }
 
-func generateColumnsID(pageID uuid.UUID, path path) uuid.UUID {
-	return uuid.NewV5(pageID, widgetTypeColumns+"-"+path.String())
+func (b *uiBuilder) generateColumnsID(path path) uuid.UUID {
+	page := b.page
+	if page == nil {
+		return uuid.Nil
+	}
+	return uuid.NewV5(page.id, widgetTypeColumns+"-"+path.String())
 }
 
-func generateColumnItemID(pageID uuid.UUID, path path) uuid.UUID {
-	return uuid.NewV5(pageID, widgetTypeColumnItem+"-"+path.String())
+func (b *uiBuilder) generateColumnItemID(path path) uuid.UUID {
+	page := b.page
+	if page == nil {
+		return uuid.Nil
+	}
+	return uuid.NewV5(page.id, widgetTypeColumnItem+"-"+path.String())
 }
