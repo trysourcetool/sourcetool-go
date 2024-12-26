@@ -7,14 +7,16 @@ import (
 )
 
 type Session struct {
-	ID    uuid.UUID
-	State *State
+	ID     uuid.UUID
+	PageID uuid.UUID
+	State  *State
 }
 
-func New(id uuid.UUID) *Session {
+func New(id uuid.UUID, pageID uuid.UUID) *Session {
 	return &Session{
-		ID:    id,
-		State: newState(),
+		ID:     id,
+		PageID: pageID,
+		State:  newState(),
 	}
 }
 

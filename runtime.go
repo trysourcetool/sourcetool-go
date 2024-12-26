@@ -99,7 +99,7 @@ func (r *runtime) handleInitializeCilent(msg *websocket.Message) error {
 	}
 
 	log.Println("Creating new session with ID:", sessionID)
-	session := session.New(sessionID)
+	session := session.New(sessionID, pageID)
 	r.sessionManager.SetSession(session)
 
 	page := r.pageManager.getPage(pageID)
@@ -144,6 +144,11 @@ func (r *runtime) handleRerunPage(msg *websocket.Message) error {
 	page := r.pageManager.getPage(pageID)
 	if page == nil {
 		return fmt.Errorf("page not found: %s", pageID)
+	}
+
+	// Reset states if page has changed
+	if sess.PageID != pageID {
+		sess.State.ResetStates()
 	}
 
 	var states map[uuid.UUID]any

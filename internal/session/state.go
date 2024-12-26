@@ -51,6 +51,12 @@ func (s *State) GetButton(id uuid.UUID) *button.State {
 	return state
 }
 
+func (s *State) ResetStates() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.data = make(map[uuid.UUID]any)
+}
+
 func (s *State) ResetButtons() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
