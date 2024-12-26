@@ -42,7 +42,6 @@ func (b *uiBuilder) Button(label string, options ...button.Option) bool {
 	widgetID := b.generateButtonInputID(label, path)
 	state := sess.State.GetButton(widgetID)
 	if state == nil {
-		// Set initial state
 		state = &button.State{
 			ID:    widgetID,
 			Value: button.ReturnValue(false),
