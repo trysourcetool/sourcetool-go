@@ -7,20 +7,24 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 
-	"github.com/trysourcetool/sourcetool-go/internal/textinput"
+	"github.com/trysourcetool/sourcetool-go/internal/textarea"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 )
 
-const widgetTypeTextInput = "textInput"
+const widgetTypeTextArea = "textArea"
 
-func (b *uiBuilder) TextInput(label string, options ...textinput.Option) string {
-	opts := &textinput.Options{
+func (b *uiBuilder) TextArea(label string, options ...textarea.Option) string {
+	defaultMinLines := 2
+	opts := &textarea.Options{
 		Label:        label,
 		Placeholder:  "",
 		DefaultValue: "",
 		Required:     false,
 		MaxLength:    nil,
 		MinLength:    nil,
+		MinLines:     &defaultMinLines,
+		MaxLines:     nil,
+		AutoResize:   true,
 	}
 
 	for _, option := range options {
@@ -45,19 +49,22 @@ func (b *uiBuilder) TextInput(label string, options ...textinput.Option) string 
 	log.Printf("Page ID: %s", page.id.String())
 	log.Printf("Path: %v\n", path)
 
-	widgetID := b.generateTextInputID(label, path)
-	state := sess.State.GetTextInput(widgetID)
+	widgetID := b.generateTextAreaID(label, path)
+	state := sess.State.GetTextArea(widgetID)
 	if state == nil {
 		// Set initial state
-		state = &textinput.State{
+		state = &textarea.State{
 			ID:           widgetID,
 			Label:        opts.Label,
-			Value:        textinput.ReturnValue(opts.DefaultValue),
+			Value:        textarea.ReturnValue(opts.DefaultValue),
 			Placeholder:  opts.Placeholder,
 			DefaultValue: opts.DefaultValue,
 			Required:     opts.Required,
 			MaxLength:    opts.MaxLength,
 			MinLength:    opts.MinLength,
+			MaxLines:     opts.MaxLines,
+			MinLines:     opts.MinLines,
+			AutoResize:   opts.AutoResize,
 		}
 		sess.State.Set(widgetID, state)
 	}
@@ -67,7 +74,7 @@ func (b *uiBuilder) TextInput(label string, options ...textinput.Option) string 
 		SessionID:  sess.ID.String(),
 		PageID:     page.id.String(),
 		WidgetID:   widgetID.String(),
-		WidgetType: widgetTypeTextInput,
+		WidgetType: widgetTypeTextArea,
 		Data:       state,
 	})
 
@@ -76,7 +83,7 @@ func (b *uiBuilder) TextInput(label string, options ...textinput.Option) string 
 	return string(returnValue)
 }
 
-func (b *uiBuilder) generateTextInputID(label string, path []int) uuid.UUID {
+func (b *uiBuilder) generateTextAreaID(label string, path []int) uuid.UUID {
 	page := b.page
 	if page == nil {
 		return uuid.Nil
@@ -85,5 +92,5 @@ func (b *uiBuilder) generateTextInputID(label string, path []int) uuid.UUID {
 	for i, num := range path {
 		strPath[i] = fmt.Sprint(num)
 	}
-	return uuid.NewV5(page.id, widgetTypeTextInput+"-"+label+"-"+strings.Join(strPath, ""))
+	return uuid.NewV5(page.id, widgetTypeTextArea+"-"+label+"-"+strings.Join(strPath, ""))
 }

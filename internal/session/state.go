@@ -9,6 +9,7 @@ import (
 	"github.com/trysourcetool/sourcetool-go/internal/button"
 	"github.com/trysourcetool/sourcetool-go/internal/numberinput"
 	"github.com/trysourcetool/sourcetool-go/internal/table"
+	"github.com/trysourcetool/sourcetool-go/internal/textarea"
 	"github.com/trysourcetool/sourcetool-go/internal/textinput"
 )
 
@@ -73,6 +74,32 @@ func anyToNumberInputState(a any) *numberinput.State {
 	}
 
 	return &numberInputState
+}
+
+func (s *State) GetTextArea(id uuid.UUID) *textarea.State {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	state, ok := s.data[id]
+	if !ok {
+		return nil
+	}
+
+	return anyToTextAreaState(state)
+}
+
+func anyToTextAreaState(a any) *textarea.State {
+	bytes, err := json.Marshal(a)
+	if err != nil {
+		return nil
+	}
+
+	var textAreaState textarea.State
+	if err := json.Unmarshal(bytes, &textAreaState); err != nil {
+		return nil
+	}
+
+	return &textAreaState
 }
 
 func (s *State) GetTable(id uuid.UUID) *table.State {

@@ -45,9 +45,6 @@ func (b *uiBuilder) Table(data any, options ...table.Option) table.ReturnValue {
 	log.Printf("Path: %v\n", path)
 
 	widgetID := b.generateTableID(path)
-
-	log.Printf("Table ID: %s\n", widgetID.String())
-
 	state := sess.State.GetTable(widgetID)
 	if state == nil {
 		// Set initial state

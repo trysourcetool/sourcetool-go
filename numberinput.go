@@ -46,9 +46,6 @@ func (b *uiBuilder) NumberInput(label string, options ...numberinput.Option) flo
 	log.Printf("Path: %v\n", path)
 
 	widgetID := b.generateNumberInputID(label, path)
-
-	log.Printf("Text Input ID: %s\n", widgetID.String())
-
 	state := sess.State.GetNumberInput(widgetID)
 	if state == nil {
 		// Set initial state
