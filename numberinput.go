@@ -3,7 +3,6 @@ package sourcetool
 import (
 	"fmt"
 	"log"
-	"strings"
 
 	"github.com/gofrs/uuid/v5"
 
@@ -39,7 +38,7 @@ func (b *uiBuilder) NumberInput(label string, options ...numberinput.Option) flo
 	if cursor == nil {
 		return 0
 	}
-	path := cursor.getDeltaPath()
+	path := cursor.getPath()
 
 	log.Printf("Session ID: %s", sess.ID.String())
 	log.Printf("Page ID: %s", page.id.String())
@@ -68,6 +67,7 @@ func (b *uiBuilder) NumberInput(label string, options ...numberinput.Option) flo
 		PageID:     page.id.String(),
 		WidgetID:   widgetID.String(),
 		WidgetType: widgetTypeNumberInput,
+		Path:       path,
 		Data:       state,
 	})
 
@@ -76,7 +76,7 @@ func (b *uiBuilder) NumberInput(label string, options ...numberinput.Option) flo
 	return float64(returnValue)
 }
 
-func (b *uiBuilder) generateNumberInputID(label string, path []int) uuid.UUID {
+func (b *uiBuilder) generateNumberInputID(label string, path path) uuid.UUID {
 	page := b.page
 	if page == nil {
 		return uuid.Nil
@@ -85,5 +85,5 @@ func (b *uiBuilder) generateNumberInputID(label string, path []int) uuid.UUID {
 	for i, num := range path {
 		strPath[i] = fmt.Sprint(num)
 	}
-	return uuid.NewV5(page.id, widgetTypeNumberInput+"-"+label+"-"+strings.Join(strPath, ""))
+	return uuid.NewV5(page.id, widgetTypeNumberInput+"-"+label+"-"+path.String())
 }

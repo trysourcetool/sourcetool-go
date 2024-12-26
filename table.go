@@ -1,9 +1,7 @@
 package sourcetool
 
 import (
-	"fmt"
 	"log"
-	"strings"
 
 	"github.com/gofrs/uuid/v5"
 
@@ -38,7 +36,7 @@ func (b *uiBuilder) Table(data any, options ...table.Option) table.ReturnValue {
 	if cursor == nil {
 		return table.ReturnValue{}
 	}
-	path := cursor.getDeltaPath()
+	path := cursor.getPath()
 
 	log.Printf("Session ID: %s", sess.ID.String())
 	log.Printf("Page ID: %s", page.id.String())
@@ -66,6 +64,7 @@ func (b *uiBuilder) Table(data any, options ...table.Option) table.ReturnValue {
 		PageID:     page.id.String(),
 		WidgetID:   widgetID.String(),
 		WidgetType: widgetTypeTable,
+		Path:       path,
 		Data:       state,
 	})
 
@@ -74,14 +73,10 @@ func (b *uiBuilder) Table(data any, options ...table.Option) table.ReturnValue {
 	return returnValue
 }
 
-func (b *uiBuilder) generateTableID(path []int) uuid.UUID {
+func (b *uiBuilder) generateTableID(path path) uuid.UUID {
 	page := b.page
 	if page == nil {
 		return uuid.Nil
 	}
-	strPath := make([]string, len(path))
-	for i, num := range path {
-		strPath[i] = fmt.Sprint(num)
-	}
-	return uuid.NewV5(page.id, widgetTypeTable+"-"+strings.Join(strPath, ""))
+	return uuid.NewV5(page.id, widgetTypeTable+"-"+path.String())
 }

@@ -2,6 +2,8 @@ package sourcetool
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/trysourcetool/sourcetool-go/internal/button"
 	"github.com/trysourcetool/sourcetool-go/internal/session"
@@ -32,6 +34,16 @@ type containerType int
 
 const main containerType = iota
 
+type path []int
+
+func (p path) String() string {
+	strPath := make([]string, len(p))
+	for i, num := range p {
+		strPath[i] = fmt.Sprint(num)
+	}
+	return strings.Join(strPath, "")
+}
+
 type cursor struct {
 	rootContainer containerType
 	parentPath    []int
@@ -46,7 +58,7 @@ func newCursor(container containerType) *cursor {
 	}
 }
 
-func (c *cursor) getDeltaPath() []int {
+func (c *cursor) getPath() path {
 	path := []int{int(c.rootContainer)}
 	path = append(path, c.parentPath...)
 	path = append(path, c.index)

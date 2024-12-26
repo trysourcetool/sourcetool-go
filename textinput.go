@@ -1,9 +1,7 @@
 package sourcetool
 
 import (
-	"fmt"
 	"log"
-	"strings"
 
 	"github.com/gofrs/uuid/v5"
 
@@ -39,7 +37,7 @@ func (b *uiBuilder) TextInput(label string, options ...textinput.Option) string 
 	if cursor == nil {
 		return ""
 	}
-	path := cursor.getDeltaPath()
+	path := cursor.getPath()
 
 	log.Printf("Session ID: %s", sess.ID.String())
 	log.Printf("Page ID: %s", page.id.String())
@@ -76,14 +74,10 @@ func (b *uiBuilder) TextInput(label string, options ...textinput.Option) string 
 	return string(returnValue)
 }
 
-func (b *uiBuilder) generateTextInputID(label string, path []int) uuid.UUID {
+func (b *uiBuilder) generateTextInputID(label string, path path) uuid.UUID {
 	page := b.page
 	if page == nil {
 		return uuid.Nil
 	}
-	strPath := make([]string, len(path))
-	for i, num := range path {
-		strPath[i] = fmt.Sprint(num)
-	}
-	return uuid.NewV5(page.id, widgetTypeTextInput+"-"+label+"-"+strings.Join(strPath, ""))
+	return uuid.NewV5(page.id, widgetTypeTextInput+"-"+label+"-"+path.String())
 }

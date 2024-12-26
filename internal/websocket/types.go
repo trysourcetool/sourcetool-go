@@ -53,6 +53,7 @@ type RenderWidgetPayload struct {
 	PageID     string `json:"pageId"`
 	WidgetID   string `json:"widgetId"`
 	WidgetType string `json:"widgetType"`
+	Path       []int  `json:"path"`
 	Data       any    `json:"data"`
 }
 

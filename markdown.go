@@ -3,7 +3,6 @@ package sourcetool
 import (
 	"fmt"
 	"log"
-	"strings"
 
 	"github.com/gofrs/uuid/v5"
 
@@ -34,7 +33,7 @@ func (b *uiBuilder) Markdown(body string, options ...markdown.Option) {
 	if cursor == nil {
 		return
 	}
-	path := cursor.getDeltaPath()
+	path := cursor.getPath()
 
 	log.Printf("Session ID: %s", sess.ID.String())
 	log.Printf("Page ID: %s", page.id.String())
@@ -56,13 +55,14 @@ func (b *uiBuilder) Markdown(body string, options ...markdown.Option) {
 		PageID:     page.id.String(),
 		WidgetID:   widgetID.String(),
 		WidgetType: widgetTypeNumberInput,
+		Path:       path,
 		Data:       state,
 	})
 
 	cursor.next()
 }
 
-func (b *uiBuilder) generateMarkdownID(body string, path []int) uuid.UUID {
+func (b *uiBuilder) generateMarkdownID(body string, path path) uuid.UUID {
 	page := b.page
 	if page == nil {
 		return uuid.Nil
@@ -71,5 +71,5 @@ func (b *uiBuilder) generateMarkdownID(body string, path []int) uuid.UUID {
 	for i, num := range path {
 		strPath[i] = fmt.Sprint(num)
 	}
-	return uuid.NewV5(page.id, widgetTypeMarkdown+"-"+body+"-"+strings.Join(strPath, ""))
+	return uuid.NewV5(page.id, widgetTypeMarkdown+"-"+body+"-"+path.String())
 }
