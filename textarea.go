@@ -50,22 +50,22 @@ func (b *uiBuilder) TextArea(label string, options ...textarea.Option) string {
 	widgetID := b.generateTextAreaID(label, path)
 	state := sess.State.GetTextArea(widgetID)
 	if state == nil {
-		// Set initial state
 		state = &textarea.State{
-			ID:           widgetID,
-			Label:        opts.Label,
-			Value:        textarea.ReturnValue(opts.DefaultValue),
-			Placeholder:  opts.Placeholder,
-			DefaultValue: opts.DefaultValue,
-			Required:     opts.Required,
-			MaxLength:    opts.MaxLength,
-			MinLength:    opts.MinLength,
-			MaxLines:     opts.MaxLines,
-			MinLines:     opts.MinLines,
-			AutoResize:   opts.AutoResize,
+			ID:    widgetID,
+			Value: textarea.ReturnValue(opts.DefaultValue),
 		}
-		sess.State.Set(widgetID, state)
 	}
+	state.Label = opts.Label
+	state.Placeholder = opts.Placeholder
+	state.DefaultValue = opts.DefaultValue
+	state.Required = opts.Required
+	state.MaxLength = opts.MaxLength
+	state.MinLength = opts.MinLength
+	state.MaxLines = opts.MaxLines
+	state.MinLines = opts.MinLines
+	state.AutoResize = opts.AutoResize
+	sess.State.Set(widgetID, state)
+
 	returnValue := state.Value
 
 	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), websocket.MessageMethodRenderWidget, &websocket.RenderWidgetPayload{

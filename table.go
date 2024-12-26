@@ -45,18 +45,17 @@ func (b *uiBuilder) Table(data any, options ...table.Option) table.ReturnValue {
 	widgetID := b.generateTableID(path)
 	state := sess.State.GetTable(widgetID)
 	if state == nil {
-		// Set initial state
 		state = &table.State{
-			ID:          widgetID,
-			Value:       table.ReturnValue{},
-			Data:        data,
-			Header:      opts.Header,
-			Description: opts.Description,
-			OnSelect:    opts.OnSelect.String(),
+			ID:    widgetID,
+			Value: table.ReturnValue{},
 		}
-		sess.State.Set(widgetID, state)
 	}
 	state.Data = data
+	state.Header = opts.Header
+	state.Description = opts.Description
+	state.OnSelect = opts.OnSelect.String()
+	sess.State.Set(widgetID, state)
+
 	returnValue := state.Value
 
 	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), websocket.MessageMethodRenderWidget, &websocket.RenderWidgetPayload{

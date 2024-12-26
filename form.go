@@ -37,13 +37,15 @@ func (b *uiBuilder) Form(buttonLabel string, options ...form.Option) (UIBuilder,
 	state := sess.State.GetForm(widgetID)
 	if state == nil {
 		state = &form.State{
-			ID:             widgetID,
-			ButtonLabel:    opts.ButtonLabel,
-			ButtonDisabled: opts.ButtonDisabled,
-			ClearOnSubmit:  opts.ClearOnSubmit,
+			ID:    widgetID,
+			Value: form.ReturnValue(false),
 		}
-		sess.State.Set(widgetID, state)
 	}
+	state.ButtonLabel = opts.ButtonLabel
+	state.ButtonDisabled = opts.ButtonDisabled
+	state.ClearOnSubmit = opts.ClearOnSubmit
+	sess.State.Set(widgetID, state)
+
 	returnValue := state.Value
 
 	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), websocket.MessageMethodRenderWidget, &websocket.RenderWidgetPayload{

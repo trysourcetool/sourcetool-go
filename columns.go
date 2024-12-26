@@ -67,11 +67,11 @@ func (b *uiBuilder) Columns(cols int, options ...columns.Option) []UIBuilder {
 		totalWeight += w
 	}
 
-	containerState := &columns.State{
+	columnsState := &columns.State{
 		ID:      widgetID,
 		Columns: cols,
 	}
-	sess.State.Set(widgetID, containerState)
+	sess.State.Set(widgetID, columnsState)
 
 	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), websocket.MessageMethodRenderWidget, &websocket.RenderWidgetPayload{
 		SessionID:  sess.ID.String(),
@@ -79,7 +79,7 @@ func (b *uiBuilder) Columns(cols int, options ...columns.Option) []UIBuilder {
 		WidgetID:   widgetID.String(),
 		WidgetType: widgetTypeColumns,
 		Path:       path,
-		Data:       containerState,
+		Data:       columnsState,
 	})
 
 	builders := make([]UIBuilder, cols)

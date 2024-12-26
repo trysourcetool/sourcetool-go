@@ -46,19 +46,19 @@ func (b *uiBuilder) TextInput(label string, options ...textinput.Option) string 
 	widgetID := b.generateTextInputID(label, path)
 	state := sess.State.GetTextInput(widgetID)
 	if state == nil {
-		// Set initial state
 		state = &textinput.State{
-			ID:           widgetID,
-			Label:        opts.Label,
-			Value:        textinput.ReturnValue(opts.DefaultValue),
-			Placeholder:  opts.Placeholder,
-			DefaultValue: opts.DefaultValue,
-			Required:     opts.Required,
-			MaxLength:    opts.MaxLength,
-			MinLength:    opts.MinLength,
+			ID:    widgetID,
+			Value: textinput.ReturnValue(opts.DefaultValue),
 		}
-		sess.State.Set(widgetID, state)
 	}
+	state.Label = opts.Label
+	state.Placeholder = opts.Placeholder
+	state.DefaultValue = opts.DefaultValue
+	state.Required = opts.Required
+	state.MaxLength = opts.MaxLength
+	state.MinLength = opts.MinLength
+	sess.State.Set(widgetID, state)
+
 	returnValue := state.Value
 
 	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), websocket.MessageMethodRenderWidget, &websocket.RenderWidgetPayload{

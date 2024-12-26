@@ -41,13 +41,12 @@ func (b *uiBuilder) Markdown(body string, options ...markdown.Option) {
 	widgetID := b.generateMarkdownID(body, path)
 	state := sess.State.GetMarkdown(widgetID)
 	if state == nil {
-		// Set initial state
 		state = &markdown.State{
-			ID:   widgetID,
-			Body: opts.Body,
+			ID: widgetID,
 		}
-		sess.State.Set(widgetID, state)
 	}
+	state.Body = opts.Body
+	sess.State.Set(widgetID, state)
 
 	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), websocket.MessageMethodRenderWidget, &websocket.RenderWidgetPayload{
 		SessionID:  sess.ID.String(),

@@ -44,12 +44,14 @@ func (b *uiBuilder) Button(label string, options ...button.Option) bool {
 	if state == nil {
 		// Set initial state
 		state = &button.State{
-			ID:       widgetID,
-			Label:    opts.Label,
-			Disabled: opts.Disabled,
+			ID:    widgetID,
+			Value: button.ReturnValue(false),
 		}
-		sess.State.Set(widgetID, state)
 	}
+	state.Label = opts.Label
+	state.Disabled = opts.Disabled
+	sess.State.Set(widgetID, state)
+
 	returnValue := state.Value
 
 	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), websocket.MessageMethodRenderWidget, &websocket.RenderWidgetPayload{
