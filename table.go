@@ -61,6 +61,7 @@ func (b *uiBuilder) Table(data any, options ...table.Option) table.ReturnValue {
 		}
 		sess.State.Set(widgetID, state)
 	}
+	state.Data = data
 	returnValue := state.Value
 
 	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), websocket.MessageMethodRenderWidget, &websocket.RenderWidgetPayload{
