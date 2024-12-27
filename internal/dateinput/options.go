@@ -10,6 +10,7 @@ type Options struct {
 	Format       string
 	MaxValue     *time.Time
 	MinValue     *time.Time
+	Location     *time.Location
 }
 
 type Option func(*Options)

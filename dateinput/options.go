@@ -41,3 +41,9 @@ func MinLength(value time.Time) dateinput.Option {
 		opts.MinValue = &value
 	}
 }
+
+func Location(location time.Location) dateinput.Option {
+	return func(opts *dateinput.Options) {
+		opts.Location = &location
+	}
+}

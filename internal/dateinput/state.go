@@ -18,6 +18,7 @@ type State struct {
 	Format       string
 	MaxValue     *time.Time
 	MinValue     *time.Time
+	Location     *time.Location
 }
 
 func (s *State) IsWidgetState()  {}

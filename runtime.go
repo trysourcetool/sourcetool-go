@@ -185,31 +185,39 @@ func (r *runtime) handleRerunPage(msg *websocket.Message) error {
 			}
 			widgetStates[id] = &numberInputState
 		case dateinput.WidgetType:
-			var dateInputState websocket.DateInputData
-			if err := json.Unmarshal(state, &dateInputState); err != nil {
+			var dateInputData websocket.DateInputData
+			if err := json.Unmarshal(state, &dateInputData); err != nil {
 				return fmt.Errorf("failed to unmarshal date input state: %v", err)
 			}
+			dateInputState, ok := currentState.(*dateinput.State)
+			if !ok {
+				return fmt.Errorf("invalid date input state: %v", currentState)
+			}
+			location := time.Local
+			if dateInputState.Location != nil {
+				location = dateInputState.Location
+			}
 			var val, defaultVal, maxVal, minVal time.Time
-			if dateInputState.Value != "" {
-				val, err = time.Parse(time.DateOnly, dateInputState.Value)
+			if dateInputData.Value != "" {
+				val, err = time.ParseInLocation(time.DateOnly, dateInputData.Value, location)
 				if err != nil {
 					return err
 				}
 			}
-			if dateInputState.DefaultValue != "" {
-				defaultVal, err = time.Parse(time.DateOnly, dateInputState.DefaultValue)
+			if dateInputData.DefaultValue != "" {
+				defaultVal, err = time.ParseInLocation(time.DateOnly, dateInputData.DefaultValue, location)
 				if err != nil {
 					return err
 				}
 			}
-			if dateInputState.MaxValue != "" {
-				maxVal, err = time.Parse(time.DateOnly, dateInputState.MaxValue)
+			if dateInputData.MaxValue != "" {
+				maxVal, err = time.ParseInLocation(time.DateOnly, dateInputData.MaxValue, location)
 				if err != nil {
 					return err
 				}
 			}
-			if dateInputState.MinValue != "" {
-				minVal, err = time.Parse(time.DateOnly, dateInputState.MinValue)
+			if dateInputData.MinValue != "" {
+				minVal, err = time.ParseInLocation(time.DateOnly, dateInputData.MinValue, location)
 				if err != nil {
 					return err
 				}

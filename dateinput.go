@@ -19,6 +19,7 @@ func (b *uiBuilder) DateInput(label string, options ...dateinput.Option) *time.T
 		Format:       "YYYY/MM/DD",
 		MaxValue:     nil,
 		MinValue:     nil,
+		Location:     time.Local,
 	}
 
 	for _, option := range options {
@@ -58,6 +59,7 @@ func (b *uiBuilder) DateInput(label string, options ...dateinput.Option) *time.T
 	state.Format = opts.Format
 	state.MaxValue = opts.MaxValue
 	state.MinValue = opts.MinValue
+	state.Location = opts.Location
 	sess.State.Set(widgetID, state)
 
 	var value, defaultValue, maxValue, minValue string
