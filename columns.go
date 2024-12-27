@@ -10,11 +10,6 @@ import (
 	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 )
 
-const (
-	widgetTypeColumns    = "columns"
-	widgetTypeColumnItem = "columnItem"
-)
-
 func (b *uiBuilder) Columns(cols int, options ...columns.Option) []UIBuilder {
 	if cols < 1 {
 		return nil
@@ -77,7 +72,7 @@ func (b *uiBuilder) Columns(cols int, options ...columns.Option) []UIBuilder {
 		SessionID:  sess.ID.String(),
 		PageID:     page.id.String(),
 		WidgetID:   widgetID.String(),
-		WidgetType: widgetTypeColumns,
+		WidgetType: columns.WidgetType,
 		Path:       path,
 		Data:       columnsState,
 	})
@@ -101,7 +96,7 @@ func (b *uiBuilder) Columns(cols int, options ...columns.Option) []UIBuilder {
 			SessionID:  sess.ID.String(),
 			PageID:     page.id.String(),
 			WidgetID:   widgetID.String(),
-			WidgetType: widgetTypeColumnItem,
+			WidgetType: columnitem.WidgetType,
 			Path:       columnPath,
 			Data:       columnItemState,
 		})
@@ -125,7 +120,7 @@ func (b *uiBuilder) generateColumnsID(path path) uuid.UUID {
 	if page == nil {
 		return uuid.Nil
 	}
-	return uuid.NewV5(page.id, widgetTypeColumns+"-"+path.String())
+	return uuid.NewV5(page.id, columns.WidgetType+"-"+path.String())
 }
 
 func (b *uiBuilder) generateColumnItemID(path path) uuid.UUID {
@@ -133,5 +128,5 @@ func (b *uiBuilder) generateColumnItemID(path path) uuid.UUID {
 	if page == nil {
 		return uuid.Nil
 	}
-	return uuid.NewV5(page.id, widgetTypeColumnItem+"-"+path.String())
+	return uuid.NewV5(page.id, columnitem.WidgetType+"-"+path.String())
 }

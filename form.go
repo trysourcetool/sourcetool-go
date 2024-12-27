@@ -6,8 +6,6 @@ import (
 	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 )
 
-const widgetTypeForm = "form"
-
 func (b *uiBuilder) Form(buttonLabel string, options ...form.Option) (UIBuilder, bool) {
 	opts := &form.Options{
 		ButtonLabel:    buttonLabel,
@@ -50,7 +48,7 @@ func (b *uiBuilder) Form(buttonLabel string, options ...form.Option) (UIBuilder,
 		SessionID:  sess.ID.String(),
 		PageID:     page.id.String(),
 		WidgetID:   widgetID.String(),
-		WidgetType: widgetTypeForm,
+		WidgetType: form.WidgetType,
 		Path:       path,
 		Data:       state,
 	})
@@ -75,5 +73,5 @@ func (b *uiBuilder) generateFormID(path path) uuid.UUID {
 	if page == nil {
 		return uuid.Nil
 	}
-	return uuid.NewV5(page.id, widgetTypeForm+"-"+path.String())
+	return uuid.NewV5(page.id, form.WidgetType+"-"+path.String())
 }

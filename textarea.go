@@ -9,8 +9,6 @@ import (
 	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 )
 
-const widgetTypeTextArea = "textArea"
-
 func (b *uiBuilder) TextArea(label string, options ...textarea.Option) string {
 	defaultMinLines := 2
 	opts := &textarea.Options{
@@ -70,7 +68,7 @@ func (b *uiBuilder) TextArea(label string, options ...textarea.Option) string {
 		SessionID:  sess.ID.String(),
 		PageID:     page.id.String(),
 		WidgetID:   widgetID.String(),
-		WidgetType: widgetTypeTextArea,
+		WidgetType: textarea.WidgetType,
 		Path:       path,
 		Data:       state,
 	})
@@ -85,5 +83,5 @@ func (b *uiBuilder) generateTextAreaID(label string, path path) uuid.UUID {
 	if page == nil {
 		return uuid.Nil
 	}
-	return uuid.NewV5(page.id, widgetTypeTextArea+"-"+label+"-"+path.String())
+	return uuid.NewV5(page.id, textarea.WidgetType+"-"+label+"-"+path.String())
 }

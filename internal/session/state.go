@@ -2,6 +2,7 @@ package session
 
 import (
 	"encoding/json"
+	"fmt"
 	"sync"
 
 	"github.com/gofrs/uuid/v5"
@@ -17,15 +18,35 @@ import (
 	"github.com/trysourcetool/sourcetool-go/internal/textinput"
 )
 
+type WidgetState interface {
+	IsWidgetState()
+	GetType() string
+}
+
+type StateData map[uuid.UUID]WidgetState
+
 type State struct {
-	data map[uuid.UUID]any // ui ID -> options state
+	// data map[uuid.UUID]any // ui ID -> options state
+	data StateData
 	mu   sync.RWMutex
 }
 
 func newState() *State {
 	return &State{
-		data: make(map[uuid.UUID]any),
+		data: make(map[uuid.UUID]WidgetState),
 	}
+}
+
+func (s *State) Get(id uuid.UUID) WidgetState {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	state, ok := s.data[id]
+	if !ok {
+		return nil
+	}
+
+	return state
 }
 
 func (s *State) GetTextInput(id uuid.UUID) *textinput.State {
@@ -265,33 +286,98 @@ func anyToFormState(a any) *form.State {
 func (s *State) ResetStates() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.data = make(map[uuid.UUID]any)
+	s.data = make(map[uuid.UUID]WidgetState)
 }
 
 func (s *State) ResetButtons() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	for _, state := range s.data {
-		if buttonState := anyToButtonState(state); buttonState != nil {
+		switch state.GetType() {
+		case button.WidgetType:
+			buttonState := anyToButtonState(state)
 			buttonState.Value = false
-			continue
-		}
-		if formState := anyToFormState(state); formState != nil {
+		case form.WidgetType:
+			formState := anyToFormState(state)
 			formState.Value = false
 		}
 	}
 }
 
-func (s *State) Set(id uuid.UUID, state any) {
+func (s *State) Set(id uuid.UUID, state WidgetState) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.data[id] = state
 }
 
-func (s *State) SetStates(states map[uuid.UUID]any) {
+func (s *State) SetStates(states map[uuid.UUID]WidgetState) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	for id, state := range states {
 		s.data[id] = state
 	}
+}
+
+type widgetStateJSON struct {
+	Type  string          `json:"type"`
+	Value json.RawMessage `json:"value"`
+}
+
+func (s *StateData) UnmarshalJSON(data []byte) error {
+	var raw map[uuid.UUID]widgetStateJSON
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+
+	*s = make(StateData)
+	for id, stateData := range raw {
+		var state WidgetState
+		switch stateData.Type {
+		case "textinput":
+			state = new(textinput.State)
+		case "numberinput":
+			state = new(numberinput.State)
+		case "dateinput":
+			state = new(dateinput.State)
+		// 他の型も同様に追加
+		default:
+			return fmt.Errorf("unknown widget type: %s", stateData.Type)
+		}
+
+		if err := json.Unmarshal(stateData.Value, state); err != nil {
+			return err
+		}
+		(*s)[id] = state
+	}
+	return nil
+}
+
+// MarshalJSONも実装する必要があります
+func (s StateData) MarshalJSON() ([]byte, error) {
+	result := make(map[uuid.UUID]widgetStateJSON)
+	for id, state := range s {
+		var stateType string
+		switch state.(type) {
+		case *textinput.State:
+			stateType = "textinput"
+		case *numberinput.State:
+			stateType = "numberinput"
+		case *dateinput.State:
+			stateType = "dateinput"
+		// 他の型も同様に追加
+		default:
+			return nil, fmt.Errorf("unknown widget type")
+		}
+
+		value, err := json.Marshal(state)
+		if err != nil {
+			return nil, err
+		}
+
+		result[id] = widgetStateJSON{
+			Type:  stateType,
+			Value: value,
+		}
+	}
+	return json.Marshal(result)
 }

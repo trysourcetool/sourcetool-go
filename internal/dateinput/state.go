@@ -6,14 +6,19 @@ import (
 	"github.com/gofrs/uuid/v5"
 )
 
+const WidgetType = "dateInput"
+
 type State struct {
-	ID           uuid.UUID  `json:"-"`
-	Value        time.Time  `json:"value"`
-	Label        string     `json:"label"`
-	Placeholder  string     `json:"placeholder"`
-	DefaultValue *time.Time `json:"defaultValue"`
-	Required     bool       `json:"required"`
-	Format       string     `json:"format"`
-	MaxValue     *time.Time `json:"maxValue"`
-	MinValue     *time.Time `json:"minValue"`
+	ID           uuid.UUID
+	Value        *time.Time
+	Label        string
+	Placeholder  string
+	DefaultValue *time.Time
+	Required     bool
+	Format       string
+	MaxValue     *time.Time
+	MinValue     *time.Time
 }
+
+func (s *State) IsWidgetState()  {}
+func (s *State) GetType() string { return WidgetType }

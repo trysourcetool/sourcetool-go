@@ -2,6 +2,8 @@ package numberinput
 
 import "github.com/gofrs/uuid/v5"
 
+const WidgetType = "numberInput"
+
 type State struct {
 	ID           uuid.UUID `json:"-"`
 	Value        float64   `json:"value"`
@@ -12,3 +14,6 @@ type State struct {
 	MaxValue     *float64  `json:"maxValue"`
 	MinValue     *float64  `json:"minValue"`
 }
+
+func (s *State) IsWidgetState()  {}
+func (s *State) GetType() string { return WidgetType }

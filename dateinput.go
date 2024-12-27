@@ -6,14 +6,11 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 
-	"github.com/trysourcetool/sourcetool-go/internal/conv"
 	"github.com/trysourcetool/sourcetool-go/internal/dateinput"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 )
 
-const widgetTypeDateInput = "dateInput"
-
-func (b *uiBuilder) DateInput(label string, options ...dateinput.Option) time.Time {
+func (b *uiBuilder) DateInput(label string, options ...dateinput.Option) *time.Time {
 	opts := &dateinput.Options{
 		Label:        label,
 		Placeholder:  "",
@@ -30,15 +27,15 @@ func (b *uiBuilder) DateInput(label string, options ...dateinput.Option) time.Ti
 
 	sess := b.session
 	if sess == nil {
-		return time.Time{}
+		return nil
 	}
 	page := b.page
 	if page == nil {
-		return time.Time{}
+		return nil
 	}
 	cursor := b.cursor
 	if cursor == nil {
-		return time.Time{}
+		return nil
 	}
 	path := cursor.getPath()
 
@@ -51,7 +48,7 @@ func (b *uiBuilder) DateInput(label string, options ...dateinput.Option) time.Ti
 	if state == nil {
 		state = &dateinput.State{
 			ID:    widgetID,
-			Value: conv.SafeValue(opts.DefaultValue),
+			Value: opts.DefaultValue,
 		}
 	}
 	state.Label = opts.Label
@@ -63,13 +60,35 @@ func (b *uiBuilder) DateInput(label string, options ...dateinput.Option) time.Ti
 	state.MinValue = opts.MinValue
 	sess.State.Set(widgetID, state)
 
+	var value, defaultValue, maxValue, minValue string
+	if state.Value != nil {
+		value = state.Value.Format(time.DateOnly)
+	}
+	if state.DefaultValue != nil {
+		defaultValue = state.DefaultValue.Format(time.DateOnly)
+	}
+	if state.MaxValue != nil {
+		maxValue = state.MaxValue.Format(time.DateOnly)
+	}
+	if state.MinValue != nil {
+		minValue = state.MinValue.Format(time.DateOnly)
+	}
 	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), websocket.MessageMethodRenderWidget, &websocket.RenderWidgetPayload{
 		SessionID:  sess.ID.String(),
 		PageID:     page.id.String(),
 		WidgetID:   widgetID.String(),
-		WidgetType: widgetTypeDateInput,
+		WidgetType: dateinput.WidgetType,
 		Path:       path,
-		Data:       state,
+		Data: &websocket.DateInputData{
+			Value:        value,
+			Label:        state.Label,
+			Placeholder:  state.Placeholder,
+			DefaultValue: defaultValue,
+			Required:     state.Required,
+			Format:       state.Format,
+			MaxValue:     maxValue,
+			MinValue:     minValue,
+		},
 	})
 
 	cursor.next()
@@ -82,5 +101,5 @@ func (b *uiBuilder) generateDateInputID(label string, path path) uuid.UUID {
 	if page == nil {
 		return uuid.Nil
 	}
-	return uuid.NewV5(page.id, widgetTypeDateInput+"-"+label+"-"+path.String())
+	return uuid.NewV5(page.id, dateinput.WidgetType+"-"+label+"-"+path.String())
 }

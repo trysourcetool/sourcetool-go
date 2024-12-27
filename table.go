@@ -10,8 +10,6 @@ import (
 	tbl "github.com/trysourcetool/sourcetool-go/table"
 )
 
-const widgetTypeTable = "table"
-
 func (b *uiBuilder) Table(data any, options ...table.Option) table.Value {
 	opts := &table.Options{
 		Header:       "",
@@ -60,7 +58,7 @@ func (b *uiBuilder) Table(data any, options ...table.Option) table.Value {
 		SessionID:  sess.ID.String(),
 		PageID:     page.id.String(),
 		WidgetID:   widgetID.String(),
-		WidgetType: widgetTypeTable,
+		WidgetType: table.WidgetType,
 		Path:       path,
 		Data:       state,
 	})
@@ -75,5 +73,5 @@ func (b *uiBuilder) generateTableID(path path) uuid.UUID {
 	if page == nil {
 		return uuid.Nil
 	}
-	return uuid.NewV5(page.id, widgetTypeTable+"-"+path.String())
+	return uuid.NewV5(page.id, table.WidgetType+"-"+path.String())
 }

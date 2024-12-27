@@ -71,3 +71,14 @@ type RerunPagePayload struct {
 type CloseSessionPayload struct {
 	SessionID string `json:"sessionId"`
 }
+
+type DateInputData struct {
+	Value        string `json:"value"`
+	Label        string `json:"label"`
+	Placeholder  string `json:"placeholder"`
+	DefaultValue string `json:"defaultValue"`
+	Required     bool   `json:"required"`
+	Format       string `json:"format"`
+	MaxValue     string `json:"maxValue"`
+	MinValue     string `json:"minValue"`
+}

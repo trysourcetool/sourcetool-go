@@ -2,6 +2,8 @@ package textarea
 
 import "github.com/gofrs/uuid/v5"
 
+const WidgetType = "textArea"
+
 type State struct {
 	ID           uuid.UUID `json:"-"`
 	Value        string    `json:"value"`
@@ -15,3 +17,6 @@ type State struct {
 	MinLines     *int      `json:"minLines"`
 	AutoResize   bool      `json:"autoResize"`
 }
+
+func (s *State) IsWidgetState()  {}
+func (s *State) GetType() string { return WidgetType }

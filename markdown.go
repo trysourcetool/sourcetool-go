@@ -9,8 +9,6 @@ import (
 	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 )
 
-const widgetTypeMarkdown = "markdown"
-
 func (b *uiBuilder) Markdown(body string, options ...markdown.Option) {
 	opts := &markdown.Options{
 		Body: body,
@@ -52,7 +50,7 @@ func (b *uiBuilder) Markdown(body string, options ...markdown.Option) {
 		SessionID:  sess.ID.String(),
 		PageID:     page.id.String(),
 		WidgetID:   widgetID.String(),
-		WidgetType: widgetTypeNumberInput,
+		WidgetType: markdown.WidgetType,
 		Path:       path,
 		Data:       state,
 	})
@@ -65,5 +63,5 @@ func (b *uiBuilder) generateMarkdownID(body string, path path) uuid.UUID {
 	if page == nil {
 		return uuid.Nil
 	}
-	return uuid.NewV5(page.id, widgetTypeMarkdown+"-"+body+"-"+path.String())
+	return uuid.NewV5(page.id, markdown.WidgetType+"-"+body+"-"+path.String())
 }

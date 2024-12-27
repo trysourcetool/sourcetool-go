@@ -9,8 +9,6 @@ import (
 	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 )
 
-const widgetTypeNumberInput = "numberInput"
-
 func (b *uiBuilder) NumberInput(label string, options ...numberinput.Option) float64 {
 	opts := &numberinput.Options{
 		Label:        label,
@@ -63,7 +61,7 @@ func (b *uiBuilder) NumberInput(label string, options ...numberinput.Option) flo
 		SessionID:  sess.ID.String(),
 		PageID:     page.id.String(),
 		WidgetID:   widgetID.String(),
-		WidgetType: widgetTypeNumberInput,
+		WidgetType: numberinput.WidgetType,
 		Path:       path,
 		Data:       state,
 	})
@@ -78,5 +76,5 @@ func (b *uiBuilder) generateNumberInputID(label string, path path) uuid.UUID {
 	if page == nil {
 		return uuid.Nil
 	}
-	return uuid.NewV5(page.id, widgetTypeNumberInput+"-"+label+"-"+path.String())
+	return uuid.NewV5(page.id, numberinput.WidgetType+"-"+label+"-"+path.String())
 }

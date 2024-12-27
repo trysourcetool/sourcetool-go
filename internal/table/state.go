@@ -2,6 +2,8 @@ package table
 
 import "github.com/gofrs/uuid/v5"
 
+const WidgetType = "table"
+
 type Value struct {
 	Selection *Selection `json:"selection"`
 }
@@ -20,3 +22,6 @@ type State struct {
 	OnSelect     string    `json:"onSelect"`
 	RowSelection string    `json:"rowSelection"`
 }
+
+func (s *State) IsWidgetState()  {}
+func (s *State) GetType() string { return WidgetType }
