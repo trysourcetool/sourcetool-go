@@ -21,6 +21,7 @@ import (
 	"github.com/trysourcetool/sourcetool-go/internal/table"
 	"github.com/trysourcetool/sourcetool-go/internal/textarea"
 	"github.com/trysourcetool/sourcetool-go/internal/textinput"
+	"github.com/trysourcetool/sourcetool-go/internal/timeinput"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 )
 
@@ -242,6 +243,27 @@ func buildNewWidgetStates(states map[uuid.UUID]json.RawMessage, sess *session.Se
 			newState, err := convertDateInputDataToState(id, &dateInputData, location)
 			if err != nil {
 				return nil, fmt.Errorf("failed to convert date input data: %v", err)
+			}
+
+			widgetStates[id] = newState
+		case timeinput.WidgetType:
+			var timeInputData websocket.TimeInputData
+			if err := json.Unmarshal(state, &timeInputData); err != nil {
+				return nil, fmt.Errorf("failed to unmarshal time input state: %v", err)
+			}
+			timeInputState, ok := currentState.(*timeinput.State)
+			if !ok {
+				return nil, fmt.Errorf("invalid time input state: %v", currentState)
+			}
+
+			location := timeInputState.Location
+			if location == nil {
+				location = time.Local
+			}
+
+			newState, err := convertTimeInputDataToState(id, &timeInputData, location)
+			if err != nil {
+				return nil, fmt.Errorf("failed to convert time input data: %v", err)
 			}
 
 			widgetStates[id] = newState

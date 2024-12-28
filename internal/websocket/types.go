@@ -103,6 +103,14 @@ type DateInputData struct {
 	MinValue     string `json:"minValue"`
 }
 
+type TimeInputData struct {
+	Value        string `json:"value"`
+	Label        string `json:"label"`
+	Placeholder  string `json:"placeholder"`
+	DefaultValue string `json:"defaultValue"`
+	Required     bool   `json:"required"`
+}
+
 type TextAreaData struct {
 	Value        string `json:"value"`
 	Label        string `json:"label"`

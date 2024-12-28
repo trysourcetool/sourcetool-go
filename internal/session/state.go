@@ -16,6 +16,7 @@ import (
 	"github.com/trysourcetool/sourcetool-go/internal/table"
 	"github.com/trysourcetool/sourcetool-go/internal/textarea"
 	"github.com/trysourcetool/sourcetool-go/internal/textinput"
+	"github.com/trysourcetool/sourcetool-go/internal/timeinput"
 )
 
 type WidgetState interface {
@@ -125,6 +126,32 @@ func anyToDateInputState(a any) *dateinput.State {
 	}
 
 	return &dateInputState
+}
+
+func (s *State) GetTimeInput(id uuid.UUID) *timeinput.State {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	state, ok := s.data[id]
+	if !ok {
+		return nil
+	}
+
+	return anyToTimeInputState(state)
+}
+
+func anyToTimeInputState(a any) *timeinput.State {
+	bytes, err := json.Marshal(a)
+	if err != nil {
+		return nil
+	}
+
+	var timeInputState timeinput.State
+	if err := json.Unmarshal(bytes, &timeInputState); err != nil {
+		return nil
+	}
+
+	return &timeInputState
 }
 
 func (s *State) GetTextArea(id uuid.UUID) *textarea.State {
