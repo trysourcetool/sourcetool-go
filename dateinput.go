@@ -1,6 +1,7 @@
 package sourcetool
 
 import (
+	"fmt"
 	"log"
 	"time"
 
@@ -104,4 +105,54 @@ func (b *uiBuilder) generateDateInputID(label string, path path) uuid.UUID {
 		return uuid.Nil
 	}
 	return uuid.NewV5(page.id, dateinput.WidgetType+"-"+label+"-"+path.String())
+}
+
+func convertDateInputDataToState(id uuid.UUID, data *websocket.DateInputData, location *time.Location) (*dateinput.State, error) {
+	if data == nil {
+		return nil, nil
+	}
+
+	parseDate := func(dateStr string) (*time.Time, error) {
+		if dateStr == "" {
+			return nil, nil
+		}
+		t, err := time.ParseInLocation(time.DateOnly, dateStr, location)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse date %q: %v", dateStr, err)
+		}
+		return &t, nil
+	}
+
+	value, err := parseDate(data.Value)
+	if err != nil {
+		return nil, err
+	}
+
+	defaultValue, err := parseDate(data.DefaultValue)
+	if err != nil {
+		return nil, err
+	}
+
+	maxValue, err := parseDate(data.MaxValue)
+	if err != nil {
+		return nil, err
+	}
+
+	minValue, err := parseDate(data.MinValue)
+	if err != nil {
+		return nil, err
+	}
+
+	return &dateinput.State{
+		ID:           id,
+		Value:        value,
+		Label:        data.Label,
+		DefaultValue: defaultValue,
+		Placeholder:  data.Placeholder,
+		Required:     data.Required,
+		Format:       data.Format,
+		MaxValue:     maxValue,
+		MinValue:     minValue,
+		Location:     location,
+	}, nil
 }

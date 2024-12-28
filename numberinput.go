@@ -5,15 +5,16 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 
+	"github.com/trysourcetool/sourcetool-go/internal/conv"
 	"github.com/trysourcetool/sourcetool-go/internal/numberinput"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 )
 
-func (b *uiBuilder) NumberInput(label string, options ...numberinput.Option) float64 {
+func (b *uiBuilder) NumberInput(label string, options ...numberinput.Option) *float64 {
 	opts := &numberinput.Options{
 		Label:        label,
 		Placeholder:  "",
-		DefaultValue: 0,
+		DefaultValue: conv.NilValue(float64(0)),
 		Required:     false,
 		MaxValue:     nil,
 		MinValue:     nil,
@@ -25,15 +26,15 @@ func (b *uiBuilder) NumberInput(label string, options ...numberinput.Option) flo
 
 	sess := b.session
 	if sess == nil {
-		return 0
+		return nil
 	}
 	page := b.page
 	if page == nil {
-		return 0
+		return nil
 	}
 	cursor := b.cursor
 	if cursor == nil {
-		return 0
+		return nil
 	}
 	path := cursor.getPath()
 
@@ -63,7 +64,7 @@ func (b *uiBuilder) NumberInput(label string, options ...numberinput.Option) flo
 		WidgetID:   widgetID.String(),
 		WidgetType: numberinput.WidgetType,
 		Path:       path,
-		Data:       state,
+		Data:       convertStateToNumberInputData(state),
 	})
 
 	cursor.next()
@@ -77,4 +78,34 @@ func (b *uiBuilder) generateNumberInputID(label string, path path) uuid.UUID {
 		return uuid.Nil
 	}
 	return uuid.NewV5(page.id, numberinput.WidgetType+"-"+label+"-"+path.String())
+}
+
+func convertStateToNumberInputData(state *numberinput.State) *websocket.NumberInputData {
+	if state == nil {
+		return nil
+	}
+	return &websocket.NumberInputData{
+		Value:        state.Value,
+		Label:        state.Label,
+		Placeholder:  state.Placeholder,
+		DefaultValue: state.DefaultValue,
+		Required:     state.Required,
+		MaxValue:     state.MaxValue,
+		MinValue:     state.MinValue,
+	}
+}
+
+func convertNumberInputDataToState(data *websocket.NumberInputData) *numberinput.State {
+	if data == nil {
+		return nil
+	}
+	return &numberinput.State{
+		Value:        data.Value,
+		Label:        data.Label,
+		Placeholder:  data.Placeholder,
+		DefaultValue: data.DefaultValue,
+		Required:     data.Required,
+		MaxValue:     data.MaxValue,
+		MinValue:     data.MinValue,
+	}
 }

@@ -20,7 +20,7 @@ import (
 type UIBuilder interface {
 	Context() context.Context
 	TextInput(string, ...textinput.Option) string
-	NumberInput(string, ...numberinput.Option) float64
+	NumberInput(string, ...numberinput.Option) *float64
 	DateInput(string, ...dateinput.Option) *time.Time
 	TextArea(string, ...textarea.Option) string
 	Table(any, ...table.Option) table.Value

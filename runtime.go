@@ -165,122 +165,11 @@ func (r *runtime) handleRerunPage(msg *websocket.Message) error {
 		return fmt.Errorf("failed to unmarshal state: %v", err)
 	}
 
-	widgetStates := make(map[uuid.UUID]session.WidgetState)
-	for id, state := range states {
-		currentState := sess.State.Get(id)
-		if currentState == nil {
-			continue
-		}
-		switch currentState.GetType() {
-		case textinput.WidgetType:
-			var textInputState textinput.State
-			if err := json.Unmarshal(state, &textInputState); err != nil {
-				return fmt.Errorf("failed to unmarshal text input state: %v", err)
-			}
-			widgetStates[id] = &textInputState
-		case numberinput.WidgetType:
-			var numberInputState numberinput.State
-			if err := json.Unmarshal(state, &numberInputState); err != nil {
-				return fmt.Errorf("failed to unmarshal number input state: %v", err)
-			}
-			widgetStates[id] = &numberInputState
-		case dateinput.WidgetType:
-			var dateInputData websocket.DateInputData
-			if err := json.Unmarshal(state, &dateInputData); err != nil {
-				return fmt.Errorf("failed to unmarshal date input state: %v", err)
-			}
-			dateInputState, ok := currentState.(*dateinput.State)
-			if !ok {
-				return fmt.Errorf("invalid date input state: %v", currentState)
-			}
-			location := time.Local
-			if dateInputState.Location != nil {
-				location = dateInputState.Location
-			}
-			var val, defaultVal, maxVal, minVal time.Time
-			if dateInputData.Value != "" {
-				val, err = time.ParseInLocation(time.DateOnly, dateInputData.Value, location)
-				if err != nil {
-					return err
-				}
-			}
-			if dateInputData.DefaultValue != "" {
-				defaultVal, err = time.ParseInLocation(time.DateOnly, dateInputData.DefaultValue, location)
-				if err != nil {
-					return err
-				}
-			}
-			if dateInputData.MaxValue != "" {
-				maxVal, err = time.ParseInLocation(time.DateOnly, dateInputData.MaxValue, location)
-				if err != nil {
-					return err
-				}
-			}
-			if dateInputData.MinValue != "" {
-				minVal, err = time.ParseInLocation(time.DateOnly, dateInputData.MinValue, location)
-				if err != nil {
-					return err
-				}
-			}
-			widgetStates[id] = &dateinput.State{
-				ID:           id,
-				Value:        &val,
-				Label:        dateInputState.Label,
-				Placeholder:  dateInputState.Placeholder,
-				DefaultValue: &defaultVal,
-				Required:     dateInputState.Required,
-				Format:       dateInputState.Format,
-				MaxValue:     &maxVal,
-				MinValue:     &minVal,
-			}
-		case form.WidgetType:
-			var formState form.State
-			if err := json.Unmarshal(state, &formState); err != nil {
-				return fmt.Errorf("failed to unmarshal form state: %v", err)
-			}
-			widgetStates[id] = &formState
-		case button.WidgetType:
-			var buttonState button.State
-			if err := json.Unmarshal(state, &buttonState); err != nil {
-				return fmt.Errorf("failed to unmarshal button state: %v", err)
-			}
-			widgetStates[id] = &buttonState
-		case markdown.WidgetType:
-			var markdownState markdown.State
-			if err := json.Unmarshal(state, &markdownState); err != nil {
-				return fmt.Errorf("failed to unmarshal markdown state: %v", err)
-			}
-			widgetStates[id] = &markdownState
-		case columns.WidgetType:
-			var columnsState columns.State
-			if err := json.Unmarshal(state, &columnsState); err != nil {
-				return fmt.Errorf("failed to unmarshal columns state: %v", err)
-			}
-			widgetStates[id] = &columnsState
-		case columnitem.WidgetType:
-			var columnItemState columnitem.State
-			if err := json.Unmarshal(state, &columnItemState); err != nil {
-				return fmt.Errorf("failed to unmarshal column item state: %v", err)
-			}
-			widgetStates[id] = &columnItemState
-		case table.WidgetType:
-			var tableState table.State
-			if err := json.Unmarshal(state, &tableState); err != nil {
-				return fmt.Errorf("failed to unmarshal table state: %v", err)
-			}
-			widgetStates[id] = &tableState
-		case textarea.WidgetType:
-			var textareaState textarea.State
-			if err := json.Unmarshal(state, &textareaState); err != nil {
-				return fmt.Errorf("failed to unmarshal textarea state: %v", err)
-			}
-			widgetStates[id] = &textareaState
-		default:
-			return fmt.Errorf("unknown widget type: %s", currentState.GetType())
-		}
+	newWidgetStates, err := buildNewWidgetStates(states, sess)
+	if err != nil {
+		return err
 	}
-
-	sess.State.SetStates(widgetStates)
+	sess.State.SetStates(newWidgetStates)
 
 	ui := &uiBuilder{
 		context: context.Background(),
@@ -313,4 +202,94 @@ func (r *runtime) handleCloseSession(msg *websocket.Message) error {
 	r.sessionManager.DeleteSession(sessionID)
 
 	return nil
+}
+
+func buildNewWidgetStates(states map[uuid.UUID]json.RawMessage, sess *session.Session) (map[uuid.UUID]session.WidgetState, error) {
+	widgetStates := make(map[uuid.UUID]session.WidgetState)
+	for id, state := range states {
+		currentState := sess.State.Get(id)
+		if currentState == nil {
+			continue
+		}
+		switch currentState.GetType() {
+		case textinput.WidgetType:
+			var textInputData websocket.TextInputData
+			if err := json.Unmarshal(state, &textInputData); err != nil {
+				return nil, fmt.Errorf("failed to unmarshal text input state: %v", err)
+			}
+			widgetStates[id] = convertTextInputDataToState(id, &textInputData)
+		case numberinput.WidgetType:
+			var numberInputData websocket.NumberInputData
+			if err := json.Unmarshal(state, &numberInputData); err != nil {
+				return nil, fmt.Errorf("failed to unmarshal number input state: %v", err)
+			}
+			widgetStates[id] = convertNumberInputDataToState(&numberInputData)
+		case dateinput.WidgetType:
+			var dateInputData websocket.DateInputData
+			if err := json.Unmarshal(state, &dateInputData); err != nil {
+				return nil, fmt.Errorf("failed to unmarshal date input state: %v", err)
+			}
+			dateInputState, ok := currentState.(*dateinput.State)
+			if !ok {
+				return nil, fmt.Errorf("invalid date input state: %v", currentState)
+			}
+
+			location := dateInputState.Location
+			if location == nil {
+				location = time.Local
+			}
+
+			newState, err := convertDateInputDataToState(id, &dateInputData, location)
+			if err != nil {
+				return nil, fmt.Errorf("failed to convert date input data: %v", err)
+			}
+
+			widgetStates[id] = newState
+		case form.WidgetType:
+			var formData websocket.FormData
+			if err := json.Unmarshal(state, &formData); err != nil {
+				return nil, fmt.Errorf("failed to unmarshal form state: %v", err)
+			}
+			widgetStates[id] = convertFormDataToState(&formData)
+		case button.WidgetType:
+			var buttonData websocket.ButtonData
+			if err := json.Unmarshal(state, &buttonData); err != nil {
+				return nil, fmt.Errorf("failed to unmarshal button state: %v", err)
+			}
+			widgetStates[id] = convertButtonDataToState(&buttonData)
+		case markdown.WidgetType:
+			var markdownData websocket.MarkdownData
+			if err := json.Unmarshal(state, &markdownData); err != nil {
+				return nil, fmt.Errorf("failed to unmarshal markdown state: %v", err)
+			}
+			widgetStates[id] = convertMarkdownDataToState(&markdownData)
+		case columns.WidgetType:
+			var columnsData websocket.ColumnsData
+			if err := json.Unmarshal(state, &columnsData); err != nil {
+				return nil, fmt.Errorf("failed to unmarshal columns state: %v", err)
+			}
+			widgetStates[id] = convertColumnsDataToState(&columnsData)
+		case columnitem.WidgetType:
+			var columnItemData websocket.ColumnItemData
+			if err := json.Unmarshal(state, &columnItemData); err != nil {
+				return nil, fmt.Errorf("failed to unmarshal column item state: %v", err)
+			}
+			widgetStates[id] = convertColumnItemDataToState(&columnItemData)
+		case table.WidgetType:
+			var tableData websocket.TableData
+			if err := json.Unmarshal(state, &tableData); err != nil {
+				return nil, fmt.Errorf("failed to unmarshal table state: %v", err)
+			}
+			widgetStates[id] = convertTableDataToState(id, &tableData)
+		case textarea.WidgetType:
+			var textareaData websocket.TextAreaData
+			if err := json.Unmarshal(state, &textareaData); err != nil {
+				return nil, fmt.Errorf("failed to unmarshal textarea state: %v", err)
+			}
+			widgetStates[id] = convertTextAreaDataToState(id, &textareaData)
+		default:
+			return nil, fmt.Errorf("unknown widget type: %s", currentState.GetType())
+		}
+	}
+	return widgetStates, nil
 }

@@ -63,7 +63,7 @@ func (b *uiBuilder) TextInput(label string, options ...textinput.Option) string 
 		WidgetID:   widgetID.String(),
 		WidgetType: textinput.WidgetType,
 		Path:       path,
-		Data:       state,
+		Data:       convertStateToTextInputData(state),
 	})
 
 	cursor.next()
@@ -77,4 +77,35 @@ func (b *uiBuilder) generateTextInputID(label string, path path) uuid.UUID {
 		return uuid.Nil
 	}
 	return uuid.NewV5(page.id, textinput.WidgetType+"-"+label+"-"+path.String())
+}
+
+func convertStateToTextInputData(state *textinput.State) *websocket.TextInputData {
+	if state == nil {
+		return nil
+	}
+	return &websocket.TextInputData{
+		Value:        state.Value,
+		Label:        state.Label,
+		Placeholder:  state.Placeholder,
+		DefaultValue: state.DefaultValue,
+		Required:     state.Required,
+		MaxLength:    state.MaxLength,
+		MinLength:    state.MinLength,
+	}
+}
+
+func convertTextInputDataToState(id uuid.UUID, data *websocket.TextInputData) *textinput.State {
+	if data == nil {
+		return nil
+	}
+	return &textinput.State{
+		ID:           id,
+		Value:        data.Value,
+		Label:        data.Label,
+		Placeholder:  data.Placeholder,
+		DefaultValue: data.DefaultValue,
+		Required:     data.Required,
+		MaxLength:    data.MaxLength,
+		MinLength:    data.MinLength,
+	}
 }

@@ -5,17 +5,17 @@ import "github.com/gofrs/uuid/v5"
 const WidgetType = "textArea"
 
 type State struct {
-	ID           uuid.UUID `json:"-"`
-	Value        string    `json:"value"`
-	Label        string    `json:"label"`
-	Placeholder  string    `json:"placeholder"`
-	DefaultValue string    `json:"defaultValue"`
-	Required     bool      `json:"required"`
-	MaxLength    *int      `json:"maxLength"`
-	MinLength    *int      `json:"minLength"`
-	MaxLines     *int      `json:"maxLines"`
-	MinLines     *int      `json:"minLines"`
-	AutoResize   bool      `json:"autoResize"`
+	ID           uuid.UUID
+	Value        string
+	Label        string
+	Placeholder  string
+	DefaultValue string
+	Required     bool
+	MaxLength    *int
+	MinLength    *int
+	MaxLines     *int
+	MinLines     *int
+	AutoResize   bool
 }
 
 func (s *State) IsWidgetState()  {}

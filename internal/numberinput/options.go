@@ -3,7 +3,7 @@ package numberinput
 type Options struct {
 	Label        string
 	Placeholder  string
-	DefaultValue float64
+	DefaultValue *float64
 	Required     bool
 	MaxValue     *float64
 	MinValue     *float64

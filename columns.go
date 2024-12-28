@@ -74,7 +74,7 @@ func (b *uiBuilder) Columns(cols int, options ...columns.Option) []UIBuilder {
 		WidgetID:   widgetID.String(),
 		WidgetType: columns.WidgetType,
 		Path:       path,
-		Data:       columnsState,
+		Data:       convertStateToColumnsData(columnsState),
 	})
 
 	builders := make([]UIBuilder, cols)
@@ -98,7 +98,7 @@ func (b *uiBuilder) Columns(cols int, options ...columns.Option) []UIBuilder {
 			WidgetID:   widgetID.String(),
 			WidgetType: columnitem.WidgetType,
 			Path:       columnPath,
-			Data:       columnItemState,
+			Data:       convertStateToColumnItemData(columnItemState),
 		})
 
 		builders[i] = &uiBuilder{
@@ -129,4 +129,28 @@ func (b *uiBuilder) generateColumnItemID(path path) uuid.UUID {
 		return uuid.Nil
 	}
 	return uuid.NewV5(page.id, columnitem.WidgetType+"-"+path.String())
+}
+
+func convertStateToColumnsData(state *columns.State) *websocket.ColumnsData {
+	return &websocket.ColumnsData{
+		Columns: state.Columns,
+	}
+}
+
+func convertColumnsDataToState(data *websocket.ColumnsData) *columns.State {
+	return &columns.State{
+		Columns: data.Columns,
+	}
+}
+
+func convertStateToColumnItemData(state *columnitem.State) *websocket.ColumnItemData {
+	return &websocket.ColumnItemData{
+		Weight: state.Weight,
+	}
+}
+
+func convertColumnItemDataToState(data *websocket.ColumnItemData) *columnitem.State {
+	return &columnitem.State{
+		Weight: data.Weight,
+	}
 }

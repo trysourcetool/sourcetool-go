@@ -60,7 +60,7 @@ func (b *uiBuilder) Table(data any, options ...table.Option) table.Value {
 		WidgetID:   widgetID.String(),
 		WidgetType: table.WidgetType,
 		Path:       path,
-		Data:       state,
+		Data:       convertStateToTableData(state),
 	})
 
 	cursor.next()
@@ -74,4 +74,47 @@ func (b *uiBuilder) generateTableID(path path) uuid.UUID {
 		return uuid.Nil
 	}
 	return uuid.NewV5(page.id, table.WidgetType+"-"+path.String())
+}
+
+func convertStateToTableData(state *table.State) *websocket.TableData {
+	if state == nil {
+		return nil
+	}
+	data := &websocket.TableData{
+		Data:         state.Data,
+		Header:       state.Header,
+		Description:  state.Description,
+		OnSelect:     state.OnSelect,
+		RowSelection: state.RowSelection,
+		Value:        websocket.TableDataValue{},
+	}
+	if state.Value.Selection != nil {
+		data.Value.Selection = &websocket.TableDataValueSelection{
+			Row:  state.Value.Selection.Row,
+			Rows: state.Value.Selection.Rows,
+		}
+	}
+	return data
+}
+
+func convertTableDataToState(id uuid.UUID, data *websocket.TableData) *table.State {
+	if data == nil {
+		return nil
+	}
+	state := &table.State{
+		ID:           id,
+		Data:         data.Data,
+		Header:       data.Header,
+		Description:  data.Description,
+		OnSelect:     data.OnSelect,
+		RowSelection: data.RowSelection,
+		Value:        table.Value{},
+	}
+	if data.Value.Selection != nil {
+		state.Value.Selection = &table.Selection{
+			Row:  data.Value.Selection.Row,
+			Rows: data.Value.Selection.Rows,
+		}
+	}
+	return state
 }

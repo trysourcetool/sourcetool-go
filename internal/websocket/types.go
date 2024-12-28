@@ -72,6 +72,26 @@ type CloseSessionPayload struct {
 	SessionID string `json:"sessionId"`
 }
 
+type TextInputData struct {
+	Value        string `json:"value"`
+	Label        string `json:"label"`
+	Placeholder  string `json:"placeholder"`
+	DefaultValue string `json:"defaultValue"`
+	Required     bool   `json:"required"`
+	MaxLength    *int   `json:"maxLength"`
+	MinLength    *int   `json:"minLength"`
+}
+
+type NumberInputData struct {
+	Value        *float64 `json:"value"`
+	Label        string   `json:"label"`
+	Placeholder  string   `json:"placeholder"`
+	DefaultValue *float64 `json:"defaultValue"`
+	Required     bool     `json:"required"`
+	MaxValue     *float64 `json:"maxValue"`
+	MinValue     *float64 `json:"minValue"`
+}
+
 type DateInputData struct {
 	Value        string `json:"value"`
 	Label        string `json:"label"`
@@ -81,4 +101,60 @@ type DateInputData struct {
 	Format       string `json:"format"`
 	MaxValue     string `json:"maxValue"`
 	MinValue     string `json:"minValue"`
+}
+
+type TextAreaData struct {
+	Value        string `json:"value"`
+	Label        string `json:"label"`
+	Placeholder  string `json:"placeholder"`
+	DefaultValue string `json:"defaultValue"`
+	Required     bool   `json:"required"`
+	MaxLength    *int   `json:"maxLength"`
+	MinLength    *int   `json:"minLength"`
+	MaxLines     *int   `json:"maxLines"`
+	MinLines     *int   `json:"minLines"`
+	AutoResize   bool   `json:"autoResize"`
+}
+
+type FormData struct {
+	Value          bool   `json:"value"`
+	ButtonLabel    string `json:"buttonLabel"`
+	ButtonDisabled bool   `json:"buttonDisabled"`
+	ClearOnSubmit  bool   `json:"clearOnSubmit"`
+}
+
+type ButtonData struct {
+	Value    bool   `json:"value"`
+	Label    string `json:"label"`
+	Disabled bool   `json:"disabled"`
+}
+
+type MarkdownData struct {
+	Body string `json:"body"`
+}
+
+type TableData struct {
+	Data         any            `json:"data"`
+	Value        TableDataValue `json:"value"`
+	Header       string         `json:"header"`
+	Description  string         `json:"description"`
+	OnSelect     string         `json:"onSelect"`
+	RowSelection string         `json:"rowSelection"`
+}
+
+type TableDataValue struct {
+	Selection *TableDataValueSelection `json:"selection"`
+}
+
+type TableDataValueSelection struct {
+	Row  int   `json:"row"`
+	Rows []int `json:"rows"`
+}
+
+type ColumnsData struct {
+	Columns int `json:"columns"`
+}
+
+type ColumnItemData struct {
+	Weight float64 `json:"weight"`
 }

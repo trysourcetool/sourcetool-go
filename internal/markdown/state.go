@@ -5,8 +5,8 @@ import "github.com/gofrs/uuid/v5"
 const WidgetType = "markdown"
 
 type State struct {
-	ID   uuid.UUID `json:"-"`
-	Body string    `json:"body"`
+	ID   uuid.UUID
+	Body string
 }
 
 func (s *State) IsWidgetState()  {}

@@ -70,7 +70,7 @@ func (b *uiBuilder) TextArea(label string, options ...textarea.Option) string {
 		WidgetID:   widgetID.String(),
 		WidgetType: textarea.WidgetType,
 		Path:       path,
-		Data:       state,
+		Data:       convertStateToTextAreaData(state),
 	})
 
 	cursor.next()
@@ -84,4 +84,41 @@ func (b *uiBuilder) generateTextAreaID(label string, path path) uuid.UUID {
 		return uuid.Nil
 	}
 	return uuid.NewV5(page.id, textarea.WidgetType+"-"+label+"-"+path.String())
+}
+
+func convertStateToTextAreaData(state *textarea.State) *websocket.TextAreaData {
+	if state == nil {
+		return nil
+	}
+	return &websocket.TextAreaData{
+		Value:        state.Value,
+		Label:        state.Label,
+		Placeholder:  state.Placeholder,
+		DefaultValue: state.DefaultValue,
+		Required:     state.Required,
+		MaxLength:    state.MaxLength,
+		MinLength:    state.MinLength,
+		MaxLines:     state.MaxLines,
+		MinLines:     state.MinLines,
+		AutoResize:   state.AutoResize,
+	}
+}
+
+func convertTextAreaDataToState(id uuid.UUID, data *websocket.TextAreaData) *textarea.State {
+	if data == nil {
+		return nil
+	}
+	return &textarea.State{
+		ID:           id,
+		Value:        data.Value,
+		Label:        data.Label,
+		Placeholder:  data.Placeholder,
+		DefaultValue: data.DefaultValue,
+		Required:     data.Required,
+		MaxLength:    data.MaxLength,
+		MinLength:    data.MinLength,
+		MaxLines:     data.MaxLines,
+		MinLines:     data.MinLines,
+		AutoResize:   data.AutoResize,
+	}
 }

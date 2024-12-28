@@ -52,7 +52,7 @@ func (b *uiBuilder) Markdown(body string, options ...markdown.Option) {
 		WidgetID:   widgetID.String(),
 		WidgetType: markdown.WidgetType,
 		Path:       path,
-		Data:       state,
+		Data:       convertStateToMarkdownData(state),
 	})
 
 	cursor.next()
@@ -64,4 +64,16 @@ func (b *uiBuilder) generateMarkdownID(body string, path path) uuid.UUID {
 		return uuid.Nil
 	}
 	return uuid.NewV5(page.id, markdown.WidgetType+"-"+body+"-"+path.String())
+}
+
+func convertStateToMarkdownData(state *markdown.State) *websocket.MarkdownData {
+	return &websocket.MarkdownData{
+		Body: state.Body,
+	}
+}
+
+func convertMarkdownDataToState(data *websocket.MarkdownData) *markdown.State {
+	return &markdown.State{
+		Body: data.Body,
+	}
 }

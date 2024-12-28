@@ -10,7 +10,7 @@ func Placeholder(placeholder string) numberinput.Option {
 
 func DefaultValue(value float64) numberinput.Option {
 	return func(opts *numberinput.Options) {
-		opts.DefaultValue = value
+		opts.DefaultValue = &value
 	}
 }
 

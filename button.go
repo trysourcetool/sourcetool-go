@@ -55,7 +55,7 @@ func (b *uiBuilder) Button(label string, options ...button.Option) bool {
 		WidgetID:   widgetID.String(),
 		WidgetType: button.WidgetType,
 		Path:       path,
-		Data:       state,
+		Data:       convertStateToButtonData(state),
 	})
 
 	cursor.next()
@@ -69,4 +69,23 @@ func (b *uiBuilder) generateButtonInputID(label string, path path) uuid.UUID {
 		return uuid.Nil
 	}
 	return uuid.NewV5(page.id, button.WidgetType+"-"+label+"-"+path.String())
+}
+
+func convertStateToButtonData(state *button.State) *websocket.ButtonData {
+	return &websocket.ButtonData{
+		Value:    state.Value,
+		Label:    state.Label,
+		Disabled: state.Disabled,
+	}
+}
+
+func convertButtonDataToState(data *websocket.ButtonData) *button.State {
+	if data == nil {
+		return nil
+	}
+	return &button.State{
+		Value:    data.Value,
+		Label:    data.Label,
+		Disabled: data.Disabled,
+	}
 }

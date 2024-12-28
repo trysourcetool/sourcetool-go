@@ -5,8 +5,8 @@ import "github.com/gofrs/uuid/v5"
 const WidgetType = "columns"
 
 type State struct {
-	ID      uuid.UUID `json:"-"`
-	Columns int       `json:"columns"`
+	ID      uuid.UUID
+	Columns int
 }
 
 func (s *State) IsWidgetState()  {}

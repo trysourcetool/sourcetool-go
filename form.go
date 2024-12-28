@@ -50,7 +50,7 @@ func (b *uiBuilder) Form(buttonLabel string, options ...form.Option) (UIBuilder,
 		WidgetID:   widgetID.String(),
 		WidgetType: form.WidgetType,
 		Path:       path,
-		Data:       state,
+		Data:       convertStateToFormData(state),
 	})
 
 	cursor.next()
@@ -74,4 +74,28 @@ func (b *uiBuilder) generateFormID(path path) uuid.UUID {
 		return uuid.Nil
 	}
 	return uuid.NewV5(page.id, form.WidgetType+"-"+path.String())
+}
+
+func convertStateToFormData(state *form.State) *websocket.FormData {
+	if state == nil {
+		return nil
+	}
+	return &websocket.FormData{
+		Value:          state.Value,
+		ButtonLabel:    state.ButtonLabel,
+		ButtonDisabled: state.ButtonDisabled,
+		ClearOnSubmit:  state.ClearOnSubmit,
+	}
+}
+
+func convertFormDataToState(data *websocket.FormData) *form.State {
+	if data == nil {
+		return nil
+	}
+	return &form.State{
+		Value:          data.Value,
+		ButtonLabel:    data.ButtonLabel,
+		ButtonDisabled: data.ButtonDisabled,
+		ClearOnSubmit:  data.ClearOnSubmit,
+	}
 }
