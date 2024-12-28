@@ -57,26 +57,13 @@ func (b *uiBuilder) TimeInput(label string, options ...timeinput.Option) *time.T
 	state.Location = opts.Location
 	sess.State.Set(widgetID, state)
 
-	var value, defaultValue string
-	if state.Value != nil {
-		value = state.Value.Format(time.TimeOnly)
-	}
-	if state.DefaultValue != nil {
-		defaultValue = state.DefaultValue.Format(time.TimeOnly)
-	}
 	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), websocket.MessageMethodRenderWidget, &websocket.RenderWidgetPayload{
 		SessionID:  sess.ID.String(),
 		PageID:     page.id.String(),
 		WidgetID:   widgetID.String(),
 		WidgetType: timeinput.WidgetType,
 		Path:       path,
-		Data: &websocket.TimeInputData{
-			Value:        value,
-			Label:        state.Label,
-			Placeholder:  state.Placeholder,
-			DefaultValue: defaultValue,
-			Required:     state.Required,
-		},
+		Data:       convertStateToTimeInputData(state),
 	})
 
 	cursor.next()
@@ -127,4 +114,24 @@ func convertTimeInputDataToState(id uuid.UUID, data *websocket.TimeInputData, lo
 		Required:     data.Required,
 		Location:     location,
 	}, nil
+}
+
+func convertStateToTimeInputData(state *timeinput.State) *websocket.TimeInputData {
+	if state == nil {
+		return nil
+	}
+	var value, defaultValue string
+	if state.Value != nil {
+		value = state.Value.Format(time.TimeOnly)
+	}
+	if state.DefaultValue != nil {
+		defaultValue = state.DefaultValue.Format(time.TimeOnly)
+	}
+	return &websocket.TimeInputData{
+		Value:        value,
+		Label:        state.Label,
+		Placeholder:  state.Placeholder,
+		DefaultValue: defaultValue,
+		Required:     state.Required,
+	}
 }

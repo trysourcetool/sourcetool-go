@@ -63,35 +63,13 @@ func (b *uiBuilder) DateInput(label string, options ...dateinput.Option) *time.T
 	state.Location = opts.Location
 	sess.State.Set(widgetID, state)
 
-	var value, defaultValue, maxValue, minValue string
-	if state.Value != nil {
-		value = state.Value.Format(time.DateOnly)
-	}
-	if state.DefaultValue != nil {
-		defaultValue = state.DefaultValue.Format(time.DateOnly)
-	}
-	if state.MaxValue != nil {
-		maxValue = state.MaxValue.Format(time.DateOnly)
-	}
-	if state.MinValue != nil {
-		minValue = state.MinValue.Format(time.DateOnly)
-	}
 	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), websocket.MessageMethodRenderWidget, &websocket.RenderWidgetPayload{
 		SessionID:  sess.ID.String(),
 		PageID:     page.id.String(),
 		WidgetID:   widgetID.String(),
 		WidgetType: dateinput.WidgetType,
 		Path:       path,
-		Data: &websocket.DateInputData{
-			Value:        value,
-			Label:        state.Label,
-			Placeholder:  state.Placeholder,
-			DefaultValue: defaultValue,
-			Required:     state.Required,
-			Format:       state.Format,
-			MaxValue:     maxValue,
-			MinValue:     minValue,
-		},
+		Data:       convertStateToDateInputData(state),
 	})
 
 	cursor.next()
@@ -155,4 +133,33 @@ func convertDateInputDataToState(id uuid.UUID, data *websocket.DateInputData, lo
 		MinValue:     minValue,
 		Location:     location,
 	}, nil
+}
+
+func convertStateToDateInputData(state *dateinput.State) *websocket.DateInputData {
+	if state == nil {
+		return nil
+	}
+	var value, defaultValue, maxValue, minValue string
+	if state.Value != nil {
+		value = state.Value.Format(time.DateOnly)
+	}
+	if state.DefaultValue != nil {
+		defaultValue = state.DefaultValue.Format(time.DateOnly)
+	}
+	if state.MaxValue != nil {
+		maxValue = state.MaxValue.Format(time.DateOnly)
+	}
+	if state.MinValue != nil {
+		minValue = state.MinValue.Format(time.DateOnly)
+	}
+	return &websocket.DateInputData{
+		Value:        value,
+		Label:        state.Label,
+		Placeholder:  state.Placeholder,
+		DefaultValue: defaultValue,
+		Required:     state.Required,
+		Format:       state.Format,
+		MaxValue:     maxValue,
+		MinValue:     minValue,
+	}
 }
