@@ -112,12 +112,17 @@ type TimeInputData struct {
 }
 
 type SelectboxData struct {
-	Value        *int     `json:"value"`
-	Label        string   `json:"label"`
-	Options      []string `json:"options"`
-	Placeholder  string   `json:"placeholder"`
-	DefaultValue *string  `json:"defaultValue"`
-	Required     bool     `json:"required"`
+	Value        *SelectboxDataValue `json:"value"`
+	Label        string              `json:"label"`
+	Options      []string            `json:"options"`
+	Placeholder  string              `json:"placeholder"`
+	DefaultValue *string             `json:"defaultValue"`
+	Required     bool                `json:"required"`
+}
+
+type SelectboxDataValue struct {
+	Value string `json:"value"`
+	Index int    `json:"index"`
 }
 
 type MultiSelectData struct {

@@ -26,7 +26,7 @@ type UIBuilder interface {
 	NumberInput(string, ...numberinput.Option) *float64
 	DateInput(string, ...dateinput.Option) *time.Time
 	TimeInput(string, ...timeinput.Option) *time.Time
-	Selectbox(string, ...selectbox.Option) *int
+	Selectbox(string, ...selectbox.Option) *selectbox.Value
 	MultiSelect(string, ...multiselect.Option) []int
 	TextArea(string, ...textarea.Option) string
 	Table(any, ...table.Option) table.Value

@@ -10,7 +10,7 @@ import (
 	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 )
 
-func (b *uiBuilder) Selectbox(label string, options ...selectbox.Option) *int {
+func (b *uiBuilder) Selectbox(label string, options ...selectbox.Option) *selectbox.Value {
 	opts := &selectbox.Options{
 		Label:        label,
 		DefaultValue: nil,
@@ -44,18 +44,21 @@ func (b *uiBuilder) Selectbox(label string, options ...selectbox.Option) *int {
 	widgetID := b.generateSelectboxID(label, path)
 	state := sess.State.GetSelectbox(widgetID)
 	if state == nil {
-		var defaultIdx *int
+		var defaultVal *selectbox.Value
 		if opts.DefaultValue != nil {
 			for i, o := range opts.Options {
 				if conv.SafeValue(opts.DefaultValue) == o {
-					defaultIdx = &i
+					defaultVal = &selectbox.Value{
+						Value: o,
+						Index: i,
+					}
 					break
 				}
 			}
 		}
 		state = &selectbox.State{
 			ID:    widgetID,
-			Value: defaultIdx,
+			Value: defaultVal,
 		}
 	}
 
@@ -103,9 +106,16 @@ func convertStateToSelectboxData(state *selectbox.State) *websocket.SelectboxDat
 	if state == nil {
 		return nil
 	}
+	var value *websocket.SelectboxDataValue
+	if state.Value != nil {
+		value = &websocket.SelectboxDataValue{
+			Value: state.Value.Value,
+			Index: state.Value.Index,
+		}
+	}
 	return &websocket.SelectboxData{
 		Label:        state.Label,
-		Value:        state.Value,
+		Value:        value,
 		Options:      state.Options,
 		Placeholder:  state.Placeholder,
 		DefaultValue: state.DefaultValue,
@@ -117,10 +127,17 @@ func convertSelectboxDataToState(id uuid.UUID, data *websocket.SelectboxData) *s
 	if data == nil {
 		return nil
 	}
+	var value *selectbox.Value
+	if data.Value != nil {
+		value = &selectbox.Value{
+			Value: data.Value.Value,
+			Index: data.Value.Index,
+		}
+	}
 	return &selectbox.State{
 		ID:           id,
 		Label:        data.Label,
-		Value:        data.Value,
+		Value:        value,
 		Options:      data.Options,
 		Placeholder:  data.Placeholder,
 		DefaultValue: data.DefaultValue,
