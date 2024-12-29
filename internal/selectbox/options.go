@@ -2,11 +2,11 @@ package selectbox
 
 type Options struct {
 	Label        string
-	Options      []any
+	Options      []string
 	Placeholder  string
 	DefaultIndex *int
 	Required     bool
-	DisplayFunc  func(any, int) string
+	DisplayFunc  func(string, int) string
 }
 
 type Option func(*Options)

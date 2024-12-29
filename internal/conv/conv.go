@@ -1,8 +1,6 @@
 package conv
 
 import (
-	"encoding/json"
-
 	"github.com/samber/lo"
 )
 
@@ -18,17 +16,4 @@ func NilValue[T comparable](in T) *T {
 		return nil
 	}
 	return &in
-}
-
-func StringValue(in any) string {
-	switch v := in.(type) {
-	case string:
-		return v
-	default:
-		res, err := json.Marshal(in)
-		if err != nil {
-			return ""
-		}
-		return string(res)
-	}
 }

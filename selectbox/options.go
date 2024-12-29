@@ -2,7 +2,7 @@ package selectbox
 
 import "github.com/trysourcetool/sourcetool-go/internal/selectbox"
 
-func Options(options ...any) selectbox.Option {
+func Options(options ...string) selectbox.Option {
 	return func(o *selectbox.Options) {
 		o.Options = options
 	}
@@ -26,7 +26,7 @@ func Required(required bool) selectbox.Option {
 	}
 }
 
-func DisplayFunc(displayFunc func(any, int) string) selectbox.Option {
+func DisplayFunc(displayFunc func(string, int) string) selectbox.Option {
 	return func(o *selectbox.Options) {
 		o.DisplayFunc = displayFunc
 	}

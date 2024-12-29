@@ -112,10 +112,9 @@ type TimeInputData struct {
 }
 
 type SelectboxData struct {
-	Value        *any     `json:"value"`
+	Value        *int     `json:"value"`
 	Label        string   `json:"label"`
-	Values       []any    `json:"values"`
-	Labels       []string `json:"labels"`
+	Options      []string `json:"options"`
 	Placeholder  string   `json:"placeholder"`
 	DefaultIndex *int     `json:"defaultIndex"`
 	Required     bool     `json:"required"`

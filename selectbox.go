@@ -5,12 +5,11 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 
-	"github.com/trysourcetool/sourcetool-go/internal/conv"
 	"github.com/trysourcetool/sourcetool-go/internal/selectbox"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 )
 
-func (b *uiBuilder) Selectbox(label string, options ...selectbox.Option) *any {
+func (b *uiBuilder) Selectbox(label string, options ...selectbox.Option) *int {
 	opts := &selectbox.Options{
 		Label:        label,
 		DefaultIndex: nil,
@@ -42,8 +41,8 @@ func (b *uiBuilder) Selectbox(label string, options ...selectbox.Option) *any {
 	log.Printf("Path: %v\n", path)
 
 	if opts.DisplayFunc == nil {
-		opts.DisplayFunc = func(v any, i int) string {
-			return conv.StringValue(v)
+		opts.DisplayFunc = func(v string, i int) string {
+			return v
 		}
 	}
 
@@ -55,17 +54,13 @@ func (b *uiBuilder) Selectbox(label string, options ...selectbox.Option) *any {
 	widgetID := b.generateSelectboxID(label, path)
 	state := sess.State.GetSelectbox(widgetID)
 	if state == nil {
-		var val any
-		if opts.DefaultIndex != nil && len(opts.Options) > conv.SafeValue(opts.DefaultIndex) {
-			val = opts.Options[*opts.DefaultIndex]
-		}
 		state = &selectbox.State{
 			ID:    widgetID,
-			Value: conv.NilValue(val),
+			Value: opts.DefaultIndex,
 		}
 	}
-	state.Labels = displayVals
 	state.Label = opts.Label
+	state.Options = displayVals
 	state.Placeholder = opts.Placeholder
 	state.DefaultIndex = opts.DefaultIndex
 	state.Required = opts.Required
@@ -98,10 +93,9 @@ func convertStateToSelectboxData(state *selectbox.State) *websocket.SelectboxDat
 		return nil
 	}
 	return &websocket.SelectboxData{
-		Value:        state.Value,
-		Values:       state.Values,
-		Labels:       state.Labels,
 		Label:        state.Label,
+		Value:        state.Value,
+		Options:      state.Options,
 		Placeholder:  state.Placeholder,
 		DefaultIndex: state.DefaultIndex,
 		Required:     state.Required,
@@ -114,10 +108,9 @@ func convertSelectboxDataToState(id uuid.UUID, data *websocket.SelectboxData) *s
 	}
 	return &selectbox.State{
 		ID:           id,
-		Value:        data.Value,
-		Values:       data.Values,
-		Labels:       data.Labels,
 		Label:        data.Label,
+		Value:        data.Value,
+		Options:      data.Options,
 		Placeholder:  data.Placeholder,
 		DefaultIndex: data.DefaultIndex,
 		Required:     data.Required,
