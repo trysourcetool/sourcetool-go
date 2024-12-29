@@ -5,6 +5,7 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 
+	"github.com/trysourcetool/sourcetool-go/internal/conv"
 	"github.com/trysourcetool/sourcetool-go/internal/selectbox"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 )
@@ -12,10 +13,10 @@ import (
 func (b *uiBuilder) Selectbox(label string, options ...selectbox.Option) *int {
 	opts := &selectbox.Options{
 		Label:        label,
-		DefaultIndex: nil,
+		DefaultValue: nil,
 		Placeholder:  "",
 		Required:     false,
-		DisplayFunc:  nil,
+		FormatFunc:   nil,
 	}
 
 	for _, option := range options {
@@ -40,29 +41,39 @@ func (b *uiBuilder) Selectbox(label string, options ...selectbox.Option) *int {
 	log.Printf("Page ID: %s", page.id.String())
 	log.Printf("Path: %v\n", path)
 
-	if opts.DisplayFunc == nil {
-		opts.DisplayFunc = func(v string, i int) string {
+	widgetID := b.generateSelectboxID(label, path)
+	state := sess.State.GetSelectbox(widgetID)
+	if state == nil {
+		var defaultIdx *int
+		if opts.DefaultValue != nil {
+			for i, o := range opts.Options {
+				if conv.SafeValue(opts.DefaultValue) == o {
+					defaultIdx = &i
+					break
+				}
+			}
+		}
+		state = &selectbox.State{
+			ID:    widgetID,
+			Value: defaultIdx,
+		}
+	}
+
+	if opts.FormatFunc == nil {
+		opts.FormatFunc = func(v string, i int) string {
 			return v
 		}
 	}
 
 	displayVals := make([]string, len(opts.Options))
 	for i, v := range opts.Options {
-		displayVals[i] = opts.DisplayFunc(v, i)
+		displayVals[i] = opts.FormatFunc(v, i)
 	}
 
-	widgetID := b.generateSelectboxID(label, path)
-	state := sess.State.GetSelectbox(widgetID)
-	if state == nil {
-		state = &selectbox.State{
-			ID:    widgetID,
-			Value: opts.DefaultIndex,
-		}
-	}
 	state.Label = opts.Label
 	state.Options = displayVals
 	state.Placeholder = opts.Placeholder
-	state.DefaultIndex = opts.DefaultIndex
+	state.DefaultValue = opts.DefaultValue
 	state.Required = opts.Required
 	sess.State.Set(widgetID, state)
 
@@ -97,7 +108,7 @@ func convertStateToSelectboxData(state *selectbox.State) *websocket.SelectboxDat
 		Value:        state.Value,
 		Options:      state.Options,
 		Placeholder:  state.Placeholder,
-		DefaultIndex: state.DefaultIndex,
+		DefaultValue: state.DefaultValue,
 		Required:     state.Required,
 	}
 }
@@ -112,7 +123,7 @@ func convertSelectboxDataToState(id uuid.UUID, data *websocket.SelectboxData) *s
 		Value:        data.Value,
 		Options:      data.Options,
 		Placeholder:  data.Placeholder,
-		DefaultIndex: data.DefaultIndex,
+		DefaultValue: data.DefaultValue,
 		Required:     data.Required,
 	}
 }

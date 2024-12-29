@@ -10,7 +10,7 @@ type State struct {
 	Value        *int
 	Options      []string
 	Placeholder  string
-	DefaultIndex *int
+	DefaultValue *string
 	Required     bool
 }
 

@@ -14,9 +14,9 @@ func Placeholder(placeholder string) selectbox.Option {
 	}
 }
 
-func DefaultIndex(defaultIndex int) selectbox.Option {
+func DefaultValue(defaultValue string) selectbox.Option {
 	return func(o *selectbox.Options) {
-		o.DefaultIndex = &defaultIndex
+		o.DefaultValue = &defaultValue
 	}
 }
 
@@ -26,8 +26,8 @@ func Required(required bool) selectbox.Option {
 	}
 }
 
-func DisplayFunc(displayFunc func(string, int) string) selectbox.Option {
+func FormatFunc(formatFunc func(string, int) string) selectbox.Option {
 	return func(o *selectbox.Options) {
-		o.DisplayFunc = displayFunc
+		o.FormatFunc = formatFunc
 	}
 }

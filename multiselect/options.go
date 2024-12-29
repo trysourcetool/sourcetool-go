@@ -26,8 +26,8 @@ func Required(required bool) multiselect.Option {
 	}
 }
 
-func DisplayFunc(displayFunc func(string, int) string) multiselect.Option {
+func FormatFunc(formatFunc func(string, int) string) multiselect.Option {
 	return func(o *multiselect.Options) {
-		o.DisplayFunc = displayFunc
+		o.FormatFunc = formatFunc
 	}
 }

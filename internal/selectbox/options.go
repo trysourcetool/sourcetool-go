@@ -4,9 +4,9 @@ type Options struct {
 	Label        string
 	Options      []string
 	Placeholder  string
-	DefaultIndex *int
+	DefaultValue *string
 	Required     bool
-	DisplayFunc  func(string, int) string
+	FormatFunc   func(string, int) string
 }
 
 type Option func(*Options)

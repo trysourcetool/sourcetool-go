@@ -15,7 +15,7 @@ func (b *uiBuilder) MultiSelect(label string, options ...multiselect.Option) []i
 		DefaultValue: nil,
 		Placeholder:  "",
 		Required:     false,
-		DisplayFunc:  nil,
+		FormatFunc:   nil,
 	}
 
 	for _, option := range options {
@@ -44,7 +44,7 @@ func (b *uiBuilder) MultiSelect(label string, options ...multiselect.Option) []i
 	state := sess.State.GetMultiSelect(widgetID)
 	if state == nil {
 		var defaultIndexes []int
-		if opts.DefaultValue != nil {
+		if len(opts.DefaultValue) != 0 {
 			defaultIndexes = make([]int, len(opts.DefaultValue))
 			for i, o := range opts.Options {
 				for j, dv := range opts.DefaultValue {
@@ -60,15 +60,15 @@ func (b *uiBuilder) MultiSelect(label string, options ...multiselect.Option) []i
 			Value: defaultIndexes,
 		}
 	}
-	if opts.DisplayFunc == nil {
-		opts.DisplayFunc = func(v string, i int) string {
+	if opts.FormatFunc == nil {
+		opts.FormatFunc = func(v string, i int) string {
 			return v
 		}
 	}
 
 	displayVals := make([]string, len(opts.Options))
 	for i, v := range opts.Options {
-		displayVals[i] = opts.DisplayFunc(v, i)
+		displayVals[i] = opts.FormatFunc(v, i)
 	}
 
 	state.Label = opts.Label

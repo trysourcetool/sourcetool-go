@@ -116,7 +116,7 @@ type SelectboxData struct {
 	Label        string   `json:"label"`
 	Options      []string `json:"options"`
 	Placeholder  string   `json:"placeholder"`
-	DefaultIndex *int     `json:"defaultIndex"`
+	DefaultValue *string  `json:"defaultValue"`
 	Required     bool     `json:"required"`
 }
 
