@@ -126,12 +126,17 @@ type SelectboxDataValue struct {
 }
 
 type MultiSelectData struct {
-	Value        []int    `json:"value"`
-	Label        string   `json:"label"`
-	Options      []string `json:"options"`
-	Placeholder  string   `json:"placeholder"`
-	DefaultValue []string `json:"defaultValue"`
-	Required     bool     `json:"required"`
+	Value        *MultiSelectDataValue `json:"value"`
+	Label        string                `json:"label"`
+	Options      []string              `json:"options"`
+	Placeholder  string                `json:"placeholder"`
+	DefaultValue []string              `json:"defaultValue"`
+	Required     bool                  `json:"required"`
+}
+
+type MultiSelectDataValue struct {
+	Values  []string `json:"values"`
+	Indexes []int    `json:"indexes"`
 }
 
 type TextAreaData struct {

@@ -9,7 +9,7 @@ import (
 	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 )
 
-func (b *uiBuilder) MultiSelect(label string, options ...multiselect.Option) []int {
+func (b *uiBuilder) MultiSelect(label string, options ...multiselect.Option) *multiselect.Value {
 	opts := &multiselect.Options{
 		Label:        label,
 		DefaultValue: nil,
@@ -43,21 +43,24 @@ func (b *uiBuilder) MultiSelect(label string, options ...multiselect.Option) []i
 	widgetID := b.generateMultiSelectID(label, path)
 	state := sess.State.GetMultiSelect(widgetID)
 	if state == nil {
-		var defaultIndexes []int
+		var defaultVal *multiselect.Value
 		if len(opts.DefaultValue) != 0 {
-			defaultIndexes = make([]int, len(opts.DefaultValue))
+			defaultIndexes := make([]int, len(opts.DefaultValue))
 			for i, o := range opts.Options {
-				for j, dv := range opts.DefaultValue {
-					if dv == o {
-						defaultIndexes[i] = j
-						break
+				for j, v := range opts.DefaultValue {
+					if o == v {
+						defaultIndexes[j] = i
 					}
 				}
+			}
+			defaultVal = &multiselect.Value{
+				Values:  opts.DefaultValue,
+				Indexes: defaultIndexes,
 			}
 		}
 		state = &multiselect.State{
 			ID:    widgetID,
-			Value: defaultIndexes,
+			Value: defaultVal,
 		}
 	}
 	if opts.FormatFunc == nil {
@@ -104,9 +107,16 @@ func convertStateToMultiSelectData(state *multiselect.State) *websocket.MultiSel
 	if state == nil {
 		return nil
 	}
+	var value *websocket.MultiSelectDataValue
+	if state.Value != nil {
+		value = &websocket.MultiSelectDataValue{
+			Values:  state.Value.Values,
+			Indexes: state.Value.Indexes,
+		}
+	}
 	return &websocket.MultiSelectData{
 		Label:        state.Label,
-		Value:        state.Value,
+		Value:        value,
 		Options:      state.Options,
 		Placeholder:  state.Placeholder,
 		DefaultValue: state.DefaultValue,
@@ -118,10 +128,17 @@ func convertMultiSelectDataToState(id uuid.UUID, data *websocket.MultiSelectData
 	if data == nil {
 		return nil
 	}
+	var value *multiselect.Value
+	if data.Value != nil {
+		value = &multiselect.Value{
+			Values:  data.Value.Values,
+			Indexes: data.Value.Indexes,
+		}
+	}
 	return &multiselect.State{
 		ID:           id,
 		Label:        data.Label,
-		Value:        data.Value,
+		Value:        value,
 		Options:      data.Options,
 		Placeholder:  data.Placeholder,
 		DefaultValue: data.DefaultValue,

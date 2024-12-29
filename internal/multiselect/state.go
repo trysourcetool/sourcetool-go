@@ -4,10 +4,15 @@ import "github.com/gofrs/uuid/v5"
 
 const WidgetType = "multiSelect"
 
+type Value struct {
+	Values  []string
+	Indexes []int
+}
+
 type State struct {
 	ID           uuid.UUID
 	Label        string
-	Value        []int
+	Value        *Value
 	Options      []string
 	Placeholder  string
 	DefaultValue []string
