@@ -11,6 +11,7 @@ import (
 	"github.com/trysourcetool/sourcetool-go/internal/dateinput"
 	"github.com/trysourcetool/sourcetool-go/internal/form"
 	"github.com/trysourcetool/sourcetool-go/internal/numberinput"
+	"github.com/trysourcetool/sourcetool-go/internal/selectbox"
 	"github.com/trysourcetool/sourcetool-go/internal/session"
 	"github.com/trysourcetool/sourcetool-go/internal/table"
 	"github.com/trysourcetool/sourcetool-go/internal/textarea"
@@ -24,6 +25,7 @@ type UIBuilder interface {
 	NumberInput(string, ...numberinput.Option) *float64
 	DateInput(string, ...dateinput.Option) *time.Time
 	TimeInput(string, ...timeinput.Option) *time.Time
+	Selectbox(string, ...selectbox.Option) *any
 	TextArea(string, ...textarea.Option) string
 	Table(any, ...table.Option) table.Value
 	Button(string, ...button.Option) bool

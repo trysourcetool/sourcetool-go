@@ -17,6 +17,7 @@ import (
 	"github.com/trysourcetool/sourcetool-go/internal/form"
 	"github.com/trysourcetool/sourcetool-go/internal/markdown"
 	"github.com/trysourcetool/sourcetool-go/internal/numberinput"
+	"github.com/trysourcetool/sourcetool-go/internal/selectbox"
 	"github.com/trysourcetool/sourcetool-go/internal/session"
 	"github.com/trysourcetool/sourcetool-go/internal/table"
 	"github.com/trysourcetool/sourcetool-go/internal/textarea"
@@ -303,6 +304,12 @@ func buildNewWidgetStates(states map[uuid.UUID]json.RawMessage, sess *session.Se
 				return nil, fmt.Errorf("failed to unmarshal table state: %v", err)
 			}
 			widgetStates[id] = convertTableDataToState(id, &tableData)
+		case selectbox.WidgetType:
+			var selectboxData websocket.SelectboxData
+			if err := json.Unmarshal(state, &selectboxData); err != nil {
+				return nil, fmt.Errorf("failed to unmarshal selectbox state: %v", err)
+			}
+			widgetStates[id] = convertSelectboxDataToState(id, &selectboxData)
 		case textarea.WidgetType:
 			var textareaData websocket.TextAreaData
 			if err := json.Unmarshal(state, &textareaData); err != nil {

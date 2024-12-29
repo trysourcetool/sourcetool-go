@@ -13,6 +13,7 @@ import (
 	"github.com/trysourcetool/sourcetool-go/internal/form"
 	"github.com/trysourcetool/sourcetool-go/internal/markdown"
 	"github.com/trysourcetool/sourcetool-go/internal/numberinput"
+	"github.com/trysourcetool/sourcetool-go/internal/selectbox"
 	"github.com/trysourcetool/sourcetool-go/internal/table"
 	"github.com/trysourcetool/sourcetool-go/internal/textarea"
 	"github.com/trysourcetool/sourcetool-go/internal/textinput"
@@ -152,6 +153,32 @@ func anyToTimeInputState(a any) *timeinput.State {
 	}
 
 	return &timeInputState
+}
+
+func (s *State) GetSelectbox(id uuid.UUID) *selectbox.State {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	state, ok := s.data[id]
+	if !ok {
+		return nil
+	}
+
+	return anyToSelectboxState(state)
+}
+
+func anyToSelectboxState(a any) *selectbox.State {
+	bytes, err := json.Marshal(a)
+	if err != nil {
+		return nil
+	}
+
+	var selectboxState selectbox.State
+	if err := json.Unmarshal(bytes, &selectboxState); err != nil {
+		return nil
+	}
+
+	return &selectboxState
 }
 
 func (s *State) GetTextArea(id uuid.UUID) *textarea.State {
