@@ -12,6 +12,7 @@ import (
 	"github.com/trysourcetool/sourcetool-go/internal/dateinput"
 	"github.com/trysourcetool/sourcetool-go/internal/form"
 	"github.com/trysourcetool/sourcetool-go/internal/markdown"
+	"github.com/trysourcetool/sourcetool-go/internal/multiselect"
 	"github.com/trysourcetool/sourcetool-go/internal/numberinput"
 	"github.com/trysourcetool/sourcetool-go/internal/selectbox"
 	"github.com/trysourcetool/sourcetool-go/internal/table"
@@ -179,6 +180,32 @@ func anyToSelectboxState(a any) *selectbox.State {
 	}
 
 	return &selectboxState
+}
+
+func (s *State) GetMultiSelect(id uuid.UUID) *multiselect.State {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	state, ok := s.data[id]
+	if !ok {
+		return nil
+	}
+
+	return anyToMultiSelectState(state)
+}
+
+func anyToMultiSelectState(a any) *multiselect.State {
+	bytes, err := json.Marshal(a)
+	if err != nil {
+		return nil
+	}
+
+	var multiSelectState multiselect.State
+	if err := json.Unmarshal(bytes, &multiSelectState); err != nil {
+		return nil
+	}
+
+	return &multiSelectState
 }
 
 func (s *State) GetTextArea(id uuid.UUID) *textarea.State {

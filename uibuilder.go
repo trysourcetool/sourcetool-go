@@ -10,6 +10,7 @@ import (
 	"github.com/trysourcetool/sourcetool-go/internal/columns"
 	"github.com/trysourcetool/sourcetool-go/internal/dateinput"
 	"github.com/trysourcetool/sourcetool-go/internal/form"
+	"github.com/trysourcetool/sourcetool-go/internal/multiselect"
 	"github.com/trysourcetool/sourcetool-go/internal/numberinput"
 	"github.com/trysourcetool/sourcetool-go/internal/selectbox"
 	"github.com/trysourcetool/sourcetool-go/internal/session"
@@ -26,6 +27,7 @@ type UIBuilder interface {
 	DateInput(string, ...dateinput.Option) *time.Time
 	TimeInput(string, ...timeinput.Option) *time.Time
 	Selectbox(string, ...selectbox.Option) *int
+	MultiSelect(string, ...multiselect.Option) []int
 	TextArea(string, ...textarea.Option) string
 	Table(any, ...table.Option) table.Value
 	Button(string, ...button.Option) bool

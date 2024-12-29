@@ -16,6 +16,7 @@ import (
 	"github.com/trysourcetool/sourcetool-go/internal/dateinput"
 	"github.com/trysourcetool/sourcetool-go/internal/form"
 	"github.com/trysourcetool/sourcetool-go/internal/markdown"
+	"github.com/trysourcetool/sourcetool-go/internal/multiselect"
 	"github.com/trysourcetool/sourcetool-go/internal/numberinput"
 	"github.com/trysourcetool/sourcetool-go/internal/selectbox"
 	"github.com/trysourcetool/sourcetool-go/internal/session"
@@ -310,6 +311,12 @@ func buildNewWidgetStates(states map[uuid.UUID]json.RawMessage, sess *session.Se
 				return nil, fmt.Errorf("failed to unmarshal selectbox state: %v", err)
 			}
 			widgetStates[id] = convertSelectboxDataToState(id, &selectboxData)
+		case multiselect.WidgetType:
+			var multiSelectData websocket.MultiSelectData
+			if err := json.Unmarshal(state, &multiSelectData); err != nil {
+				return nil, fmt.Errorf("failed to unmarshal multiSelect state: %v", err)
+			}
+			widgetStates[id] = convertMultiSelectDataToState(id, &multiSelectData)
 		case textarea.WidgetType:
 			var textareaData websocket.TextAreaData
 			if err := json.Unmarshal(state, &textareaData); err != nil {
