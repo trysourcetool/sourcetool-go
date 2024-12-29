@@ -41,21 +41,23 @@ func (b *uiBuilder) Selectbox(label string, options ...selectbox.Option) *select
 	log.Printf("Page ID: %s", page.id.String())
 	log.Printf("Path: %v\n", path)
 
+	var defaultVal *int
+	if opts.DefaultValue != nil {
+		for i, o := range opts.Options {
+			if conv.SafeValue(opts.DefaultValue) == o {
+				defaultVal = &i
+				break
+			}
+		}
+	}
+
 	widgetID := b.generateSelectboxID(label, path)
 	state := sess.State.GetSelectbox(widgetID)
 	if state == nil {
-		var defaultVal *int
-		if opts.DefaultValue != nil {
-			for i, o := range opts.Options {
-				if conv.SafeValue(opts.DefaultValue) == o {
-					defaultVal = &i
-					break
-				}
-			}
-		}
 		state = &selectbox.State{
-			ID:    widgetID,
-			Value: defaultVal,
+			ID:           widgetID,
+			Value:        defaultVal,
+			DefaultValue: defaultVal,
 		}
 	}
 
@@ -73,7 +75,7 @@ func (b *uiBuilder) Selectbox(label string, options ...selectbox.Option) *select
 	state.Label = opts.Label
 	state.Options = displayVals
 	state.Placeholder = opts.Placeholder
-	state.DefaultValue = opts.DefaultValue
+	state.DefaultValue = defaultVal
 	state.Required = opts.Required
 	sess.State.Set(widgetID, state)
 

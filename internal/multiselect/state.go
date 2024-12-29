@@ -15,7 +15,7 @@ type State struct {
 	Value        []int
 	Options      []string
 	Placeholder  string
-	DefaultValue []string
+	DefaultValue []int
 	Required     bool
 }
 

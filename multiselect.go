@@ -40,20 +40,21 @@ func (b *uiBuilder) MultiSelect(label string, options ...multiselect.Option) *mu
 	log.Printf("Page ID: %s", page.id.String())
 	log.Printf("Path: %v\n", path)
 
-	widgetID := b.generateMultiSelectID(label, path)
-	state := sess.State.GetMultiSelect(widgetID)
-	if state == nil {
-		var defaultVal []int
-		if len(opts.DefaultValue) != 0 {
-			for _, o := range opts.DefaultValue {
-				for i, opt := range opts.Options {
-					if opt == o {
-						defaultVal = append(defaultVal, i)
-						break
-					}
+	var defaultVal []int
+	if len(opts.DefaultValue) != 0 {
+		for _, o := range opts.DefaultValue {
+			for i, opt := range opts.Options {
+				if opt == o {
+					defaultVal = append(defaultVal, i)
+					break
 				}
 			}
 		}
+	}
+
+	widgetID := b.generateMultiSelectID(label, path)
+	state := sess.State.GetMultiSelect(widgetID)
+	if state == nil {
 		state = &multiselect.State{
 			ID:    widgetID,
 			Value: defaultVal,
@@ -73,7 +74,7 @@ func (b *uiBuilder) MultiSelect(label string, options ...multiselect.Option) *mu
 	state.Label = opts.Label
 	state.Options = displayVals
 	state.Placeholder = opts.Placeholder
-	state.DefaultValue = opts.DefaultValue
+	state.DefaultValue = defaultVal
 	state.Required = opts.Required
 	sess.State.Set(widgetID, state)
 
