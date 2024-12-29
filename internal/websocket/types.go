@@ -112,31 +112,21 @@ type TimeInputData struct {
 }
 
 type SelectboxData struct {
-	Value        *SelectboxDataValue `json:"value"`
-	Label        string              `json:"label"`
-	Options      []string            `json:"options"`
-	Placeholder  string              `json:"placeholder"`
-	DefaultValue *string             `json:"defaultValue"`
-	Required     bool                `json:"required"`
-}
-
-type SelectboxDataValue struct {
-	Value string `json:"value"`
-	Index int    `json:"index"`
+	Value        *int     `json:"value"`
+	Label        string   `json:"label"`
+	Options      []string `json:"options"`
+	Placeholder  string   `json:"placeholder"`
+	DefaultValue *string  `json:"defaultValue"`
+	Required     bool     `json:"required"`
 }
 
 type MultiSelectData struct {
-	Value        *MultiSelectDataValue `json:"value"`
-	Label        string                `json:"label"`
-	Options      []string              `json:"options"`
-	Placeholder  string                `json:"placeholder"`
-	DefaultValue []string              `json:"defaultValue"`
-	Required     bool                  `json:"required"`
-}
-
-type MultiSelectDataValue struct {
-	Values  []string `json:"values"`
-	Indexes []int    `json:"indexes"`
+	Value        []int    `json:"value"`
+	Label        string   `json:"label"`
+	Options      []string `json:"options"`
+	Placeholder  string   `json:"placeholder"`
+	DefaultValue []string `json:"defaultValue"`
+	Required     bool     `json:"required"`
 }
 
 type TextAreaData struct {

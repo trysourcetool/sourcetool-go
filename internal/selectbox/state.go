@@ -12,7 +12,7 @@ type Value struct {
 type State struct {
 	ID           uuid.UUID
 	Label        string
-	Value        *Value
+	Value        *int
 	Options      []string
 	Placeholder  string
 	DefaultValue *string

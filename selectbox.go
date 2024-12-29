@@ -44,14 +44,11 @@ func (b *uiBuilder) Selectbox(label string, options ...selectbox.Option) *select
 	widgetID := b.generateSelectboxID(label, path)
 	state := sess.State.GetSelectbox(widgetID)
 	if state == nil {
-		var defaultVal *selectbox.Value
+		var defaultVal *int
 		if opts.DefaultValue != nil {
 			for i, o := range opts.Options {
 				if conv.SafeValue(opts.DefaultValue) == o {
-					defaultVal = &selectbox.Value{
-						Value: o,
-						Index: i,
-					}
+					defaultVal = &i
 					break
 				}
 			}
@@ -91,7 +88,15 @@ func (b *uiBuilder) Selectbox(label string, options ...selectbox.Option) *select
 
 	cursor.next()
 
-	return state.Value
+	var value *selectbox.Value
+	if state.Value != nil {
+		value = &selectbox.Value{
+			Value: opts.Options[*state.Value],
+			Index: conv.SafeValue(state.Value),
+		}
+	}
+
+	return value
 }
 
 func (b *uiBuilder) generateSelectboxID(label string, path path) uuid.UUID {
@@ -106,16 +111,9 @@ func convertStateToSelectboxData(state *selectbox.State) *websocket.SelectboxDat
 	if state == nil {
 		return nil
 	}
-	var value *websocket.SelectboxDataValue
-	if state.Value != nil {
-		value = &websocket.SelectboxDataValue{
-			Value: state.Value.Value,
-			Index: state.Value.Index,
-		}
-	}
 	return &websocket.SelectboxData{
 		Label:        state.Label,
-		Value:        value,
+		Value:        state.Value,
 		Options:      state.Options,
 		Placeholder:  state.Placeholder,
 		DefaultValue: state.DefaultValue,
@@ -127,17 +125,10 @@ func convertSelectboxDataToState(id uuid.UUID, data *websocket.SelectboxData) *s
 	if data == nil {
 		return nil
 	}
-	var value *selectbox.Value
-	if data.Value != nil {
-		value = &selectbox.Value{
-			Value: data.Value.Value,
-			Index: data.Value.Index,
-		}
-	}
 	return &selectbox.State{
 		ID:           id,
 		Label:        data.Label,
-		Value:        value,
+		Value:        data.Value,
 		Options:      data.Options,
 		Placeholder:  data.Placeholder,
 		DefaultValue: data.DefaultValue,
