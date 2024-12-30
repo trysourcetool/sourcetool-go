@@ -8,6 +8,7 @@ import (
 	"github.com/gofrs/uuid/v5"
 
 	"github.com/trysourcetool/sourcetool-go/internal/button"
+	"github.com/trysourcetool/sourcetool-go/internal/checkbox"
 	"github.com/trysourcetool/sourcetool-go/internal/columns"
 	"github.com/trysourcetool/sourcetool-go/internal/dateinput"
 	"github.com/trysourcetool/sourcetool-go/internal/form"
@@ -206,6 +207,32 @@ func anyToMultiSelectState(a any) *multiselect.State {
 	}
 
 	return &multiSelectState
+}
+
+func (s *State) GetCheckbox(id uuid.UUID) *checkbox.State {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	state, ok := s.data[id]
+	if !ok {
+		return nil
+	}
+
+	return anyToCheckboxState(state)
+}
+
+func anyToCheckboxState(a any) *checkbox.State {
+	bytes, err := json.Marshal(a)
+	if err != nil {
+		return nil
+	}
+
+	var checkboxSelectState checkbox.State
+	if err := json.Unmarshal(bytes, &checkboxSelectState); err != nil {
+		return nil
+	}
+
+	return &checkboxSelectState
 }
 
 func (s *State) GetTextArea(id uuid.UUID) *textarea.State {

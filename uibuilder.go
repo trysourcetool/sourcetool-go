@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/trysourcetool/sourcetool-go/internal/button"
+	"github.com/trysourcetool/sourcetool-go/internal/checkbox"
 	"github.com/trysourcetool/sourcetool-go/internal/columns"
 	"github.com/trysourcetool/sourcetool-go/internal/dateinput"
 	"github.com/trysourcetool/sourcetool-go/internal/form"
@@ -28,6 +29,7 @@ type UIBuilder interface {
 	TimeInput(string, ...timeinput.Option) *time.Time
 	Selectbox(string, ...selectbox.Option) *selectbox.Value
 	MultiSelect(string, ...multiselect.Option) *multiselect.Value
+	Checkbox(string, ...checkbox.Option) bool
 	TextArea(string, ...textarea.Option) string
 	Table(any, ...table.Option) table.Value
 	Button(string, ...button.Option) bool

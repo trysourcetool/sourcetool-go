@@ -11,6 +11,7 @@ import (
 	"github.com/gofrs/uuid/v5"
 
 	"github.com/trysourcetool/sourcetool-go/internal/button"
+	"github.com/trysourcetool/sourcetool-go/internal/checkbox"
 	"github.com/trysourcetool/sourcetool-go/internal/columnitem"
 	"github.com/trysourcetool/sourcetool-go/internal/columns"
 	"github.com/trysourcetool/sourcetool-go/internal/dateinput"
@@ -317,6 +318,12 @@ func buildNewWidgetStates(states map[uuid.UUID]json.RawMessage, sess *session.Se
 				return nil, fmt.Errorf("failed to unmarshal multiSelect state: %v", err)
 			}
 			widgetStates[id] = convertMultiSelectDataToState(id, &multiSelectData)
+		case checkbox.WidgetType:
+			var checkboxData websocket.CheckboxData
+			if err := json.Unmarshal(state, &checkboxData); err != nil {
+				return nil, fmt.Errorf("failed to unmarshal checkbox state: %v", err)
+			}
+			widgetStates[id] = convertCheckboxDataToState(id, &checkboxData)
 		case textarea.WidgetType:
 			var textareaData websocket.TextAreaData
 			if err := json.Unmarshal(state, &textareaData); err != nil {
