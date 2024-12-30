@@ -15,6 +15,7 @@ import (
 	"github.com/trysourcetool/sourcetool-go/internal/columnitem"
 	"github.com/trysourcetool/sourcetool-go/internal/columns"
 	"github.com/trysourcetool/sourcetool-go/internal/dateinput"
+	"github.com/trysourcetool/sourcetool-go/internal/datetimeinput"
 	"github.com/trysourcetool/sourcetool-go/internal/form"
 	"github.com/trysourcetool/sourcetool-go/internal/markdown"
 	"github.com/trysourcetool/sourcetool-go/internal/multiselect"
@@ -244,6 +245,27 @@ func buildNewWidgetStates(states map[uuid.UUID]json.RawMessage, sess *session.Se
 			}
 
 			newState, err := convertDateInputDataToState(id, &dateInputData, location)
+			if err != nil {
+				return nil, fmt.Errorf("failed to convert date input data: %v", err)
+			}
+
+			widgetStates[id] = newState
+		case datetimeinput.WidgetType:
+			var dateTimeInputData websocket.DateTimeInputData
+			if err := json.Unmarshal(state, &dateTimeInputData); err != nil {
+				return nil, fmt.Errorf("failed to unmarshal datetime input state: %v", err)
+			}
+			dateTimeInputState, ok := currentState.(*datetimeinput.State)
+			if !ok {
+				return nil, fmt.Errorf("invalid datetime input state: %v", currentState)
+			}
+
+			location := dateTimeInputState.Location
+			if location == nil {
+				location = time.Local
+			}
+
+			newState, err := convertDateTimeInputDataToState(id, &dateTimeInputData, location)
 			if err != nil {
 				return nil, fmt.Errorf("failed to convert date input data: %v", err)
 			}

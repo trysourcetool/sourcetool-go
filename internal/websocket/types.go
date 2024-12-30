@@ -103,6 +103,17 @@ type DateInputData struct {
 	MinValue     string `json:"minValue"`
 }
 
+type DateTimeInputData struct {
+	Value        string `json:"value"`
+	Label        string `json:"label"`
+	Placeholder  string `json:"placeholder"`
+	DefaultValue string `json:"defaultValue"`
+	Required     bool   `json:"required"`
+	Format       string `json:"format"`
+	MaxValue     string `json:"maxValue"`
+	MinValue     string `json:"minValue"`
+}
+
 type TimeInputData struct {
 	Value        string `json:"value"`
 	Label        string `json:"label"`
