@@ -147,6 +147,14 @@ type CheckboxData struct {
 	Required     bool   `json:"required"`
 }
 
+type CheckboxGroupData struct {
+	Value        []int    `json:"value"`
+	Label        string   `json:"label"`
+	Options      []string `json:"options"`
+	DefaultValue []int    `json:"defaultValue"`
+	Required     bool     `json:"required"`
+}
+
 type TextAreaData struct {
 	Value        string `json:"value"`
 	Label        string `json:"label"`

@@ -8,6 +8,7 @@ import (
 
 	"github.com/trysourcetool/sourcetool-go/internal/button"
 	"github.com/trysourcetool/sourcetool-go/internal/checkbox"
+	"github.com/trysourcetool/sourcetool-go/internal/checkboxgroup"
 	"github.com/trysourcetool/sourcetool-go/internal/columns"
 	"github.com/trysourcetool/sourcetool-go/internal/dateinput"
 	"github.com/trysourcetool/sourcetool-go/internal/datetimeinput"
@@ -259,6 +260,32 @@ func anyToCheckboxState(a any) *checkbox.State {
 	}
 
 	return &checkboxSelectState
+}
+
+func (s *State) GetCheckboxGroup(id uuid.UUID) *checkboxgroup.State {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	state, ok := s.data[id]
+	if !ok {
+		return nil
+	}
+
+	return anyToCheckboxGroupState(state)
+}
+
+func anyToCheckboxGroupState(a any) *checkboxgroup.State {
+	bytes, err := json.Marshal(a)
+	if err != nil {
+		return nil
+	}
+
+	var checkboxGroupState checkboxgroup.State
+	if err := json.Unmarshal(bytes, &checkboxGroupState); err != nil {
+		return nil
+	}
+
+	return &checkboxGroupState
 }
 
 func (s *State) GetTextArea(id uuid.UUID) *textarea.State {

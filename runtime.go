@@ -12,6 +12,7 @@ import (
 
 	"github.com/trysourcetool/sourcetool-go/internal/button"
 	"github.com/trysourcetool/sourcetool-go/internal/checkbox"
+	"github.com/trysourcetool/sourcetool-go/internal/checkboxgroup"
 	"github.com/trysourcetool/sourcetool-go/internal/columnitem"
 	"github.com/trysourcetool/sourcetool-go/internal/columns"
 	"github.com/trysourcetool/sourcetool-go/internal/dateinput"
@@ -346,6 +347,12 @@ func buildNewWidgetStates(states map[uuid.UUID]json.RawMessage, sess *session.Se
 				return nil, fmt.Errorf("failed to unmarshal checkbox state: %v", err)
 			}
 			widgetStates[id] = convertCheckboxDataToState(id, &checkboxData)
+		case checkboxgroup.WidgetType:
+			var checkboxGroupData websocket.CheckboxGroupData
+			if err := json.Unmarshal(state, &checkboxGroupData); err != nil {
+				return nil, fmt.Errorf("failed to unmarshal checkbox group state: %v", err)
+			}
+			widgetStates[id] = convertCheckboxGroupDataToState(id, &checkboxGroupData)
 		case textarea.WidgetType:
 			var textareaData websocket.TextAreaData
 			if err := json.Unmarshal(state, &textareaData); err != nil {
