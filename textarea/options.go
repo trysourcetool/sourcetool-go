@@ -20,6 +20,12 @@ func Required(required bool) textarea.Option {
 	}
 }
 
+func Disabled(disabled bool) textarea.Option {
+	return func(opts *textarea.Options) {
+		opts.Disabled = disabled
+	}
+}
+
 func MaxLength(length int) textarea.Option {
 	return func(opts *textarea.Options) {
 		opts.MaxLength = &length

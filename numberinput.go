@@ -16,6 +16,7 @@ func (b *uiBuilder) NumberInput(label string, options ...numberinput.Option) *fl
 		Placeholder:  "",
 		DefaultValue: conv.NilValue(float64(0)),
 		Required:     false,
+		Disabled:     false,
 		MaxValue:     nil,
 		MinValue:     nil,
 	}
@@ -54,6 +55,7 @@ func (b *uiBuilder) NumberInput(label string, options ...numberinput.Option) *fl
 	state.Placeholder = opts.Placeholder
 	state.DefaultValue = opts.DefaultValue
 	state.Required = opts.Required
+	state.Disabled = opts.Disabled
 	state.MaxValue = opts.MaxValue
 	state.MinValue = opts.MinValue
 	sess.State.Set(widgetID, state)
@@ -90,6 +92,7 @@ func convertStateToNumberInputData(state *numberinput.State) *websocket.NumberIn
 		Placeholder:  state.Placeholder,
 		DefaultValue: state.DefaultValue,
 		Required:     state.Required,
+		Disabled:     state.Disabled,
 		MaxValue:     state.MaxValue,
 		MinValue:     state.MinValue,
 	}
@@ -105,6 +108,7 @@ func convertNumberInputDataToState(data *websocket.NumberInputData) *numberinput
 		Placeholder:  data.Placeholder,
 		DefaultValue: data.DefaultValue,
 		Required:     data.Required,
+		Disabled:     data.Disabled,
 		MaxValue:     data.MaxValue,
 		MinValue:     data.MinValue,
 	}

@@ -5,6 +5,7 @@ type Options struct {
 	Placeholder  string
 	DefaultValue *float64
 	Required     bool
+	Disabled     bool
 	MaxValue     *float64
 	MinValue     *float64
 }

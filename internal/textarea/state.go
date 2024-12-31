@@ -11,6 +11,7 @@ type State struct {
 	Placeholder  string
 	DefaultValue string
 	Required     bool
+	Disabled     bool
 	MaxLength    *int
 	MinLength    *int
 	MaxLines     *int

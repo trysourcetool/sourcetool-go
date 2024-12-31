@@ -20,6 +20,12 @@ func Required(required bool) checkboxgroup.Option {
 	}
 }
 
+func Disabled(disabled bool) checkboxgroup.Option {
+	return func(o *checkboxgroup.Options) {
+		o.Disabled = disabled
+	}
+}
+
 func FormatFunc(formatFunc func(string, int) string) checkboxgroup.Option {
 	return func(o *checkboxgroup.Options) {
 		o.FormatFunc = formatFunc

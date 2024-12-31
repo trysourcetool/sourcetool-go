@@ -13,3 +13,9 @@ func Required(required bool) checkbox.Option {
 		o.Required = required
 	}
 }
+
+func Disabled(disabled bool) checkbox.Option {
+	return func(o *checkbox.Options) {
+		o.Disabled = disabled
+	}
+}

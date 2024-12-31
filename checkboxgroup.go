@@ -14,6 +14,7 @@ func (b *uiBuilder) CheckboxGroup(label string, options ...checkboxgroup.Option)
 		Label:        label,
 		DefaultValue: nil,
 		Required:     false,
+		Disabled:     false,
 		FormatFunc:   nil,
 	}
 
@@ -74,6 +75,7 @@ func (b *uiBuilder) CheckboxGroup(label string, options ...checkboxgroup.Option)
 	state.Options = displayVals
 	state.DefaultValue = defaultVal
 	state.Required = opts.Required
+	state.Disabled = opts.Disabled
 	sess.State.Set(widgetID, state)
 
 	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), websocket.MessageMethodRenderWidget, &websocket.RenderWidgetPayload{
@@ -120,6 +122,7 @@ func convertStateToCheckboxGroupData(state *checkboxgroup.State) *websocket.Chec
 		Options:      state.Options,
 		DefaultValue: state.DefaultValue,
 		Required:     state.Required,
+		Disabled:     state.Disabled,
 	}
 }
 
@@ -134,5 +137,6 @@ func convertCheckboxGroupDataToState(id uuid.UUID, data *websocket.CheckboxGroup
 		Options:      data.Options,
 		DefaultValue: data.DefaultValue,
 		Required:     data.Required,
+		Disabled:     data.Disabled,
 	}
 }

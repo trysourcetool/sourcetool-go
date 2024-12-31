@@ -24,6 +24,12 @@ func Required(required bool) datetimeinput.Option {
 	}
 }
 
+func Disabled(disabled bool) datetimeinput.Option {
+	return func(opts *datetimeinput.Options) {
+		opts.Disabled = disabled
+	}
+}
+
 func Format(format string) datetimeinput.Option {
 	return func(opts *datetimeinput.Options) {
 		opts.Format = format

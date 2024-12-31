@@ -5,6 +5,7 @@ type Options struct {
 	Options      []string
 	DefaultValue []string
 	Required     bool
+	Disabled     bool
 	FormatFunc   func(string, int) string
 }
 

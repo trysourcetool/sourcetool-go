@@ -26,6 +26,12 @@ func Required(required bool) selectbox.Option {
 	}
 }
 
+func Disabled(disabled bool) selectbox.Option {
+	return func(o *selectbox.Options) {
+		o.Disabled = disabled
+	}
+}
+
 func FormatFunc(formatFunc func(string, int) string) selectbox.Option {
 	return func(o *selectbox.Options) {
 		o.FormatFunc = formatFunc

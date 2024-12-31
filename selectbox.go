@@ -16,6 +16,7 @@ func (b *uiBuilder) Selectbox(label string, options ...selectbox.Option) *select
 		DefaultValue: nil,
 		Placeholder:  "",
 		Required:     false,
+		Disabled:     false,
 		FormatFunc:   nil,
 	}
 
@@ -77,6 +78,7 @@ func (b *uiBuilder) Selectbox(label string, options ...selectbox.Option) *select
 	state.Placeholder = opts.Placeholder
 	state.DefaultValue = defaultVal
 	state.Required = opts.Required
+	state.Disabled = opts.Disabled
 	sess.State.Set(widgetID, state)
 
 	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), websocket.MessageMethodRenderWidget, &websocket.RenderWidgetPayload{
@@ -120,6 +122,7 @@ func convertStateToSelectboxData(state *selectbox.State) *websocket.SelectboxDat
 		Placeholder:  state.Placeholder,
 		DefaultValue: state.DefaultValue,
 		Required:     state.Required,
+		Disabled:     state.Disabled,
 	}
 }
 
@@ -135,5 +138,6 @@ func convertSelectboxDataToState(id uuid.UUID, data *websocket.SelectboxData) *s
 		Placeholder:  data.Placeholder,
 		DefaultValue: data.DefaultValue,
 		Required:     data.Required,
+		Disabled:     data.Disabled,
 	}
 }

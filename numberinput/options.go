@@ -20,6 +20,12 @@ func Required(required bool) numberinput.Option {
 	}
 }
 
+func Disabled(disabled bool) numberinput.Option {
+	return func(opts *numberinput.Options) {
+		opts.Disabled = disabled
+	}
+}
+
 func MaxValue(value float64) numberinput.Option {
 	return func(opts *numberinput.Options) {
 		opts.MinValue = &value

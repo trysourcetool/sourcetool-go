@@ -14,6 +14,7 @@ func (b *uiBuilder) Checkbox(label string, options ...checkbox.Option) bool {
 		Label:        label,
 		DefaultValue: false,
 		Required:     false,
+		Disabled:     false,
 	}
 
 	for _, option := range options {
@@ -49,6 +50,7 @@ func (b *uiBuilder) Checkbox(label string, options ...checkbox.Option) bool {
 	state.Label = opts.Label
 	state.DefaultValue = opts.DefaultValue
 	state.Required = opts.Required
+	state.Disabled = opts.Disabled
 	sess.State.Set(widgetID, state)
 
 	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), websocket.MessageMethodRenderWidget, &websocket.RenderWidgetPayload{
@@ -82,6 +84,7 @@ func convertStateToCheckboxData(state *checkbox.State) *websocket.CheckboxData {
 		Label:        state.Label,
 		DefaultValue: state.DefaultValue,
 		Required:     state.Required,
+		Disabled:     state.Disabled,
 	}
 }
 
@@ -95,5 +98,6 @@ func convertCheckboxDataToState(id uuid.UUID, data *websocket.CheckboxData) *che
 		Label:        data.Label,
 		DefaultValue: data.DefaultValue,
 		Required:     data.Required,
+		Disabled:     data.Disabled,
 	}
 }

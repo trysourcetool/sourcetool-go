@@ -78,6 +78,7 @@ type TextInputData struct {
 	Placeholder  string `json:"placeholder"`
 	DefaultValue string `json:"defaultValue"`
 	Required     bool   `json:"required"`
+	Disabled     bool   `json:"disabled"`
 	MaxLength    *int   `json:"maxLength"`
 	MinLength    *int   `json:"minLength"`
 }
@@ -88,6 +89,7 @@ type NumberInputData struct {
 	Placeholder  string   `json:"placeholder"`
 	DefaultValue *float64 `json:"defaultValue"`
 	Required     bool     `json:"required"`
+	Disabled     bool     `json:"disabled"`
 	MaxValue     *float64 `json:"maxValue"`
 	MinValue     *float64 `json:"minValue"`
 }
@@ -98,6 +100,7 @@ type DateInputData struct {
 	Placeholder  string `json:"placeholder"`
 	DefaultValue string `json:"defaultValue"`
 	Required     bool   `json:"required"`
+	Disabled     bool   `json:"disabled"`
 	Format       string `json:"format"`
 	MaxValue     string `json:"maxValue"`
 	MinValue     string `json:"minValue"`
@@ -109,6 +112,7 @@ type DateTimeInputData struct {
 	Placeholder  string `json:"placeholder"`
 	DefaultValue string `json:"defaultValue"`
 	Required     bool   `json:"required"`
+	Disabled     bool   `json:"disabled"`
 	Format       string `json:"format"`
 	MaxValue     string `json:"maxValue"`
 	MinValue     string `json:"minValue"`
@@ -120,6 +124,7 @@ type TimeInputData struct {
 	Placeholder  string `json:"placeholder"`
 	DefaultValue string `json:"defaultValue"`
 	Required     bool   `json:"required"`
+	Disabled     bool   `json:"disabled"`
 }
 
 type SelectboxData struct {
@@ -129,6 +134,7 @@ type SelectboxData struct {
 	Placeholder  string   `json:"placeholder"`
 	DefaultValue *int     `json:"defaultValue"`
 	Required     bool     `json:"required"`
+	Disabled     bool     `json:"disabled"`
 }
 
 type MultiSelectData struct {
@@ -138,6 +144,7 @@ type MultiSelectData struct {
 	Placeholder  string   `json:"placeholder"`
 	DefaultValue []int    `json:"defaultValue"`
 	Required     bool     `json:"required"`
+	Disabled     bool     `json:"disabled"`
 }
 
 type CheckboxData struct {
@@ -145,6 +152,7 @@ type CheckboxData struct {
 	Label        string `json:"label"`
 	DefaultValue bool   `json:"defaultValue"`
 	Required     bool   `json:"required"`
+	Disabled     bool   `json:"disabled"`
 }
 
 type CheckboxGroupData struct {
@@ -153,6 +161,7 @@ type CheckboxGroupData struct {
 	Options      []string `json:"options"`
 	DefaultValue []int    `json:"defaultValue"`
 	Required     bool     `json:"required"`
+	Disabled     bool     `json:"disabled"`
 }
 
 type TextAreaData struct {
@@ -161,6 +170,7 @@ type TextAreaData struct {
 	Placeholder  string `json:"placeholder"`
 	DefaultValue string `json:"defaultValue"`
 	Required     bool   `json:"required"`
+	Disabled     bool   `json:"disabled"`
 	MaxLength    *int   `json:"maxLength"`
 	MinLength    *int   `json:"minLength"`
 	MaxLines     *int   `json:"maxLines"`

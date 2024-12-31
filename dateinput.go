@@ -17,6 +17,7 @@ func (b *uiBuilder) DateInput(label string, options ...dateinput.Option) *time.T
 		Placeholder:  "",
 		DefaultValue: nil,
 		Required:     false,
+		Disabled:     false,
 		Format:       "YYYY/MM/DD",
 		MaxValue:     nil,
 		MinValue:     nil,
@@ -57,6 +58,7 @@ func (b *uiBuilder) DateInput(label string, options ...dateinput.Option) *time.T
 	state.Placeholder = opts.Placeholder
 	state.DefaultValue = opts.DefaultValue
 	state.Required = opts.Required
+	state.Disabled = opts.Disabled
 	state.Format = opts.Format
 	state.MaxValue = opts.MaxValue
 	state.MinValue = opts.MinValue
@@ -128,6 +130,7 @@ func convertDateInputDataToState(id uuid.UUID, data *websocket.DateInputData, lo
 		DefaultValue: defaultValue,
 		Placeholder:  data.Placeholder,
 		Required:     data.Required,
+		Disabled:     data.Disabled,
 		Format:       data.Format,
 		MaxValue:     maxValue,
 		MinValue:     minValue,
@@ -158,6 +161,7 @@ func convertStateToDateInputData(state *dateinput.State) *websocket.DateInputDat
 		Placeholder:  state.Placeholder,
 		DefaultValue: defaultValue,
 		Required:     state.Required,
+		Disabled:     state.Disabled,
 		Format:       state.Format,
 		MaxValue:     maxValue,
 		MinValue:     minValue,

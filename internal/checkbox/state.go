@@ -10,6 +10,7 @@ type State struct {
 	Value        bool
 	DefaultValue bool
 	Required     bool
+	Disabled     bool
 }
 
 func (s *State) IsWidgetState()  {}

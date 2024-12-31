@@ -15,6 +15,7 @@ func (b *uiBuilder) TextInput(label string, options ...textinput.Option) string 
 		Placeholder:  "",
 		DefaultValue: "",
 		Required:     false,
+		Disabled:     false,
 		MaxLength:    nil,
 		MinLength:    nil,
 	}
@@ -53,6 +54,7 @@ func (b *uiBuilder) TextInput(label string, options ...textinput.Option) string 
 	state.Placeholder = opts.Placeholder
 	state.DefaultValue = opts.DefaultValue
 	state.Required = opts.Required
+	state.Disabled = opts.Disabled
 	state.MaxLength = opts.MaxLength
 	state.MinLength = opts.MinLength
 	sess.State.Set(widgetID, state)
@@ -89,6 +91,7 @@ func convertStateToTextInputData(state *textinput.State) *websocket.TextInputDat
 		Placeholder:  state.Placeholder,
 		DefaultValue: state.DefaultValue,
 		Required:     state.Required,
+		Disabled:     state.Disabled,
 		MaxLength:    state.MaxLength,
 		MinLength:    state.MinLength,
 	}
@@ -105,6 +108,7 @@ func convertTextInputDataToState(id uuid.UUID, data *websocket.TextInputData) *t
 		Placeholder:  data.Placeholder,
 		DefaultValue: data.DefaultValue,
 		Required:     data.Required,
+		Disabled:     data.Disabled,
 		MaxLength:    data.MaxLength,
 		MinLength:    data.MinLength,
 	}

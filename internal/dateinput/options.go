@@ -7,6 +7,7 @@ type Options struct {
 	Placeholder  string
 	DefaultValue *time.Time
 	Required     bool
+	Disabled     bool
 	Format       string
 	MaxValue     *time.Time
 	MinValue     *time.Time

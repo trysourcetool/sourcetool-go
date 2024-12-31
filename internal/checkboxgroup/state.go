@@ -16,6 +16,7 @@ type State struct {
 	Options      []string
 	DefaultValue []int
 	Required     bool
+	Disabled     bool
 }
 
 func (s *State) IsWidgetState()  {}

@@ -15,6 +15,7 @@ func (b *uiBuilder) MultiSelect(label string, options ...multiselect.Option) *mu
 		DefaultValue: nil,
 		Placeholder:  "",
 		Required:     false,
+		Disabled:     false,
 		FormatFunc:   nil,
 	}
 
@@ -76,6 +77,7 @@ func (b *uiBuilder) MultiSelect(label string, options ...multiselect.Option) *mu
 	state.Placeholder = opts.Placeholder
 	state.DefaultValue = defaultVal
 	state.Required = opts.Required
+	state.Disabled = opts.Disabled
 	sess.State.Set(widgetID, state)
 
 	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), websocket.MessageMethodRenderWidget, &websocket.RenderWidgetPayload{
@@ -123,6 +125,7 @@ func convertStateToMultiSelectData(state *multiselect.State) *websocket.MultiSel
 		Placeholder:  state.Placeholder,
 		DefaultValue: state.DefaultValue,
 		Required:     state.Required,
+		Disabled:     state.Disabled,
 	}
 }
 
@@ -138,5 +141,6 @@ func convertMultiSelectDataToState(id uuid.UUID, data *websocket.MultiSelectData
 		Placeholder:  data.Placeholder,
 		DefaultValue: data.DefaultValue,
 		Required:     data.Required,
+		Disabled:     data.Disabled,
 	}
 }

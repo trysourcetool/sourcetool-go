@@ -16,6 +16,7 @@ func (b *uiBuilder) TextArea(label string, options ...textarea.Option) string {
 		Placeholder:  "",
 		DefaultValue: "",
 		Required:     false,
+		Disabled:     false,
 		MaxLength:    nil,
 		MinLength:    nil,
 		MinLines:     &defaultMinLines,
@@ -57,6 +58,7 @@ func (b *uiBuilder) TextArea(label string, options ...textarea.Option) string {
 	state.Placeholder = opts.Placeholder
 	state.DefaultValue = opts.DefaultValue
 	state.Required = opts.Required
+	state.Disabled = opts.Disabled
 	state.MaxLength = opts.MaxLength
 	state.MinLength = opts.MinLength
 	state.MaxLines = opts.MaxLines
@@ -96,6 +98,7 @@ func convertStateToTextAreaData(state *textarea.State) *websocket.TextAreaData {
 		Placeholder:  state.Placeholder,
 		DefaultValue: state.DefaultValue,
 		Required:     state.Required,
+		Disabled:     state.Disabled,
 		MaxLength:    state.MaxLength,
 		MinLength:    state.MinLength,
 		MaxLines:     state.MaxLines,
@@ -115,6 +118,7 @@ func convertTextAreaDataToState(id uuid.UUID, data *websocket.TextAreaData) *tex
 		Placeholder:  data.Placeholder,
 		DefaultValue: data.DefaultValue,
 		Required:     data.Required,
+		Disabled:     data.Disabled,
 		MaxLength:    data.MaxLength,
 		MinLength:    data.MinLength,
 		MaxLines:     data.MaxLines,

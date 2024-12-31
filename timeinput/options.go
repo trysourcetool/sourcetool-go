@@ -24,6 +24,12 @@ func Required(required bool) timeinput.Option {
 	}
 }
 
+func Disabled(disabled bool) timeinput.Option {
+	return func(opts *timeinput.Options) {
+		opts.Disabled = disabled
+	}
+}
+
 func Location(location time.Location) timeinput.Option {
 	return func(opts *timeinput.Options) {
 		opts.Location = &location

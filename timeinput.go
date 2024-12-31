@@ -17,6 +17,7 @@ func (b *uiBuilder) TimeInput(label string, options ...timeinput.Option) *time.T
 		Placeholder:  "",
 		DefaultValue: nil,
 		Required:     false,
+		Disabled:     false,
 		Location:     time.Local,
 	}
 
@@ -54,6 +55,7 @@ func (b *uiBuilder) TimeInput(label string, options ...timeinput.Option) *time.T
 	state.Placeholder = opts.Placeholder
 	state.DefaultValue = opts.DefaultValue
 	state.Required = opts.Required
+	state.Disabled = opts.Disabled
 	state.Location = opts.Location
 	sess.State.Set(widgetID, state)
 
@@ -112,6 +114,7 @@ func convertTimeInputDataToState(id uuid.UUID, data *websocket.TimeInputData, lo
 		DefaultValue: defaultValue,
 		Placeholder:  data.Placeholder,
 		Required:     data.Required,
+		Disabled:     data.Disabled,
 		Location:     location,
 	}, nil
 }
@@ -133,5 +136,6 @@ func convertStateToTimeInputData(state *timeinput.State) *websocket.TimeInputDat
 		Placeholder:  state.Placeholder,
 		DefaultValue: defaultValue,
 		Required:     state.Required,
+		Disabled:     state.Disabled,
 	}
 }

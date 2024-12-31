@@ -26,6 +26,12 @@ func Required(required bool) multiselect.Option {
 	}
 }
 
+func Disabled(disabled bool) multiselect.Option {
+	return func(o *multiselect.Options) {
+		o.Disabled = disabled
+	}
+}
+
 func FormatFunc(formatFunc func(string, int) string) multiselect.Option {
 	return func(o *multiselect.Options) {
 		o.FormatFunc = formatFunc

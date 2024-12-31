@@ -20,6 +20,12 @@ func Required(required bool) textinput.Option {
 	}
 }
 
+func Disabled(disabled bool) textinput.Option {
+	return func(opts *textinput.Options) {
+		opts.Disabled = disabled
+	}
+}
+
 func MaxLength(length int) textinput.Option {
 	return func(opts *textinput.Options) {
 		opts.MaxLength = &length
