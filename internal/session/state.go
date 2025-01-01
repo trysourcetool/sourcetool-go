@@ -16,6 +16,7 @@ import (
 	"github.com/trysourcetool/sourcetool-go/internal/markdown"
 	"github.com/trysourcetool/sourcetool-go/internal/multiselect"
 	"github.com/trysourcetool/sourcetool-go/internal/numberinput"
+	"github.com/trysourcetool/sourcetool-go/internal/radio"
 	"github.com/trysourcetool/sourcetool-go/internal/selectbox"
 	"github.com/trysourcetool/sourcetool-go/internal/table"
 	"github.com/trysourcetool/sourcetool-go/internal/textarea"
@@ -286,6 +287,32 @@ func anyToCheckboxGroupState(a any) *checkboxgroup.State {
 	}
 
 	return &checkboxGroupState
+}
+
+func (s *State) GetRadio(id uuid.UUID) *radio.State {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	state, ok := s.data[id]
+	if !ok {
+		return nil
+	}
+
+	return anyToRadioState(state)
+}
+
+func anyToRadioState(a any) *radio.State {
+	bytes, err := json.Marshal(a)
+	if err != nil {
+		return nil
+	}
+
+	var radioState radio.State
+	if err := json.Unmarshal(bytes, &radioState); err != nil {
+		return nil
+	}
+
+	return &radioState
 }
 
 func (s *State) GetTextArea(id uuid.UUID) *textarea.State {

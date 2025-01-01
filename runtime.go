@@ -21,6 +21,7 @@ import (
 	"github.com/trysourcetool/sourcetool-go/internal/markdown"
 	"github.com/trysourcetool/sourcetool-go/internal/multiselect"
 	"github.com/trysourcetool/sourcetool-go/internal/numberinput"
+	"github.com/trysourcetool/sourcetool-go/internal/radio"
 	"github.com/trysourcetool/sourcetool-go/internal/selectbox"
 	"github.com/trysourcetool/sourcetool-go/internal/session"
 	"github.com/trysourcetool/sourcetool-go/internal/table"
@@ -353,6 +354,12 @@ func buildNewWidgetStates(states map[uuid.UUID]json.RawMessage, sess *session.Se
 				return nil, fmt.Errorf("failed to unmarshal checkbox group state: %v", err)
 			}
 			widgetStates[id] = convertCheckboxGroupDataToState(id, &checkboxGroupData)
+		case radio.WidgetType:
+			var radioData websocket.RadioData
+			if err := json.Unmarshal(state, &radioData); err != nil {
+				return nil, fmt.Errorf("failed to unmarshal radio group state: %v", err)
+			}
+			widgetStates[id] = convertRadioDataToState(id, &radioData)
 		case textarea.WidgetType:
 			var textareaData websocket.TextAreaData
 			if err := json.Unmarshal(state, &textareaData); err != nil {
