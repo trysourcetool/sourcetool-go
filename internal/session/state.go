@@ -480,14 +480,20 @@ func (s *State) ResetStates() {
 func (s *State) ResetButtons() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	for _, state := range s.data {
+	for id, state := range s.data {
 		switch state.GetType() {
 		case button.WidgetType:
 			buttonState := anyToButtonState(state)
-			buttonState.Value = false
+			if buttonState != nil {
+				buttonState.Value = false
+				s.data[id] = buttonState
+			}
 		case form.WidgetType:
 			formState := anyToFormState(state)
-			formState.Value = false
+			if formState != nil {
+				formState.Value = false
+				s.data[id] = formState
+			}
 		}
 	}
 }
