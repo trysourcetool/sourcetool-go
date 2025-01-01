@@ -27,7 +27,7 @@ func newTestServer() *testServer {
 	}
 
 	s.Server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// APIキーの検証
+		// Validate API key
 		authHeader := r.Header.Get("Authorization")
 		if !strings.HasPrefix(authHeader, "Bearer ") {
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
@@ -96,14 +96,14 @@ func TestClient_MessageHandling(t *testing.T) {
 		t.Fatal("connection not established")
 	}
 
-	// テスト用のメッセージハンドラー
+	// Test message handler
 	receivedCh := make(chan *Message, 1)
 	client.RegisterHandler(MessageMethodInitializeClient, func(msg *Message) error {
 		receivedCh <- msg
 		return nil
 	})
 
-	// テストメッセージの送信
+	// Send test message
 	testMsg := &Message{
 		ID:     "test_id",
 		Kind:   MessageKindCall,
@@ -118,7 +118,7 @@ func TestClient_MessageHandling(t *testing.T) {
 		t.Fatalf("failed to write message: %v", err)
 	}
 
-	// メッセージの受信を待つ
+	// Wait for message reception
 	select {
 	case msg := <-receivedCh:
 		if msg.ID != testMsg.ID {
@@ -151,7 +151,7 @@ func TestClient_EnqueueWithResponse(t *testing.T) {
 		t.Fatal("connection not established")
 	}
 
-	// レスポンスを待つgoroutineを開始
+	// Start goroutine to wait for response
 	go func() {
 		var msg Message
 		if err := conn.ReadJSON(&msg); err != nil {
@@ -159,7 +159,7 @@ func TestClient_EnqueueWithResponse(t *testing.T) {
 			return
 		}
 
-		// レスポンスを送信
+		// Send response
 		resp := Message{
 			ID:      msg.ID,
 			Kind:    MessageKindResponse,
@@ -171,7 +171,7 @@ func TestClient_EnqueueWithResponse(t *testing.T) {
 		}
 	}()
 
-	// メッセージを送信して応答を待つ
+	// Send message and wait for response
 	resp, err := client.EnqueueWithResponse("test_id", MessageMethodInitializeHost, map[string]string{
 		"test": "data",
 	})
@@ -204,24 +204,24 @@ func TestClient_Reconnection(t *testing.T) {
 	}
 	defer client.Close()
 
-	// 最初の接続を確認
+	// Verify initial connection
 	conn := s.WaitForConnection(t)
 	if conn == nil {
 		t.Fatal("initial connection not established")
 	}
 
-	// 接続を切断
+	// Disconnect connection
 	conn.Close()
 
-	// 再接続を待つ
+	// Wait for reconnection
 	select {
 	case <-reconnected:
-		// 再接続成功
+		// Reconnection successful
 	case <-time.After(time.Second):
 		t.Fatal("timeout waiting for reconnection")
 	}
 
-	// 新しい接続を確認
+	// Verify new connection
 	conn = s.WaitForConnection(t)
 	if conn == nil {
 		t.Fatal("reconnection not established")

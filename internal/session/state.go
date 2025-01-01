@@ -1,7 +1,6 @@
 package session
 
 import (
-	"encoding/json"
 	"sync"
 
 	"github.com/gofrs/uuid/v5"
@@ -64,21 +63,12 @@ func (s *State) GetTextInput(id uuid.UUID) *textinput.State {
 		return nil
 	}
 
-	return anyToTextInputState(state)
-}
-
-func anyToTextInputState(a any) *textinput.State {
-	bytes, err := json.Marshal(a)
-	if err != nil {
+	v, ok := state.(*textinput.State)
+	if !ok {
 		return nil
 	}
 
-	var textInputState textinput.State
-	if err := json.Unmarshal(bytes, &textInputState); err != nil {
-		return nil
-	}
-
-	return &textInputState
+	return v
 }
 
 func (s *State) GetNumberInput(id uuid.UUID) *numberinput.State {
@@ -90,21 +80,12 @@ func (s *State) GetNumberInput(id uuid.UUID) *numberinput.State {
 		return nil
 	}
 
-	return anyToNumberInputState(state)
-}
-
-func anyToNumberInputState(a any) *numberinput.State {
-	bytes, err := json.Marshal(a)
-	if err != nil {
+	v, ok := state.(*numberinput.State)
+	if !ok {
 		return nil
 	}
 
-	var numberInputState numberinput.State
-	if err := json.Unmarshal(bytes, &numberInputState); err != nil {
-		return nil
-	}
-
-	return &numberInputState
+	return v
 }
 
 func (s *State) GetDateInput(id uuid.UUID) *dateinput.State {
@@ -116,21 +97,12 @@ func (s *State) GetDateInput(id uuid.UUID) *dateinput.State {
 		return nil
 	}
 
-	return anyToDateInputState(state)
-}
-
-func anyToDateInputState(a any) *dateinput.State {
-	bytes, err := json.Marshal(a)
-	if err != nil {
+	v, ok := state.(*dateinput.State)
+	if !ok {
 		return nil
 	}
 
-	var dateInputState dateinput.State
-	if err := json.Unmarshal(bytes, &dateInputState); err != nil {
-		return nil
-	}
-
-	return &dateInputState
+	return v
 }
 
 func (s *State) GetDateTimeInput(id uuid.UUID) *datetimeinput.State {
@@ -142,21 +114,12 @@ func (s *State) GetDateTimeInput(id uuid.UUID) *datetimeinput.State {
 		return nil
 	}
 
-	return anyToDateTimeInputState(state)
-}
-
-func anyToDateTimeInputState(a any) *datetimeinput.State {
-	bytes, err := json.Marshal(a)
-	if err != nil {
+	v, ok := state.(*datetimeinput.State)
+	if !ok {
 		return nil
 	}
 
-	var dateTimeInputState datetimeinput.State
-	if err := json.Unmarshal(bytes, &dateTimeInputState); err != nil {
-		return nil
-	}
-
-	return &dateTimeInputState
+	return v
 }
 
 func (s *State) GetTimeInput(id uuid.UUID) *timeinput.State {
@@ -168,21 +131,12 @@ func (s *State) GetTimeInput(id uuid.UUID) *timeinput.State {
 		return nil
 	}
 
-	return anyToTimeInputState(state)
-}
-
-func anyToTimeInputState(a any) *timeinput.State {
-	bytes, err := json.Marshal(a)
-	if err != nil {
+	v, ok := state.(*timeinput.State)
+	if !ok {
 		return nil
 	}
 
-	var timeInputState timeinput.State
-	if err := json.Unmarshal(bytes, &timeInputState); err != nil {
-		return nil
-	}
-
-	return &timeInputState
+	return v
 }
 
 func (s *State) GetSelectbox(id uuid.UUID) *selectbox.State {
@@ -194,21 +148,12 @@ func (s *State) GetSelectbox(id uuid.UUID) *selectbox.State {
 		return nil
 	}
 
-	return anyToSelectboxState(state)
-}
-
-func anyToSelectboxState(a any) *selectbox.State {
-	bytes, err := json.Marshal(a)
-	if err != nil {
+	v, ok := state.(*selectbox.State)
+	if !ok {
 		return nil
 	}
 
-	var selectboxState selectbox.State
-	if err := json.Unmarshal(bytes, &selectboxState); err != nil {
-		return nil
-	}
-
-	return &selectboxState
+	return v
 }
 
 func (s *State) GetMultiSelect(id uuid.UUID) *multiselect.State {
@@ -220,21 +165,12 @@ func (s *State) GetMultiSelect(id uuid.UUID) *multiselect.State {
 		return nil
 	}
 
-	return anyToMultiSelectState(state)
-}
-
-func anyToMultiSelectState(a any) *multiselect.State {
-	bytes, err := json.Marshal(a)
-	if err != nil {
+	v, ok := state.(*multiselect.State)
+	if !ok {
 		return nil
 	}
 
-	var multiSelectState multiselect.State
-	if err := json.Unmarshal(bytes, &multiSelectState); err != nil {
-		return nil
-	}
-
-	return &multiSelectState
+	return v
 }
 
 func (s *State) GetCheckbox(id uuid.UUID) *checkbox.State {
@@ -246,21 +182,12 @@ func (s *State) GetCheckbox(id uuid.UUID) *checkbox.State {
 		return nil
 	}
 
-	return anyToCheckboxState(state)
-}
-
-func anyToCheckboxState(a any) *checkbox.State {
-	bytes, err := json.Marshal(a)
-	if err != nil {
+	v, ok := state.(*checkbox.State)
+	if !ok {
 		return nil
 	}
 
-	var checkboxSelectState checkbox.State
-	if err := json.Unmarshal(bytes, &checkboxSelectState); err != nil {
-		return nil
-	}
-
-	return &checkboxSelectState
+	return v
 }
 
 func (s *State) GetCheckboxGroup(id uuid.UUID) *checkboxgroup.State {
@@ -272,21 +199,12 @@ func (s *State) GetCheckboxGroup(id uuid.UUID) *checkboxgroup.State {
 		return nil
 	}
 
-	return anyToCheckboxGroupState(state)
-}
-
-func anyToCheckboxGroupState(a any) *checkboxgroup.State {
-	bytes, err := json.Marshal(a)
-	if err != nil {
+	v, ok := state.(*checkboxgroup.State)
+	if !ok {
 		return nil
 	}
 
-	var checkboxGroupState checkboxgroup.State
-	if err := json.Unmarshal(bytes, &checkboxGroupState); err != nil {
-		return nil
-	}
-
-	return &checkboxGroupState
+	return v
 }
 
 func (s *State) GetRadio(id uuid.UUID) *radio.State {
@@ -298,21 +216,12 @@ func (s *State) GetRadio(id uuid.UUID) *radio.State {
 		return nil
 	}
 
-	return anyToRadioState(state)
-}
-
-func anyToRadioState(a any) *radio.State {
-	bytes, err := json.Marshal(a)
-	if err != nil {
+	v, ok := state.(*radio.State)
+	if !ok {
 		return nil
 	}
 
-	var radioState radio.State
-	if err := json.Unmarshal(bytes, &radioState); err != nil {
-		return nil
-	}
-
-	return &radioState
+	return v
 }
 
 func (s *State) GetTextArea(id uuid.UUID) *textarea.State {
@@ -324,21 +233,12 @@ func (s *State) GetTextArea(id uuid.UUID) *textarea.State {
 		return nil
 	}
 
-	return anyToTextAreaState(state)
-}
-
-func anyToTextAreaState(a any) *textarea.State {
-	bytes, err := json.Marshal(a)
-	if err != nil {
+	v, ok := state.(*textarea.State)
+	if !ok {
 		return nil
 	}
 
-	var textAreaState textarea.State
-	if err := json.Unmarshal(bytes, &textAreaState); err != nil {
-		return nil
-	}
-
-	return &textAreaState
+	return v
 }
 
 func (s *State) GetTable(id uuid.UUID) *table.State {
@@ -350,21 +250,12 @@ func (s *State) GetTable(id uuid.UUID) *table.State {
 		return nil
 	}
 
-	return anyToTableState(state)
-}
-
-func anyToTableState(a any) *table.State {
-	bytes, err := json.Marshal(a)
-	if err != nil {
+	v, ok := state.(*table.State)
+	if !ok {
 		return nil
 	}
 
-	var tableState table.State
-	if err := json.Unmarshal(bytes, &tableState); err != nil {
-		return nil
-	}
-
-	return &tableState
+	return v
 }
 
 func (s *State) GetButton(id uuid.UUID) *button.State {
@@ -376,21 +267,12 @@ func (s *State) GetButton(id uuid.UUID) *button.State {
 		return nil
 	}
 
-	return anyToButtonState(state)
-}
-
-func anyToButtonState(a any) *button.State {
-	bytes, err := json.Marshal(a)
-	if err != nil {
+	v, ok := state.(*button.State)
+	if !ok {
 		return nil
 	}
 
-	var buttonState button.State
-	if err := json.Unmarshal(bytes, &buttonState); err != nil {
-		return nil
-	}
-
-	return &buttonState
+	return v
 }
 
 func (s *State) GetColumns(id uuid.UUID) *columns.State {
@@ -402,21 +284,12 @@ func (s *State) GetColumns(id uuid.UUID) *columns.State {
 		return nil
 	}
 
-	return anyToColumnsState(state)
-}
-
-func anyToColumnsState(a any) *columns.State {
-	bytes, err := json.Marshal(a)
-	if err != nil {
+	v, ok := state.(*columns.State)
+	if !ok {
 		return nil
 	}
 
-	var columnsState columns.State
-	if err := json.Unmarshal(bytes, &columnsState); err != nil {
-		return nil
-	}
-
-	return &columnsState
+	return v
 }
 
 func (s *State) GetMarkdown(id uuid.UUID) *markdown.State {
@@ -428,21 +301,12 @@ func (s *State) GetMarkdown(id uuid.UUID) *markdown.State {
 		return nil
 	}
 
-	return anyToMarkdownState(state)
-}
-
-func anyToMarkdownState(a any) *markdown.State {
-	bytes, err := json.Marshal(a)
-	if err != nil {
+	v, ok := state.(*markdown.State)
+	if !ok {
 		return nil
 	}
 
-	var markdownState markdown.State
-	if err := json.Unmarshal(bytes, &markdownState); err != nil {
-		return nil
-	}
-
-	return &markdownState
+	return v
 }
 
 func (s *State) GetForm(id uuid.UUID) *form.State {
@@ -454,21 +318,12 @@ func (s *State) GetForm(id uuid.UUID) *form.State {
 		return nil
 	}
 
-	return anyToFormState(state)
-}
-
-func anyToFormState(a any) *form.State {
-	bytes, err := json.Marshal(a)
-	if err != nil {
+	v, ok := state.(*form.State)
+	if !ok {
 		return nil
 	}
 
-	var formState form.State
-	if err := json.Unmarshal(bytes, &formState); err != nil {
-		return nil
-	}
-
-	return &formState
+	return v
 }
 
 func (s *State) ResetStates() {
@@ -483,14 +338,14 @@ func (s *State) ResetButtons() {
 	for id, state := range s.data {
 		switch state.GetType() {
 		case button.WidgetType:
-			buttonState := anyToButtonState(state)
-			if buttonState != nil {
+			buttonState, ok := state.(*button.State)
+			if ok {
 				buttonState.Value = false
 				s.data[id] = buttonState
 			}
 		case form.WidgetType:
-			formState := anyToFormState(state)
-			if formState != nil {
+			formState, ok := state.(*form.State)
+			if ok {
 				formState.Value = false
 				s.data[id] = formState
 			}

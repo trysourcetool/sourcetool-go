@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/gofrs/uuid/v5"
+
 	"github.com/trysourcetool/sourcetool-go/internal/selectbox"
 	"github.com/trysourcetool/sourcetool-go/internal/session"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket"
@@ -38,8 +39,8 @@ func TestConvertStateToSelectboxData(t *testing.T) {
 
 	tests := []struct {
 		name string
-		got  interface{}
-		want interface{}
+		got  any
+		want any
 	}{
 		{"Label", data.Label, state.Label},
 		{"Value", *data.Value, *state.Value},
@@ -84,8 +85,8 @@ func TestConvertSelectboxDataToState(t *testing.T) {
 
 	tests := []struct {
 		name string
-		got  interface{}
-		want interface{}
+		got  any
+		want any
 	}{
 		{"ID", state.ID, id},
 		{"Label", state.Label, data.Label},
@@ -167,8 +168,8 @@ func TestSelectbox(t *testing.T) {
 
 	tests := []struct {
 		name string
-		got  interface{}
-		want interface{}
+		got  any
+		want any
 	}{
 		{"Label", state.Label, label},
 		{"Options length", len(state.Options), len(options)},

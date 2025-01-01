@@ -2,37 +2,39 @@ package sourcetool
 
 import (
 	"context"
+	"reflect"
 	"testing"
 
 	"github.com/gofrs/uuid/v5"
 
-	"github.com/trysourcetool/sourcetool-go/internal/radio"
+	"github.com/trysourcetool/sourcetool-go/internal/multiselect"
 	"github.com/trysourcetool/sourcetool-go/internal/session"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket/mock"
-	externalradio "github.com/trysourcetool/sourcetool-go/radio"
+	externalmultiselect "github.com/trysourcetool/sourcetool-go/multiselect"
 )
 
-func TestConvertStateToRadioData(t *testing.T) {
+func TestConvertStateToMultiSelectData(t *testing.T) {
 	id := uuid.Must(uuid.NewV4())
-	value := 1
-	defaultValue := 0
-	options := []string{"Option 1", "Option 2"}
+	value := []int{0, 2}
+	defaultValue := []int{0}
+	options := []string{"Option 1", "Option 2", "Option 3"}
 
-	state := &radio.State{
+	state := &multiselect.State{
 		ID:           id,
-		Label:        "Test Radio",
-		Value:        &value,
+		Label:        "Test MultiSelect",
+		Value:        value,
 		Options:      options,
-		DefaultValue: &defaultValue,
+		Placeholder:  "Select options",
+		DefaultValue: defaultValue,
 		Required:     true,
 		Disabled:     false,
 	}
 
-	data := convertStateToRadioData(state)
+	data := convertStateToMultiSelectData(state)
 
 	if data == nil {
-		t.Fatal("convertStateToRadioData returned nil")
+		t.Fatal("convertStateToMultiSelectData returned nil")
 	}
 
 	tests := []struct {
@@ -41,41 +43,43 @@ func TestConvertStateToRadioData(t *testing.T) {
 		want any
 	}{
 		{"Label", data.Label, state.Label},
-		{"Value", *data.Value, *state.Value},
+		{"Value", data.Value, state.Value},
 		{"Options length", len(data.Options), len(state.Options)},
-		{"DefaultValue", *data.DefaultValue, *state.DefaultValue},
+		{"Placeholder", data.Placeholder, state.Placeholder},
+		{"DefaultValue", data.DefaultValue, state.DefaultValue},
 		{"Required", data.Required, state.Required},
 		{"Disabled", data.Disabled, state.Disabled},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.got != tt.want {
+			if !reflect.DeepEqual(tt.got, tt.want) {
 				t.Errorf("got %v, want %v", tt.got, tt.want)
 			}
 		})
 	}
 }
 
-func TestConvertRadioDataToState(t *testing.T) {
+func TestConvertMultiSelectDataToState(t *testing.T) {
 	id := uuid.Must(uuid.NewV4())
-	value := 1
-	defaultValue := 0
-	options := []string{"Option 1", "Option 2"}
+	value := []int{0, 2}
+	defaultValue := []int{0}
+	options := []string{"Option 1", "Option 2", "Option 3"}
 
-	data := &websocket.RadioData{
-		Label:        "Test Radio",
-		Value:        &value,
+	data := &websocket.MultiSelectData{
+		Label:        "Test MultiSelect",
+		Value:        value,
 		Options:      options,
-		DefaultValue: &defaultValue,
+		Placeholder:  "Select options",
+		DefaultValue: defaultValue,
 		Required:     true,
 		Disabled:     false,
 	}
 
-	state := convertRadioDataToState(id, data)
+	state := convertMultiSelectDataToState(id, data)
 
 	if state == nil {
-		t.Fatal("convertRadioDataToState returned nil")
+		t.Fatal("convertMultiSelectDataToState returned nil")
 	}
 
 	tests := []struct {
@@ -85,23 +89,24 @@ func TestConvertRadioDataToState(t *testing.T) {
 	}{
 		{"ID", state.ID, id},
 		{"Label", state.Label, data.Label},
-		{"Value", *state.Value, *data.Value},
+		{"Value", state.Value, data.Value},
 		{"Options length", len(state.Options), len(data.Options)},
-		{"DefaultValue", *state.DefaultValue, *data.DefaultValue},
+		{"Placeholder", state.Placeholder, data.Placeholder},
+		{"DefaultValue", state.DefaultValue, data.DefaultValue},
 		{"Required", state.Required, data.Required},
 		{"Disabled", state.Disabled, data.Disabled},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.got != tt.want {
+			if !reflect.DeepEqual(tt.got, tt.want) {
 				t.Errorf("got %v, want %v", tt.got, tt.want)
 			}
 		})
 	}
 }
 
-func TestRadio(t *testing.T) {
+func TestMultiSelect(t *testing.T) {
 	sessionID := uuid.Must(uuid.NewV4())
 	pageID := uuid.Must(uuid.NewV4())
 	sess := session.New(sessionID, pageID)
@@ -120,26 +125,30 @@ func TestRadio(t *testing.T) {
 		},
 	}
 
-	label := "Test Radio"
-	options := []string{"Option 1", "Option 2"}
-	defaultValue := "Option 1"
+	label := "Test MultiSelect"
+	options := []string{"Option 1", "Option 2", "Option 3"}
+	defaultValue := []string{"Option 1", "Option 3"}
+	placeholder := "Select options"
 
-	// Create Radio component
-	value := builder.Radio(label,
-		externalradio.Options(options...),
-		externalradio.DefaultValue(defaultValue),
-		externalradio.Required(true),
+	// Create MultiSelect component with all options
+	value := builder.MultiSelect(label,
+		externalmultiselect.Options(options...),
+		externalmultiselect.DefaultValue(defaultValue...),
+		externalmultiselect.Placeholder(placeholder),
+		externalmultiselect.Required(true),
+		externalmultiselect.Disabled(true),
 	)
 
 	// Verify return value
 	if value == nil {
-		t.Fatal("Radio returned nil")
+		t.Fatal("MultiSelect returned nil")
 	}
-	if value.Value != defaultValue {
-		t.Errorf("Radio value = %v, want %v", value.Value, defaultValue)
+	if !reflect.DeepEqual(value.Values, defaultValue) {
+		t.Errorf("MultiSelect values = %v, want %v", value.Values, defaultValue)
 	}
-	if value.Index != 0 {
-		t.Errorf("Radio index = %v, want 0", value.Index)
+	expectedIndexes := []int{0, 2}
+	if !reflect.DeepEqual(value.Indexes, expectedIndexes) {
+		t.Errorf("MultiSelect indexes = %v, want %v", value.Indexes, expectedIndexes)
 	}
 
 	// Verify WebSocket message
@@ -152,10 +161,10 @@ func TestRadio(t *testing.T) {
 	}
 
 	// Verify state
-	widgetID := builder.generateRadioID(label, []int{0})
-	state := sess.State.GetRadio(widgetID)
+	widgetID := builder.generateMultiSelectID(label, []int{0})
+	state := sess.State.GetMultiSelect(widgetID)
 	if state == nil {
-		t.Fatal("Radio state not found")
+		t.Fatal("MultiSelect state not found")
 	}
 
 	tests := []struct {
@@ -165,20 +174,21 @@ func TestRadio(t *testing.T) {
 	}{
 		{"Label", state.Label, label},
 		{"Options length", len(state.Options), len(options)},
+		{"Placeholder", state.Placeholder, placeholder},
 		{"Required", state.Required, true},
-		{"Disabled", state.Disabled, false},
+		{"Disabled", state.Disabled, true},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.got != tt.want {
+			if !reflect.DeepEqual(tt.got, tt.want) {
 				t.Errorf("got %v, want %v", tt.got, tt.want)
 			}
 		})
 	}
 }
 
-func TestRadio_WithFormatFunc(t *testing.T) {
+func TestMultiSelect_WithFormatFunc(t *testing.T) {
 	sessionID := uuid.Must(uuid.NewV4())
 	pageID := uuid.Must(uuid.NewV4())
 	sess := session.New(sessionID, pageID)
@@ -197,28 +207,26 @@ func TestRadio_WithFormatFunc(t *testing.T) {
 		},
 	}
 
-	label := "Test Radio"
+	label := "Test MultiSelect"
 	options := []string{"Option 1", "Option 2"}
 	formatFunc := func(value string, index int) string {
 		return value + " (Custom)"
 	}
 
-	builder.Radio(label,
-		externalradio.Options(options...),
-		externalradio.FormatFunc(formatFunc),
+	builder.MultiSelect(label,
+		externalmultiselect.Options(options...),
+		externalmultiselect.FormatFunc(formatFunc),
 	)
 
 	// Verify that format function is applied
-	widgetID := builder.generateRadioID(label, []int{0})
-	state := sess.State.GetRadio(widgetID)
+	widgetID := builder.generateMultiSelectID(label, []int{0})
+	state := sess.State.GetMultiSelect(widgetID)
 	if state == nil {
-		t.Fatal("Radio state not found")
+		t.Fatal("MultiSelect state not found")
 	}
 
 	expectedOptions := []string{"Option 1 (Custom)", "Option 2 (Custom)"}
-	for i, opt := range state.Options {
-		if opt != expectedOptions[i] {
-			t.Errorf("Formatted option[%d] = %v, want %v", i, opt, expectedOptions[i])
-		}
+	if !reflect.DeepEqual(state.Options, expectedOptions) {
+		t.Errorf("Formatted options = %v, want %v", state.Options, expectedOptions)
 	}
 }

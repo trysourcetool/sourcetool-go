@@ -28,12 +28,12 @@ func Disabled(disabled bool) numberinput.Option {
 
 func MaxValue(value float64) numberinput.Option {
 	return func(opts *numberinput.Options) {
-		opts.MinValue = &value
+		opts.MaxValue = &value
 	}
 }
 
 func MinLength(value float64) numberinput.Option {
 	return func(opts *numberinput.Options) {
-		opts.MaxValue = &value
+		opts.MinValue = &value
 	}
 }

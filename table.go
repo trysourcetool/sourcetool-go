@@ -52,6 +52,7 @@ func (b *uiBuilder) Table(data any, options ...table.Option) table.Value {
 	state.Header = opts.Header
 	state.Description = opts.Description
 	state.OnSelect = opts.OnSelect.String()
+	state.RowSelection = opts.RowSelection.String()
 	sess.State.Set(widgetID, state)
 
 	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), websocket.MessageMethodRenderWidget, &websocket.RenderWidgetPayload{

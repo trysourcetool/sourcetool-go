@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/gofrs/uuid/v5"
+
 	"github.com/trysourcetool/sourcetool-go/internal/session"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket/mock"
