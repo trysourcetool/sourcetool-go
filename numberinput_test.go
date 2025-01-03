@@ -141,7 +141,7 @@ func TestNumberInput(t *testing.T) {
 		externalnumberinput.Required(true),
 		externalnumberinput.Disabled(true),
 		externalnumberinput.MaxValue(maxValue),
-		externalnumberinput.MinLength(minValue),
+		externalnumberinput.MinValue(minValue),
 	)
 
 	// Verify return value

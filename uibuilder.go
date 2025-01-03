@@ -13,6 +13,7 @@ import (
 	"github.com/trysourcetool/sourcetool-go/internal/dateinput"
 	"github.com/trysourcetool/sourcetool-go/internal/datetimeinput"
 	"github.com/trysourcetool/sourcetool-go/internal/form"
+	"github.com/trysourcetool/sourcetool-go/internal/markdown"
 	"github.com/trysourcetool/sourcetool-go/internal/multiselect"
 	"github.com/trysourcetool/sourcetool-go/internal/numberinput"
 	"github.com/trysourcetool/sourcetool-go/internal/selectbox"
@@ -25,6 +26,7 @@ import (
 
 type UIBuilder interface {
 	Context() context.Context
+	Markdown(string, ...markdown.Option)
 	TextInput(string, ...textinput.Option) string
 	NumberInput(string, ...numberinput.Option) *float64
 	DateInput(string, ...dateinput.Option) *time.Time

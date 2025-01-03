@@ -32,7 +32,7 @@ func MaxValue(value float64) numberinput.Option {
 	}
 }
 
-func MinLength(value float64) numberinput.Option {
+func MinValue(value float64) numberinput.Option {
 	return func(opts *numberinput.Options) {
 		opts.MinValue = &value
 	}
