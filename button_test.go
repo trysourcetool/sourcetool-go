@@ -6,7 +6,7 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 
-	externalbutton "github.com/trysourcetool/sourcetool-go/button"
+	"github.com/trysourcetool/sourcetool-go/button"
 	"github.com/trysourcetool/sourcetool-go/internal/session"
 	"github.com/trysourcetool/sourcetool-go/internal/session/state"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket"
@@ -103,7 +103,7 @@ func TestButton(t *testing.T) {
 
 	// Create Button component with all options
 	value := builder.Button(label,
-		externalbutton.Disabled(true),
+		button.Disabled(true),
 	)
 
 	// Verify return value

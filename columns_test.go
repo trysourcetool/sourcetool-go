@@ -6,7 +6,7 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 
-	externalcolumns "github.com/trysourcetool/sourcetool-go/columns"
+	"github.com/trysourcetool/sourcetool-go/columns"
 	"github.com/trysourcetool/sourcetool-go/internal/session"
 	"github.com/trysourcetool/sourcetool-go/internal/session/state"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket"
@@ -172,7 +172,7 @@ func TestColumns_WithWeight(t *testing.T) {
 	weights := []int{2, 1, 1}
 	totalWeight := 4
 
-	builders := builder.Columns(cols, externalcolumns.Weight(weights...))
+	builders := builder.Columns(cols, columns.Weight(weights...))
 
 	if builders == nil {
 		t.Fatal("Columns returned nil")
@@ -235,7 +235,7 @@ func TestColumns_InvalidInput(t *testing.T) {
 			if tt.weights == nil {
 				builders = builder.Columns(tt.cols)
 			} else {
-				builders = builder.Columns(tt.cols, externalcolumns.Weight(tt.weights...))
+				builders = builder.Columns(tt.cols, columns.Weight(tt.weights...))
 			}
 
 			if tt.cols <= 0 && builders != nil {

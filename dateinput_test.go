@@ -7,7 +7,7 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 
-	externaldateinput "github.com/trysourcetool/sourcetool-go/dateinput"
+	"github.com/trysourcetool/sourcetool-go/dateinput"
 	"github.com/trysourcetool/sourcetool-go/internal/session"
 	"github.com/trysourcetool/sourcetool-go/internal/session/state"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket"
@@ -161,14 +161,14 @@ func TestDateInput(t *testing.T) {
 
 	// Create DateInput component with all options
 	value := builder.DateInput(label,
-		externaldateinput.DefaultValue(now),
-		externaldateinput.Placeholder(placeholder),
-		externaldateinput.Required(true),
-		externaldateinput.Disabled(true),
-		externaldateinput.Format(format),
-		externaldateinput.MaxValue(maxDate),
-		externaldateinput.MinLength(minDate),
-		externaldateinput.Location(location),
+		dateinput.DefaultValue(now),
+		dateinput.Placeholder(placeholder),
+		dateinput.Required(true),
+		dateinput.Disabled(true),
+		dateinput.Format(format),
+		dateinput.MaxValue(maxDate),
+		dateinput.MinLength(minDate),
+		dateinput.Location(location),
 	)
 
 	// Verify return value

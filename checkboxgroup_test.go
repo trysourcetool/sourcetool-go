@@ -7,7 +7,7 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 
-	externalcheckboxgroup "github.com/trysourcetool/sourcetool-go/checkboxgroup"
+	"github.com/trysourcetool/sourcetool-go/checkboxgroup"
 	"github.com/trysourcetool/sourcetool-go/internal/session"
 	"github.com/trysourcetool/sourcetool-go/internal/session/state"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket"
@@ -127,10 +127,10 @@ func TestCheckboxGroup(t *testing.T) {
 
 	// Create CheckboxGroup component with all options
 	value := builder.CheckboxGroup(label,
-		externalcheckboxgroup.Options(options...),
-		externalcheckboxgroup.DefaultValue(defaultValue...),
-		externalcheckboxgroup.Required(true),
-		externalcheckboxgroup.Disabled(true),
+		checkboxgroup.Options(options...),
+		checkboxgroup.DefaultValue(defaultValue...),
+		checkboxgroup.Required(true),
+		checkboxgroup.Disabled(true),
 	)
 
 	// Verify return value
@@ -207,8 +207,8 @@ func TestCheckboxGroup_WithFormatFunc(t *testing.T) {
 	}
 
 	builder.CheckboxGroup(label,
-		externalcheckboxgroup.Options(options...),
-		externalcheckboxgroup.FormatFunc(formatFunc),
+		checkboxgroup.Options(options...),
+		checkboxgroup.FormatFunc(formatFunc),
 	)
 
 	// Verify that format function is applied

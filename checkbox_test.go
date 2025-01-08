@@ -6,7 +6,7 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 
-	externalcheckbox "github.com/trysourcetool/sourcetool-go/checkbox"
+	"github.com/trysourcetool/sourcetool-go/checkbox"
 	"github.com/trysourcetool/sourcetool-go/internal/session"
 	"github.com/trysourcetool/sourcetool-go/internal/session/state"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket"
@@ -114,9 +114,9 @@ func TestCheckbox(t *testing.T) {
 
 	// Create Checkbox component with all options
 	value := builder.Checkbox(label,
-		externalcheckbox.DefaultValue(true),
-		externalcheckbox.Required(true),
-		externalcheckbox.Disabled(true),
+		checkbox.DefaultValue(true),
+		checkbox.Required(true),
+		checkbox.Disabled(true),
 	)
 
 	// Verify return value
