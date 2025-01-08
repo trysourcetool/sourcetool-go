@@ -22,8 +22,8 @@ func (b *uiBuilder) Selectbox(label string, opts ...selectbox.Option) *selectbox
 		FormatFunc:   nil,
 	}
 
-	for _, option := range opts {
-		option.Apply(selectboxOpts)
+	for _, o := range opts {
+		o.Apply(selectboxOpts)
 	}
 
 	sess := b.session

@@ -21,8 +21,8 @@ func (b *uiBuilder) MultiSelect(label string, opts ...multiselect.Option) *multi
 		FormatFunc:   nil,
 	}
 
-	for _, option := range opts {
-		option.Apply(multiSelectOpts)
+	for _, o := range opts {
+		o.Apply(multiSelectOpts)
 	}
 
 	sess := b.session

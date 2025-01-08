@@ -21,8 +21,8 @@ func (b *uiBuilder) Radio(label string, opts ...radio.Option) *radio.Value {
 		FormatFunc:   nil,
 	}
 
-	for _, option := range opts {
-		option.Apply(radioOpts)
+	for _, o := range opts {
+		o.Apply(radioOpts)
 	}
 
 	sess := b.session

@@ -35,8 +35,8 @@ func (b *uiBuilder) Columns(cols int, opts ...columns.Option) []UIBuilder {
 	columnsOpts := &options.ColumnsOptions{
 		Columns: cols,
 	}
-	for _, option := range opts {
-		option.Apply(columnsOpts)
+	for _, o := range opts {
+		o.Apply(columnsOpts)
 	}
 
 	widgetID := b.generateColumnsID(path)

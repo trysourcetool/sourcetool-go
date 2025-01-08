@@ -22,8 +22,8 @@ func (b *uiBuilder) TextInput(label string, opts ...textinput.Option) string {
 		MinLength:    nil,
 	}
 
-	for _, option := range opts {
-		option.Apply(textInputOpts)
+	for _, o := range opts {
+		o.Apply(textInputOpts)
 	}
 
 	sess := b.session

@@ -26,8 +26,8 @@ func (b *uiBuilder) TextArea(label string, opts ...textarea.Option) string {
 		AutoResize:   true,
 	}
 
-	for _, option := range opts {
-		option.Apply(textAreaOpts)
+	for _, o := range opts {
+		o.Apply(textAreaOpts)
 	}
 
 	sess := b.session

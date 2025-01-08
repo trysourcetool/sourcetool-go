@@ -23,8 +23,8 @@ func (b *uiBuilder) TimeInput(label string, opts ...timeinput.Option) *time.Time
 		Location:     time.Local,
 	}
 
-	for _, option := range opts {
-		option.Apply(timeInputOpts)
+	for _, o := range opts {
+		o.Apply(timeInputOpts)
 	}
 
 	sess := b.session

@@ -19,8 +19,8 @@ func (b *uiBuilder) Checkbox(label string, opts ...checkbox.Option) bool {
 		Disabled:     false,
 	}
 
-	for _, option := range opts {
-		option.Apply(checkboxOpts)
+	for _, o := range opts {
+		o.Apply(checkboxOpts)
 	}
 
 	sess := b.session

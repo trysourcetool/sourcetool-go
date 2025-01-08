@@ -26,8 +26,8 @@ func (b *uiBuilder) DateInput(label string, opts ...dateinput.Option) *time.Time
 		Location:     time.Local,
 	}
 
-	for _, option := range opts {
-		option.Apply(dateInputOpts)
+	for _, o := range opts {
+		o.Apply(dateInputOpts)
 	}
 
 	sess := b.session

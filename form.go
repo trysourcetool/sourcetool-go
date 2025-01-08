@@ -15,8 +15,8 @@ func (b *uiBuilder) Form(buttonLabel string, opts ...form.Option) (UIBuilder, bo
 		ClearOnSubmit:  false,
 	}
 
-	for _, option := range opts {
-		option.Apply(formOpts)
+	for _, o := range opts {
+		o.Apply(formOpts)
 	}
 
 	sess := b.session

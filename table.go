@@ -18,8 +18,8 @@ func (b *uiBuilder) Table(data any, opts ...table.Option) table.Value {
 		RowSelection: conv.NilValue(table.SelectionModeSingle.String()),
 	}
 
-	for _, option := range opts {
-		option.Apply(tableOpts)
+	for _, o := range opts {
+		o.Apply(tableOpts)
 	}
 
 	sess := b.session

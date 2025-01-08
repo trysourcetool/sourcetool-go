@@ -23,8 +23,8 @@ func (b *uiBuilder) NumberInput(label string, opts ...numberinput.Option) *float
 		MinValue:     nil,
 	}
 
-	for _, option := range opts {
-		option.Apply(numberInputOpts)
+	for _, o := range opts {
+		o.Apply(numberInputOpts)
 	}
 
 	sess := b.session

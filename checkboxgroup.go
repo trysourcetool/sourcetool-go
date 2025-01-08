@@ -20,8 +20,8 @@ func (b *uiBuilder) CheckboxGroup(label string, opts ...checkboxgroup.Option) *c
 		FormatFunc:   nil,
 	}
 
-	for _, option := range opts {
-		option.Apply(checkboxGroupOpts)
+	for _, o := range opts {
+		o.Apply(checkboxGroupOpts)
 	}
 
 	sess := b.session

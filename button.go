@@ -17,8 +17,8 @@ func (b *uiBuilder) Button(label string, opts ...button.Option) bool {
 		Disabled: false,
 	}
 
-	for _, option := range opts {
-		option.Apply(buttonOpts)
+	for _, o := range opts {
+		o.Apply(buttonOpts)
 	}
 
 	sess := b.session
