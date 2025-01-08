@@ -2,11 +2,6 @@ package multiselect
 
 import "github.com/trysourcetool/sourcetool-go/internal/options"
 
-type Value struct {
-	Values  []string
-	Indexes []int
-}
-
 type Option interface {
 	Apply(*options.MultiSelectOptions)
 }

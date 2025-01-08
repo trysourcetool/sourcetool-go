@@ -2,11 +2,6 @@ package radio
 
 import "github.com/trysourcetool/sourcetool-go/internal/options"
 
-type Value struct {
-	Value string
-	Index int
-}
-
 type Option interface {
 	Apply(*options.RadioOptions)
 }
