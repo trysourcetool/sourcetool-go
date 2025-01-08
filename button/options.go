@@ -1,9 +1,17 @@
 package button
 
-import "github.com/trysourcetool/sourcetool-go/internal/button"
+import "github.com/trysourcetool/sourcetool-go/internal/options"
 
-func Disabled(disabled bool) button.Option {
-	return func(opts *button.Options) {
-		opts.Disabled = disabled
-	}
+type Option interface {
+	Apply(*options.ButtonOptions)
+}
+
+type disabledOption bool
+
+func (d disabledOption) Apply(opts *options.ButtonOptions) {
+	opts.Disabled = bool(d)
+}
+
+func Disabled(disabled bool) Option {
+	return disabledOption(disabled)
 }

@@ -5,27 +5,12 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 
-	"github.com/trysourcetool/sourcetool-go/internal/button"
-	"github.com/trysourcetool/sourcetool-go/internal/checkbox"
-	"github.com/trysourcetool/sourcetool-go/internal/checkboxgroup"
-	"github.com/trysourcetool/sourcetool-go/internal/columns"
-	"github.com/trysourcetool/sourcetool-go/internal/dateinput"
-	"github.com/trysourcetool/sourcetool-go/internal/datetimeinput"
-	"github.com/trysourcetool/sourcetool-go/internal/form"
-	"github.com/trysourcetool/sourcetool-go/internal/markdown"
-	"github.com/trysourcetool/sourcetool-go/internal/multiselect"
-	"github.com/trysourcetool/sourcetool-go/internal/numberinput"
-	"github.com/trysourcetool/sourcetool-go/internal/radio"
-	"github.com/trysourcetool/sourcetool-go/internal/selectbox"
-	"github.com/trysourcetool/sourcetool-go/internal/table"
-	"github.com/trysourcetool/sourcetool-go/internal/textarea"
-	"github.com/trysourcetool/sourcetool-go/internal/textinput"
-	"github.com/trysourcetool/sourcetool-go/internal/timeinput"
+	"github.com/trysourcetool/sourcetool-go/internal/session/state"
 )
 
 type WidgetState interface {
 	IsWidgetState()
-	GetType() string
+	GetType() state.WidgetType
 }
 
 type StateData map[uuid.UUID]WidgetState
@@ -54,16 +39,16 @@ func (s *State) Get(id uuid.UUID) WidgetState {
 	return state
 }
 
-func (s *State) GetTextInput(id uuid.UUID) *textinput.State {
+func (s *State) GetTextInput(id uuid.UUID) *state.TextInputState {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	state, ok := s.data[id]
+	st, ok := s.data[id]
 	if !ok {
 		return nil
 	}
 
-	v, ok := state.(*textinput.State)
+	v, ok := st.(*state.TextInputState)
 	if !ok {
 		return nil
 	}
@@ -71,16 +56,16 @@ func (s *State) GetTextInput(id uuid.UUID) *textinput.State {
 	return v
 }
 
-func (s *State) GetNumberInput(id uuid.UUID) *numberinput.State {
+func (s *State) GetNumberInput(id uuid.UUID) *state.NumberInputState {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	state, ok := s.data[id]
+	st, ok := s.data[id]
 	if !ok {
 		return nil
 	}
 
-	v, ok := state.(*numberinput.State)
+	v, ok := st.(*state.NumberInputState)
 	if !ok {
 		return nil
 	}
@@ -88,16 +73,16 @@ func (s *State) GetNumberInput(id uuid.UUID) *numberinput.State {
 	return v
 }
 
-func (s *State) GetDateInput(id uuid.UUID) *dateinput.State {
+func (s *State) GetDateInput(id uuid.UUID) *state.DateInputState {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	state, ok := s.data[id]
+	st, ok := s.data[id]
 	if !ok {
 		return nil
 	}
 
-	v, ok := state.(*dateinput.State)
+	v, ok := st.(*state.DateInputState)
 	if !ok {
 		return nil
 	}
@@ -105,16 +90,16 @@ func (s *State) GetDateInput(id uuid.UUID) *dateinput.State {
 	return v
 }
 
-func (s *State) GetDateTimeInput(id uuid.UUID) *datetimeinput.State {
+func (s *State) GetDateTimeInput(id uuid.UUID) *state.DateTimeInputState {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	state, ok := s.data[id]
+	st, ok := s.data[id]
 	if !ok {
 		return nil
 	}
 
-	v, ok := state.(*datetimeinput.State)
+	v, ok := st.(*state.DateTimeInputState)
 	if !ok {
 		return nil
 	}
@@ -122,16 +107,16 @@ func (s *State) GetDateTimeInput(id uuid.UUID) *datetimeinput.State {
 	return v
 }
 
-func (s *State) GetTimeInput(id uuid.UUID) *timeinput.State {
+func (s *State) GetTimeInput(id uuid.UUID) *state.TimeInputState {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	state, ok := s.data[id]
+	st, ok := s.data[id]
 	if !ok {
 		return nil
 	}
 
-	v, ok := state.(*timeinput.State)
+	v, ok := st.(*state.TimeInputState)
 	if !ok {
 		return nil
 	}
@@ -139,16 +124,16 @@ func (s *State) GetTimeInput(id uuid.UUID) *timeinput.State {
 	return v
 }
 
-func (s *State) GetSelectbox(id uuid.UUID) *selectbox.State {
+func (s *State) GetSelectbox(id uuid.UUID) *state.SelectboxState {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	state, ok := s.data[id]
+	st, ok := s.data[id]
 	if !ok {
 		return nil
 	}
 
-	v, ok := state.(*selectbox.State)
+	v, ok := st.(*state.SelectboxState)
 	if !ok {
 		return nil
 	}
@@ -156,16 +141,16 @@ func (s *State) GetSelectbox(id uuid.UUID) *selectbox.State {
 	return v
 }
 
-func (s *State) GetMultiSelect(id uuid.UUID) *multiselect.State {
+func (s *State) GetMultiSelect(id uuid.UUID) *state.MultiSelectState {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	state, ok := s.data[id]
+	st, ok := s.data[id]
 	if !ok {
 		return nil
 	}
 
-	v, ok := state.(*multiselect.State)
+	v, ok := st.(*state.MultiSelectState)
 	if !ok {
 		return nil
 	}
@@ -173,16 +158,16 @@ func (s *State) GetMultiSelect(id uuid.UUID) *multiselect.State {
 	return v
 }
 
-func (s *State) GetCheckbox(id uuid.UUID) *checkbox.State {
+func (s *State) GetCheckbox(id uuid.UUID) *state.CheckboxState {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	state, ok := s.data[id]
+	st, ok := s.data[id]
 	if !ok {
 		return nil
 	}
 
-	v, ok := state.(*checkbox.State)
+	v, ok := st.(*state.CheckboxState)
 	if !ok {
 		return nil
 	}
@@ -190,16 +175,16 @@ func (s *State) GetCheckbox(id uuid.UUID) *checkbox.State {
 	return v
 }
 
-func (s *State) GetCheckboxGroup(id uuid.UUID) *checkboxgroup.State {
+func (s *State) GetCheckboxGroup(id uuid.UUID) *state.CheckboxGroupState {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	state, ok := s.data[id]
+	st, ok := s.data[id]
 	if !ok {
 		return nil
 	}
 
-	v, ok := state.(*checkboxgroup.State)
+	v, ok := st.(*state.CheckboxGroupState)
 	if !ok {
 		return nil
 	}
@@ -207,16 +192,16 @@ func (s *State) GetCheckboxGroup(id uuid.UUID) *checkboxgroup.State {
 	return v
 }
 
-func (s *State) GetRadio(id uuid.UUID) *radio.State {
+func (s *State) GetRadio(id uuid.UUID) *state.RadioState {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	state, ok := s.data[id]
+	st, ok := s.data[id]
 	if !ok {
 		return nil
 	}
 
-	v, ok := state.(*radio.State)
+	v, ok := st.(*state.RadioState)
 	if !ok {
 		return nil
 	}
@@ -224,16 +209,16 @@ func (s *State) GetRadio(id uuid.UUID) *radio.State {
 	return v
 }
 
-func (s *State) GetTextArea(id uuid.UUID) *textarea.State {
+func (s *State) GetTextArea(id uuid.UUID) *state.TextAreaState {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	state, ok := s.data[id]
+	st, ok := s.data[id]
 	if !ok {
 		return nil
 	}
 
-	v, ok := state.(*textarea.State)
+	v, ok := st.(*state.TextAreaState)
 	if !ok {
 		return nil
 	}
@@ -241,16 +226,16 @@ func (s *State) GetTextArea(id uuid.UUID) *textarea.State {
 	return v
 }
 
-func (s *State) GetTable(id uuid.UUID) *table.State {
+func (s *State) GetTable(id uuid.UUID) *state.TableState {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	state, ok := s.data[id]
+	st, ok := s.data[id]
 	if !ok {
 		return nil
 	}
 
-	v, ok := state.(*table.State)
+	v, ok := st.(*state.TableState)
 	if !ok {
 		return nil
 	}
@@ -258,16 +243,16 @@ func (s *State) GetTable(id uuid.UUID) *table.State {
 	return v
 }
 
-func (s *State) GetButton(id uuid.UUID) *button.State {
+func (s *State) GetButton(id uuid.UUID) *state.ButtonState {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	state, ok := s.data[id]
+	st, ok := s.data[id]
 	if !ok {
 		return nil
 	}
 
-	v, ok := state.(*button.State)
+	v, ok := st.(*state.ButtonState)
 	if !ok {
 		return nil
 	}
@@ -275,16 +260,16 @@ func (s *State) GetButton(id uuid.UUID) *button.State {
 	return v
 }
 
-func (s *State) GetColumns(id uuid.UUID) *columns.State {
+func (s *State) GetColumns(id uuid.UUID) *state.ColumnsState {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	state, ok := s.data[id]
+	st, ok := s.data[id]
 	if !ok {
 		return nil
 	}
 
-	v, ok := state.(*columns.State)
+	v, ok := st.(*state.ColumnsState)
 	if !ok {
 		return nil
 	}
@@ -292,16 +277,16 @@ func (s *State) GetColumns(id uuid.UUID) *columns.State {
 	return v
 }
 
-func (s *State) GetMarkdown(id uuid.UUID) *markdown.State {
+func (s *State) GetMarkdown(id uuid.UUID) *state.MarkdownState {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	state, ok := s.data[id]
+	st, ok := s.data[id]
 	if !ok {
 		return nil
 	}
 
-	v, ok := state.(*markdown.State)
+	v, ok := st.(*state.MarkdownState)
 	if !ok {
 		return nil
 	}
@@ -309,16 +294,16 @@ func (s *State) GetMarkdown(id uuid.UUID) *markdown.State {
 	return v
 }
 
-func (s *State) GetForm(id uuid.UUID) *form.State {
+func (s *State) GetForm(id uuid.UUID) *state.FormState {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	state, ok := s.data[id]
+	st, ok := s.data[id]
 	if !ok {
 		return nil
 	}
 
-	v, ok := state.(*form.State)
+	v, ok := st.(*state.FormState)
 	if !ok {
 		return nil
 	}
@@ -335,16 +320,16 @@ func (s *State) ResetStates() {
 func (s *State) ResetButtons() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	for id, state := range s.data {
-		switch state.GetType() {
-		case button.WidgetType:
-			buttonState, ok := state.(*button.State)
+	for id, st := range s.data {
+		switch st.GetType() {
+		case state.WidgetTypeButton:
+			buttonState, ok := st.(*state.ButtonState)
 			if ok {
 				buttonState.Value = false
 				s.data[id] = buttonState
 			}
-		case form.WidgetType:
-			formState, ok := state.(*form.State)
+		case state.WidgetTypeForm:
+			formState, ok := st.(*state.FormState)
 			if ok {
 				formState.Value = false
 				s.data[id] = formState

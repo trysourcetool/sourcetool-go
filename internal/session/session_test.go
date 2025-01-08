@@ -5,9 +5,8 @@ import (
 	"testing"
 
 	"github.com/gofrs/uuid/v5"
-	"github.com/trysourcetool/sourcetool-go/internal/button"
-	"github.com/trysourcetool/sourcetool-go/internal/form"
-	"github.com/trysourcetool/sourcetool-go/internal/radio"
+
+	"github.com/trysourcetool/sourcetool-go/internal/session/state"
 )
 
 func TestSession_New(t *testing.T) {
@@ -76,107 +75,107 @@ func TestSessionManager_ConcurrentAccess(t *testing.T) {
 }
 
 func TestState_SetGet(t *testing.T) {
-	state := newState()
+	s := newState()
 	id := uuid.Must(uuid.NewV4())
 
-	radioState := &radio.State{
+	radioState := &state.RadioState{
 		ID:      id,
 		Label:   "Test Radio",
 		Options: []string{"Option 1", "Option 2"},
 	}
 
 	// Test Set and Get
-	state.Set(id, radioState)
-	got := state.Get(id)
+	s.Set(id, radioState)
+	got := s.Get(id)
 
 	if got == nil {
 		t.Fatal("Get() returned nil")
 	}
-	if got.GetType() != radio.WidgetType {
-		t.Errorf("got.GetType() = %v, want %v", got.GetType(), radio.WidgetType)
+	if got.GetType() != state.WidgetTypeRadio {
+		t.Errorf("got.GetType() = %v, want %v", got.GetType(), state.WidgetTypeRadio)
 	}
 }
 
 func TestState_ResetStates(t *testing.T) {
-	state := newState()
+	s := newState()
 	id := uuid.Must(uuid.NewV4())
 
-	radioState := &radio.State{
+	radioState := &state.RadioState{
 		ID:      id,
 		Label:   "Test Radio",
 		Options: []string{"Option 1", "Option 2"},
 	}
 
-	state.Set(id, radioState)
-	state.ResetStates()
+	s.Set(id, radioState)
+	s.ResetStates()
 
-	if got := state.Get(id); got != nil {
+	if got := s.Get(id); got != nil {
 		t.Errorf("Get(%v) after reset = %v, want nil", id, got)
 	}
 }
 
 func TestState_ResetButtons(t *testing.T) {
-	state := newState()
+	s := newState()
 	buttonID := uuid.Must(uuid.NewV4())
 	formID := uuid.Must(uuid.NewV4())
 
 	// Set initial states
-	buttonState := &button.State{
+	buttonState := &state.ButtonState{
 		ID:    buttonID,
 		Value: true,
 	}
-	formState := &form.State{
+	formState := &state.FormState{
 		ID:    formID,
 		Value: true,
 	}
 
-	state.Set(buttonID, buttonState)
-	state.Set(formID, formState)
+	s.Set(buttonID, buttonState)
+	s.Set(formID, formState)
 
 	// Reset buttons
-	state.ResetButtons()
+	s.ResetButtons()
 
 	// Check button state
-	if got := state.GetButton(buttonID); got.Value {
+	if got := s.GetButton(buttonID); got.Value {
 		t.Error("button value after reset = true, want false")
 	}
 
 	// Check form state
-	if got := state.GetForm(formID); got.Value {
+	if got := s.GetForm(formID); got.Value {
 		t.Error("form value after reset = true, want false")
 	}
 }
 
 func TestState_SetStates(t *testing.T) {
-	state := newState()
+	s := newState()
 	id1 := uuid.Must(uuid.NewV4())
 	id2 := uuid.Must(uuid.NewV4())
 
 	states := map[uuid.UUID]WidgetState{
-		id1: &radio.State{
+		id1: &state.RadioState{
 			ID:      id1,
 			Label:   "Radio 1",
 			Options: []string{"Option 1", "Option 2"},
 		},
-		id2: &radio.State{
+		id2: &state.RadioState{
 			ID:      id2,
 			Label:   "Radio 2",
 			Options: []string{"Option 3", "Option 4"},
 		},
 	}
 
-	state.SetStates(states)
+	s.SetStates(states)
 
 	// Verify both states were set
 	for id := range states {
-		if got := state.Get(id); got == nil {
+		if got := s.Get(id); got == nil {
 			t.Errorf("Get(%v) = nil, want non-nil", id)
 		}
 	}
 }
 
 func TestState_ConcurrentAccess(t *testing.T) {
-	state := newState()
+	s := newState()
 	var wg sync.WaitGroup
 	numGoroutines := 10
 
@@ -186,14 +185,14 @@ func TestState_ConcurrentAccess(t *testing.T) {
 			defer wg.Done()
 			id := uuid.Must(uuid.NewV4())
 
-			radioState := &radio.State{
+			radioState := &state.RadioState{
 				ID:      id,
 				Label:   "Test Radio",
 				Options: []string{"Option 1", "Option 2"},
 			}
 
-			state.Set(id, radioState)
-			got := state.Get(id)
+			s.Set(id, radioState)
+			got := s.Get(id)
 			if got == nil {
 				t.Errorf("Get(%v) = nil, want non-nil", id)
 			}

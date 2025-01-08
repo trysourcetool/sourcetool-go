@@ -207,10 +207,10 @@ type MarkdownData struct {
 type TableData struct {
 	Data         any            `json:"data"`
 	Value        TableDataValue `json:"value"`
-	Header       string         `json:"header"`
-	Description  string         `json:"description"`
-	OnSelect     string         `json:"onSelect"`
-	RowSelection string         `json:"rowSelection"`
+	Header       *string        `json:"header"`
+	Description  *string        `json:"description"`
+	OnSelect     *string        `json:"onSelect"`
+	RowSelection *string        `json:"rowSelection"`
 }
 
 type TableDataValue struct {

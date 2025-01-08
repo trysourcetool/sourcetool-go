@@ -3,35 +3,59 @@ package timeinput
 import (
 	"time"
 
-	"github.com/trysourcetool/sourcetool-go/internal/timeinput"
+	"github.com/trysourcetool/sourcetool-go/internal/options"
 )
 
-func Placeholder(placeholder string) timeinput.Option {
-	return func(opts *timeinput.Options) {
-		opts.Placeholder = placeholder
-	}
+type Option interface {
+	Apply(*options.TimeInputOptions)
 }
 
-func DefaultValue(value time.Time) timeinput.Option {
-	return func(opts *timeinput.Options) {
-		opts.DefaultValue = &value
-	}
+type placeholderOption string
+
+func (p placeholderOption) Apply(opts *options.TimeInputOptions) {
+	opts.Placeholder = string(p)
 }
 
-func Required(required bool) timeinput.Option {
-	return func(opts *timeinput.Options) {
-		opts.Required = required
-	}
+func Placeholder(placeholder string) Option {
+	return placeholderOption(placeholder)
 }
 
-func Disabled(disabled bool) timeinput.Option {
-	return func(opts *timeinput.Options) {
-		opts.Disabled = disabled
-	}
+type defaultValueOption time.Time
+
+func (d defaultValueOption) Apply(opts *options.TimeInputOptions) {
+	opts.DefaultValue = (*time.Time)(&d)
 }
 
-func Location(location time.Location) timeinput.Option {
-	return func(opts *timeinput.Options) {
-		opts.Location = &location
-	}
+func DefaultValue(value time.Time) Option {
+	return defaultValueOption(value)
+}
+
+type requiredOption bool
+
+func (r requiredOption) Apply(opts *options.TimeInputOptions) {
+	opts.Required = bool(r)
+}
+
+func Required(required bool) Option {
+	return requiredOption(required)
+}
+
+type disabledOption bool
+
+func (d disabledOption) Apply(opts *options.TimeInputOptions) {
+	opts.Disabled = bool(d)
+}
+
+func Disabled(disabled bool) Option {
+	return disabledOption(disabled)
+}
+
+type locationOption time.Location
+
+func (l locationOption) Apply(opts *options.TimeInputOptions) {
+	opts.Location = (*time.Location)(&l)
+}
+
+func Location(location time.Location) Option {
+	return locationOption(location)
 }

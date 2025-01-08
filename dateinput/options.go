@@ -3,53 +3,89 @@ package dateinput
 import (
 	"time"
 
-	"github.com/trysourcetool/sourcetool-go/internal/dateinput"
+	"github.com/trysourcetool/sourcetool-go/internal/options"
 )
 
-func Placeholder(placeholder string) dateinput.Option {
-	return func(opts *dateinput.Options) {
-		opts.Placeholder = placeholder
-	}
+type Option interface {
+	Apply(*options.DateInputOptions)
 }
 
-func DefaultValue(value time.Time) dateinput.Option {
-	return func(opts *dateinput.Options) {
-		opts.DefaultValue = &value
-	}
+type placeholderOption string
+
+func (p placeholderOption) Apply(opts *options.DateInputOptions) {
+	opts.Placeholder = string(p)
 }
 
-func Required(required bool) dateinput.Option {
-	return func(opts *dateinput.Options) {
-		opts.Required = required
-	}
+func Placeholder(placeholder string) Option {
+	return placeholderOption(placeholder)
 }
 
-func Disabled(disabled bool) dateinput.Option {
-	return func(opts *dateinput.Options) {
-		opts.Disabled = disabled
-	}
+type defaultValueOption time.Time
+
+func (d defaultValueOption) Apply(opts *options.DateInputOptions) {
+	opts.DefaultValue = (*time.Time)(&d)
 }
 
-func Format(format string) dateinput.Option {
-	return func(opts *dateinput.Options) {
-		opts.Format = format
-	}
+func DefaultValue(value time.Time) Option {
+	return defaultValueOption(value)
 }
 
-func MaxValue(value time.Time) dateinput.Option {
-	return func(opts *dateinput.Options) {
-		opts.MaxValue = &value
-	}
+type requiredOption bool
+
+func (r requiredOption) Apply(opts *options.DateInputOptions) {
+	opts.Required = bool(r)
 }
 
-func MinLength(value time.Time) dateinput.Option {
-	return func(opts *dateinput.Options) {
-		opts.MinValue = &value
-	}
+func Required(required bool) Option {
+	return requiredOption(required)
 }
 
-func Location(location time.Location) dateinput.Option {
-	return func(opts *dateinput.Options) {
-		opts.Location = &location
-	}
+type disabledOption bool
+
+func (d disabledOption) Apply(opts *options.DateInputOptions) {
+	opts.Disabled = bool(d)
+}
+
+func Disabled(disabled bool) Option {
+	return disabledOption(disabled)
+}
+
+type formatOption string
+
+func (f formatOption) Apply(opts *options.DateInputOptions) {
+	opts.Format = string(f)
+}
+
+func Format(format string) Option {
+	return formatOption(format)
+}
+
+type maxValueOption time.Time
+
+func (m maxValueOption) Apply(opts *options.DateInputOptions) {
+	opts.MaxValue = (*time.Time)(&m)
+}
+
+func MaxValue(value time.Time) Option {
+	return maxValueOption(value)
+}
+
+type minValueOption time.Time
+
+func (m minValueOption) Apply(opts *options.DateInputOptions) {
+	opts.MinValue = (*time.Time)(&m)
+}
+
+func MinLength(value time.Time) Option {
+	return minValueOption(value)
+}
+
+type locationOption time.Location
+
+func (l locationOption) Apply(opts *options.DateInputOptions) {
+	opts.Location = (*time.Location)(&l)
+}
+
+func Location(location time.Location) Option {
+	return locationOption(location)
 }

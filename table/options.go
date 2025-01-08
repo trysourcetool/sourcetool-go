@@ -1,37 +1,78 @@
 package table
 
-import "github.com/trysourcetool/sourcetool-go/internal/table"
+import "github.com/trysourcetool/sourcetool-go/internal/options"
+
+type Value struct {
+	Selection *Selection
+}
+
+type Selection struct {
+	Row  int
+	Rows []int
+}
+
+type SelectionBehavior string
 
 const (
-	OnSelectIgnore table.OnSelect = "ignore"
-	OnSelectRerun  table.OnSelect = "rerun"
+	SelectionBehaviorIgnore SelectionBehavior = "ignore"
+	SelectionBehaviorRerun  SelectionBehavior = "rerun"
 )
+
+func (b SelectionBehavior) String() string {
+	return string(b)
+}
+
+type SelectionMode string
 
 const (
-	RowSelectionSingle   table.RowSelection = "single"
-	RowSelectionMultiple table.RowSelection = "multiple"
+	SelectionModeSingle   SelectionMode = "single"
+	SelectionModeMultiple SelectionMode = "multiple"
 )
 
-func Header(header string) table.Option {
-	return func(opts *table.Options) {
-		opts.Header = header
-	}
+func (m SelectionMode) String() string {
+	return string(m)
 }
 
-func Description(description string) table.Option {
-	return func(opts *table.Options) {
-		opts.Description = description
-	}
+type Option interface {
+	Apply(*options.TableOptions)
 }
 
-func OnSelect(onSelect table.OnSelect) table.Option {
-	return func(opts *table.Options) {
-		opts.OnSelect = onSelect
-	}
+type headerOption string
+
+func (h headerOption) Apply(opts *options.TableOptions) {
+	opts.Header = (*string)(&h)
 }
 
-func RowSelection(rowSelection table.RowSelection) table.Option {
-	return func(opts *table.Options) {
-		opts.RowSelection = rowSelection
-	}
+func Header(header string) Option {
+	return headerOption(header)
+}
+
+type descriptionOption string
+
+func (d descriptionOption) Apply(opts *options.TableOptions) {
+	opts.Description = (*string)(&d)
+}
+
+func Description(description string) Option {
+	return descriptionOption(description)
+}
+
+type onSelectOption SelectionBehavior
+
+func (o onSelectOption) Apply(opts *options.TableOptions) {
+	opts.OnSelect = (*string)((*SelectionBehavior)(&o))
+}
+
+func OnSelect(behavior SelectionBehavior) Option {
+	return onSelectOption(behavior)
+}
+
+type rowSelectionOption SelectionMode
+
+func (r rowSelectionOption) Apply(opts *options.TableOptions) {
+	opts.RowSelection = (*string)((*SelectionMode)(&r))
+}
+
+func RowSelection(mode SelectionMode) Option {
+	return rowSelectionOption(mode)
 }

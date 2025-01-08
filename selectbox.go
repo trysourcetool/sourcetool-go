@@ -6,12 +6,14 @@ import (
 	"github.com/gofrs/uuid/v5"
 
 	"github.com/trysourcetool/sourcetool-go/internal/conv"
-	"github.com/trysourcetool/sourcetool-go/internal/selectbox"
+	"github.com/trysourcetool/sourcetool-go/internal/options"
+	"github.com/trysourcetool/sourcetool-go/internal/session/state"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket"
+	"github.com/trysourcetool/sourcetool-go/selectbox"
 )
 
-func (b *uiBuilder) Selectbox(label string, options ...selectbox.Option) *selectbox.Value {
-	opts := &selectbox.Options{
+func (b *uiBuilder) Selectbox(label string, opts ...selectbox.Option) *selectbox.Value {
+	selectboxOpts := &options.SelectboxOptions{
 		Label:        label,
 		DefaultValue: nil,
 		Placeholder:  "",
@@ -20,8 +22,8 @@ func (b *uiBuilder) Selectbox(label string, options ...selectbox.Option) *select
 		FormatFunc:   nil,
 	}
 
-	for _, option := range options {
-		option(opts)
+	for _, option := range opts {
+		option.Apply(selectboxOpts)
 	}
 
 	sess := b.session
@@ -43,9 +45,9 @@ func (b *uiBuilder) Selectbox(label string, options ...selectbox.Option) *select
 	log.Printf("Path: %v\n", path)
 
 	var defaultVal *int
-	if opts.DefaultValue != nil {
-		for i, o := range opts.Options {
-			if conv.SafeValue(opts.DefaultValue) == o {
+	if selectboxOpts.DefaultValue != nil {
+		for i, o := range selectboxOpts.Options {
+			if conv.SafeValue(selectboxOpts.DefaultValue) == o {
 				defaultVal = &i
 				break
 			}
@@ -53,50 +55,50 @@ func (b *uiBuilder) Selectbox(label string, options ...selectbox.Option) *select
 	}
 
 	widgetID := b.generateSelectboxID(label, path)
-	state := sess.State.GetSelectbox(widgetID)
-	if state == nil {
-		state = &selectbox.State{
+	selectboxState := sess.State.GetSelectbox(widgetID)
+	if selectboxState == nil {
+		selectboxState = &state.SelectboxState{
 			ID:           widgetID,
 			Value:        defaultVal,
 			DefaultValue: defaultVal,
 		}
 	}
 
-	if opts.FormatFunc == nil {
-		opts.FormatFunc = func(v string, i int) string {
+	if selectboxOpts.FormatFunc == nil {
+		selectboxOpts.FormatFunc = func(v string, i int) string {
 			return v
 		}
 	}
 
-	displayVals := make([]string, len(opts.Options))
-	for i, v := range opts.Options {
-		displayVals[i] = opts.FormatFunc(v, i)
+	displayVals := make([]string, len(selectboxOpts.Options))
+	for i, v := range selectboxOpts.Options {
+		displayVals[i] = selectboxOpts.FormatFunc(v, i)
 	}
 
-	state.Label = opts.Label
-	state.Options = displayVals
-	state.Placeholder = opts.Placeholder
-	state.DefaultValue = defaultVal
-	state.Required = opts.Required
-	state.Disabled = opts.Disabled
-	sess.State.Set(widgetID, state)
+	selectboxState.Label = selectboxOpts.Label
+	selectboxState.Options = displayVals
+	selectboxState.Placeholder = selectboxOpts.Placeholder
+	selectboxState.DefaultValue = defaultVal
+	selectboxState.Required = selectboxOpts.Required
+	selectboxState.Disabled = selectboxOpts.Disabled
+	sess.State.Set(widgetID, selectboxState)
 
 	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), websocket.MessageMethodRenderWidget, &websocket.RenderWidgetPayload{
 		SessionID:  sess.ID.String(),
 		PageID:     page.id.String(),
 		WidgetID:   widgetID.String(),
-		WidgetType: selectbox.WidgetType,
+		WidgetType: state.WidgetTypeSelectbox.String(),
 		Path:       path,
-		Data:       convertStateToSelectboxData(state),
+		Data:       convertStateToSelectboxData(selectboxState),
 	})
 
 	cursor.next()
 
 	var value *selectbox.Value
-	if state.Value != nil {
+	if selectboxState.Value != nil {
 		value = &selectbox.Value{
-			Value: opts.Options[*state.Value],
-			Index: conv.SafeValue(state.Value),
+			Value: selectboxOpts.Options[*selectboxState.Value],
+			Index: conv.SafeValue(selectboxState.Value),
 		}
 	}
 
@@ -108,10 +110,10 @@ func (b *uiBuilder) generateSelectboxID(label string, path path) uuid.UUID {
 	if page == nil {
 		return uuid.Nil
 	}
-	return uuid.NewV5(page.id, selectbox.WidgetType+"-"+label+"-"+path.String())
+	return uuid.NewV5(page.id, state.WidgetTypeSelectbox.String()+"-"+label+"-"+path.String())
 }
 
-func convertStateToSelectboxData(state *selectbox.State) *websocket.SelectboxData {
+func convertStateToSelectboxData(state *state.SelectboxState) *websocket.SelectboxData {
 	if state == nil {
 		return nil
 	}
@@ -126,11 +128,11 @@ func convertStateToSelectboxData(state *selectbox.State) *websocket.SelectboxDat
 	}
 }
 
-func convertSelectboxDataToState(id uuid.UUID, data *websocket.SelectboxData) *selectbox.State {
+func convertSelectboxDataToState(id uuid.UUID, data *websocket.SelectboxData) *state.SelectboxState {
 	if data == nil {
 		return nil
 	}
-	return &selectbox.State{
+	return &state.SelectboxState{
 		ID:           id,
 		Label:        data.Label,
 		Value:        data.Value,

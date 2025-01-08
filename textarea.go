@@ -5,13 +5,15 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 
-	"github.com/trysourcetool/sourcetool-go/internal/textarea"
+	"github.com/trysourcetool/sourcetool-go/internal/options"
+	"github.com/trysourcetool/sourcetool-go/internal/session/state"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket"
+	"github.com/trysourcetool/sourcetool-go/textarea"
 )
 
-func (b *uiBuilder) TextArea(label string, options ...textarea.Option) string {
+func (b *uiBuilder) TextArea(label string, opts ...textarea.Option) string {
 	defaultMinLines := 2
-	opts := &textarea.Options{
+	textAreaOpts := &options.TextAreaOptions{
 		Label:        label,
 		Placeholder:  "",
 		DefaultValue: "",
@@ -24,8 +26,8 @@ func (b *uiBuilder) TextArea(label string, options ...textarea.Option) string {
 		AutoResize:   true,
 	}
 
-	for _, option := range options {
-		option(opts)
+	for _, option := range opts {
+		option.Apply(textAreaOpts)
 	}
 
 	sess := b.session
@@ -47,37 +49,37 @@ func (b *uiBuilder) TextArea(label string, options ...textarea.Option) string {
 	log.Printf("Path: %v\n", path)
 
 	widgetID := b.generateTextAreaID(label, path)
-	state := sess.State.GetTextArea(widgetID)
-	if state == nil {
-		state = &textarea.State{
+	textAreaState := sess.State.GetTextArea(widgetID)
+	if textAreaState == nil {
+		textAreaState = &state.TextAreaState{
 			ID:    widgetID,
-			Value: opts.DefaultValue,
+			Value: textAreaOpts.DefaultValue,
 		}
 	}
-	state.Label = opts.Label
-	state.Placeholder = opts.Placeholder
-	state.DefaultValue = opts.DefaultValue
-	state.Required = opts.Required
-	state.Disabled = opts.Disabled
-	state.MaxLength = opts.MaxLength
-	state.MinLength = opts.MinLength
-	state.MaxLines = opts.MaxLines
-	state.MinLines = opts.MinLines
-	state.AutoResize = opts.AutoResize
-	sess.State.Set(widgetID, state)
+	textAreaState.Label = textAreaOpts.Label
+	textAreaState.Placeholder = textAreaOpts.Placeholder
+	textAreaState.DefaultValue = textAreaOpts.DefaultValue
+	textAreaState.Required = textAreaOpts.Required
+	textAreaState.Disabled = textAreaOpts.Disabled
+	textAreaState.MaxLength = textAreaOpts.MaxLength
+	textAreaState.MinLength = textAreaOpts.MinLength
+	textAreaState.MaxLines = textAreaOpts.MaxLines
+	textAreaState.MinLines = textAreaOpts.MinLines
+	textAreaState.AutoResize = textAreaOpts.AutoResize
+	sess.State.Set(widgetID, textAreaState)
 
 	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), websocket.MessageMethodRenderWidget, &websocket.RenderWidgetPayload{
 		SessionID:  sess.ID.String(),
 		PageID:     page.id.String(),
 		WidgetID:   widgetID.String(),
-		WidgetType: textarea.WidgetType,
+		WidgetType: state.WidgetTypeTextArea.String(),
 		Path:       path,
-		Data:       convertStateToTextAreaData(state),
+		Data:       convertStateToTextAreaData(textAreaState),
 	})
 
 	cursor.next()
 
-	return state.Value
+	return textAreaState.Value
 }
 
 func (b *uiBuilder) generateTextAreaID(label string, path path) uuid.UUID {
@@ -85,10 +87,10 @@ func (b *uiBuilder) generateTextAreaID(label string, path path) uuid.UUID {
 	if page == nil {
 		return uuid.Nil
 	}
-	return uuid.NewV5(page.id, textarea.WidgetType+"-"+label+"-"+path.String())
+	return uuid.NewV5(page.id, state.WidgetTypeTextArea.String()+"-"+label+"-"+path.String())
 }
 
-func convertStateToTextAreaData(state *textarea.State) *websocket.TextAreaData {
+func convertStateToTextAreaData(state *state.TextAreaState) *websocket.TextAreaData {
 	if state == nil {
 		return nil
 	}
@@ -107,11 +109,11 @@ func convertStateToTextAreaData(state *textarea.State) *websocket.TextAreaData {
 	}
 }
 
-func convertTextAreaDataToState(id uuid.UUID, data *websocket.TextAreaData) *textarea.State {
+func convertTextAreaDataToState(id uuid.UUID, data *websocket.TextAreaData) *state.TextAreaState {
 	if data == nil {
 		return nil
 	}
-	return &textarea.State{
+	return &state.TextAreaState{
 		ID:           id,
 		Value:        data.Value,
 		Label:        data.Label,

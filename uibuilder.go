@@ -6,27 +6,27 @@ import (
 	"strings"
 	"time"
 
-	"github.com/trysourcetool/sourcetool-go/internal/button"
-	"github.com/trysourcetool/sourcetool-go/internal/checkbox"
-	"github.com/trysourcetool/sourcetool-go/internal/checkboxgroup"
-	"github.com/trysourcetool/sourcetool-go/internal/columns"
-	"github.com/trysourcetool/sourcetool-go/internal/dateinput"
-	"github.com/trysourcetool/sourcetool-go/internal/datetimeinput"
-	"github.com/trysourcetool/sourcetool-go/internal/form"
-	"github.com/trysourcetool/sourcetool-go/internal/markdown"
-	"github.com/trysourcetool/sourcetool-go/internal/multiselect"
-	"github.com/trysourcetool/sourcetool-go/internal/numberinput"
-	"github.com/trysourcetool/sourcetool-go/internal/selectbox"
+	"github.com/trysourcetool/sourcetool-go/button"
+	"github.com/trysourcetool/sourcetool-go/checkbox"
+	"github.com/trysourcetool/sourcetool-go/checkboxgroup"
+	"github.com/trysourcetool/sourcetool-go/columns"
+	"github.com/trysourcetool/sourcetool-go/dateinput"
+	"github.com/trysourcetool/sourcetool-go/datetimeinput"
+	"github.com/trysourcetool/sourcetool-go/form"
 	"github.com/trysourcetool/sourcetool-go/internal/session"
-	"github.com/trysourcetool/sourcetool-go/internal/table"
-	"github.com/trysourcetool/sourcetool-go/internal/textarea"
-	"github.com/trysourcetool/sourcetool-go/internal/textinput"
-	"github.com/trysourcetool/sourcetool-go/internal/timeinput"
+	"github.com/trysourcetool/sourcetool-go/multiselect"
+	"github.com/trysourcetool/sourcetool-go/numberinput"
+	"github.com/trysourcetool/sourcetool-go/radio"
+	"github.com/trysourcetool/sourcetool-go/selectbox"
+	"github.com/trysourcetool/sourcetool-go/table"
+	"github.com/trysourcetool/sourcetool-go/textarea"
+	"github.com/trysourcetool/sourcetool-go/textinput"
+	"github.com/trysourcetool/sourcetool-go/timeinput"
 )
 
 type UIBuilder interface {
 	Context() context.Context
-	Markdown(string, ...markdown.Option)
+	Markdown(string)
 	TextInput(string, ...textinput.Option) string
 	NumberInput(string, ...numberinput.Option) *float64
 	DateInput(string, ...dateinput.Option) *time.Time
@@ -34,6 +34,7 @@ type UIBuilder interface {
 	TimeInput(string, ...timeinput.Option) *time.Time
 	Selectbox(string, ...selectbox.Option) *selectbox.Value
 	MultiSelect(string, ...multiselect.Option) *multiselect.Value
+	Radio(string, ...radio.Option) *radio.Value
 	Checkbox(string, ...checkbox.Option) bool
 	CheckboxGroup(string, ...checkboxgroup.Option) *checkboxgroup.Value
 	TextArea(string, ...textarea.Option) string

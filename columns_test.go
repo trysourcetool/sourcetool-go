@@ -7,28 +7,27 @@ import (
 	"github.com/gofrs/uuid/v5"
 
 	externalcolumns "github.com/trysourcetool/sourcetool-go/columns"
-	"github.com/trysourcetool/sourcetool-go/internal/columnitem"
-	"github.com/trysourcetool/sourcetool-go/internal/columns"
 	"github.com/trysourcetool/sourcetool-go/internal/session"
+	"github.com/trysourcetool/sourcetool-go/internal/session/state"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket/mock"
 )
 
 func TestConvertStateToColumnsData(t *testing.T) {
 	id := uuid.Must(uuid.NewV4())
-	state := &columns.State{
+	columnsState := &state.ColumnsState{
 		ID:      id,
 		Columns: 3,
 	}
 
-	data := convertStateToColumnsData(state)
+	data := convertStateToColumnsData(columnsState)
 
 	if data == nil {
 		t.Fatal("convertStateToColumnsData returned nil")
 	}
 
-	if data.Columns != state.Columns {
-		t.Errorf("Columns = %v, want %v", data.Columns, state.Columns)
+	if data.Columns != columnsState.Columns {
+		t.Errorf("Columns = %v, want %v", data.Columns, columnsState.Columns)
 	}
 }
 
@@ -50,19 +49,19 @@ func TestConvertColumnsDataToState(t *testing.T) {
 
 func TestConvertStateToColumnItemData(t *testing.T) {
 	id := uuid.Must(uuid.NewV4())
-	state := &columnitem.State{
+	columnItemState := &state.ColumnItemState{
 		ID:     id,
 		Weight: 0.5,
 	}
 
-	data := convertStateToColumnItemData(state)
+	data := convertStateToColumnItemData(columnItemState)
 
 	if data == nil {
 		t.Fatal("convertStateToColumnItemData returned nil")
 	}
 
-	if data.Weight != state.Weight {
-		t.Errorf("Weight = %v, want %v", data.Weight, state.Weight)
+	if data.Weight != columnItemState.Weight {
+		t.Errorf("Weight = %v, want %v", data.Weight, columnItemState.Weight)
 	}
 }
 
@@ -121,13 +120,13 @@ func TestColumns(t *testing.T) {
 
 	// Verify columns state
 	widgetID := builder.generateColumnsID([]int{0})
-	state := sess.State.GetColumns(widgetID)
-	if state == nil {
+	columnsState := sess.State.GetColumns(widgetID)
+	if columnsState == nil {
 		t.Fatal("Columns state not found")
 	}
 
-	if state.Columns != cols {
-		t.Errorf("Columns = %v, want %v", state.Columns, cols)
+	if columnsState.Columns != cols {
+		t.Errorf("Columns = %v, want %v", columnsState.Columns, cols)
 	}
 
 	// Verify column items state
@@ -140,7 +139,7 @@ func TestColumns(t *testing.T) {
 		}
 
 		expectedWeight := 1.0 / float64(cols)
-		columnItemState, ok := columnState.(*columnitem.State)
+		columnItemState, ok := columnState.(*state.ColumnItemState)
 		if !ok {
 			t.Fatalf("Column item state[%d] is not *columnitem.State", i)
 		}
@@ -189,7 +188,7 @@ func TestColumns_WithWeight(t *testing.T) {
 		}
 
 		expectedWeight := float64(weights[i]) / float64(totalWeight)
-		columnItemState, ok := columnState.(*columnitem.State)
+		columnItemState, ok := columnState.(*state.ColumnItemState)
 		if !ok {
 			t.Fatalf("Column item state[%d] is not *columnitem.State", i)
 		}
@@ -254,7 +253,7 @@ func TestColumns_InvalidInput(t *testing.T) {
 					}
 
 					expectedWeight := 1.0 / float64(tt.cols)
-					columnItemState, ok := columnState.(*columnitem.State)
+					columnItemState, ok := columnState.(*state.ColumnItemState)
 					if !ok {
 						t.Fatalf("Column item state[%d] is not *columnitem.State", i)
 					}

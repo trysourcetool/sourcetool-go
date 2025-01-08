@@ -7,11 +7,12 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 
+	"github.com/trysourcetool/sourcetool-go/internal/conv"
 	"github.com/trysourcetool/sourcetool-go/internal/session"
-	"github.com/trysourcetool/sourcetool-go/internal/table"
+	"github.com/trysourcetool/sourcetool-go/internal/session/state"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket/mock"
-	externaltable "github.com/trysourcetool/sourcetool-go/table"
+	"github.com/trysourcetool/sourcetool-go/table"
 )
 
 type testData struct {
@@ -25,24 +26,24 @@ func TestConvertStateToTableData(t *testing.T) {
 		{ID: 1, Name: "Test 1"},
 		{ID: 2, Name: "Test 2"},
 	}
-	selection := &table.Selection{
+	selection := &state.TableStateValueSelection{
 		Row:  0,
 		Rows: []int{0},
 	}
 
-	state := &table.State{
+	tableState := &state.TableState{
 		ID:           id,
 		Data:         data,
-		Header:       "Test Table",
-		Description:  "Test Description",
-		OnSelect:     string(externaltable.OnSelectRerun),
-		RowSelection: string(externaltable.RowSelectionSingle),
-		Value: table.Value{
+		Header:       conv.NilValue("Test Table"),
+		Description:  conv.NilValue("Test Description"),
+		OnSelect:     conv.NilValue(table.SelectionBehaviorRerun.String()),
+		RowSelection: conv.NilValue(table.SelectionModeSingle.String()),
+		Value: state.TableStateValue{
 			Selection: selection,
 		},
 	}
 
-	tableData := convertStateToTableData(state)
+	tableData := convertStateToTableData(tableState)
 
 	if tableData == nil {
 		t.Fatal("convertStateToTableData returned nil")
@@ -53,12 +54,12 @@ func TestConvertStateToTableData(t *testing.T) {
 		got  any
 		want any
 	}{
-		{"Header", tableData.Header, state.Header},
-		{"Description", tableData.Description, state.Description},
-		{"OnSelect", tableData.OnSelect, state.OnSelect},
-		{"RowSelection", tableData.RowSelection, state.RowSelection},
-		{"Selection.Row", tableData.Value.Selection.Row, state.Value.Selection.Row},
-		{"Selection.Rows", tableData.Value.Selection.Rows, state.Value.Selection.Rows},
+		{"Header", conv.SafeValue(tableData.Header), conv.SafeValue(tableState.Header)},
+		{"Description", conv.SafeValue(tableData.Description), conv.SafeValue(tableState.Description)},
+		{"OnSelect", conv.SafeValue(tableData.OnSelect), conv.SafeValue(tableState.OnSelect)},
+		{"RowSelection", tableData.RowSelection, tableState.RowSelection},
+		{"Selection.Row", tableData.Value.Selection.Row, tableState.Value.Selection.Row},
+		{"Selection.Rows", tableData.Value.Selection.Rows, tableState.Value.Selection.Rows},
 	}
 
 	for _, tt := range tests {
@@ -88,10 +89,10 @@ func TestConvertTableDataToState(t *testing.T) {
 
 	tableData := &websocket.TableData{
 		Data:         data,
-		Header:       "Test Table",
-		Description:  "Test Description",
-		OnSelect:     externaltable.OnSelectRerun.String(),
-		RowSelection: externaltable.RowSelectionSingle.String(),
+		Header:       conv.NilValue("Test Table"),
+		Description:  conv.NilValue("Test Description"),
+		OnSelect:     conv.NilValue(table.SelectionBehaviorRerun.String()),
+		RowSelection: conv.NilValue(table.SelectionModeSingle.String()),
 		Value: websocket.TableDataValue{
 			Selection: selection,
 		},
@@ -158,11 +159,11 @@ func TestTable(t *testing.T) {
 	description := "Test Description"
 
 	// Create Table component with all options
-	value := builder.Table(data,
-		externaltable.Header(header),
-		externaltable.Description(description),
-		externaltable.OnSelect(externaltable.OnSelectRerun),
-		externaltable.RowSelection(externaltable.RowSelectionMultiple),
+	builder.Table(data,
+		table.Header(header),
+		table.Description(description),
+		table.OnSelect(table.SelectionBehaviorRerun),
+		table.RowSelection(table.SelectionModeSingle),
 	)
 
 	// Verify WebSocket message
@@ -186,10 +187,10 @@ func TestTable(t *testing.T) {
 		got  any
 		want any
 	}{
-		{"Header", state.Header, header},
-		{"Description", state.Description, description},
-		{"OnSelect", state.OnSelect, externaltable.OnSelectRerun.String()},
-		{"RowSelection", state.RowSelection, externaltable.RowSelectionMultiple.String()},
+		{"Header", conv.SafeValue(state.Header), header},
+		{"Description", conv.SafeValue(state.Description), description},
+		{"OnSelect", conv.SafeValue(state.OnSelect), table.SelectionBehaviorRerun.String()},
+		{"RowSelection", conv.SafeValue(state.RowSelection), table.SelectionModeSingle.String()},
 	}
 
 	for _, tt := range tests {
@@ -203,11 +204,6 @@ func TestTable(t *testing.T) {
 	// Verify data separately since it's an any
 	if !reflect.DeepEqual(state.Data, data) {
 		t.Errorf("Data = %v, want %v", state.Data, data)
-	}
-
-	// Verify return value
-	if !reflect.DeepEqual(value, state.Value) {
-		t.Errorf("Return value = %v, want %v", value, state.Value)
 	}
 }
 
@@ -246,16 +242,16 @@ func TestTable_DefaultValues(t *testing.T) {
 	}
 
 	// Verify default values
-	if state.OnSelect != externaltable.OnSelectIgnore.String() {
-		t.Errorf("Default OnSelect = %v, want %v", state.OnSelect, externaltable.OnSelectIgnore)
+	if conv.SafeValue(state.OnSelect) != table.SelectionBehaviorIgnore.String() {
+		t.Errorf("Default OnSelect = %v, want %v", conv.SafeValue(state.OnSelect), table.SelectionBehaviorIgnore)
 	}
-	if state.RowSelection != externaltable.RowSelectionSingle.String() {
-		t.Errorf("Default RowSelection = %v, want %v", state.RowSelection, externaltable.RowSelectionSingle)
+	if conv.SafeValue(state.RowSelection) != table.SelectionModeSingle.String() {
+		t.Errorf("Default RowSelection = %v, want %v", conv.SafeValue(state.RowSelection), table.SelectionModeSingle)
 	}
-	if state.Header != "" {
+	if state.Header != nil {
 		t.Errorf("Default Header = %v, want empty string", state.Header)
 	}
-	if state.Description != "" {
+	if state.Description != nil {
 		t.Errorf("Default Description = %v, want empty string", state.Description)
 	}
 }

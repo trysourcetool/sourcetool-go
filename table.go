@@ -5,21 +5,21 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 
-	"github.com/trysourcetool/sourcetool-go/internal/table"
+	"github.com/trysourcetool/sourcetool-go/internal/conv"
+	"github.com/trysourcetool/sourcetool-go/internal/options"
+	"github.com/trysourcetool/sourcetool-go/internal/session/state"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket"
-	tbl "github.com/trysourcetool/sourcetool-go/table"
+	"github.com/trysourcetool/sourcetool-go/table"
 )
 
-func (b *uiBuilder) Table(data any, options ...table.Option) table.Value {
-	opts := &table.Options{
-		Header:       "",
-		Description:  "",
-		OnSelect:     tbl.OnSelectIgnore,
-		RowSelection: tbl.RowSelectionSingle,
+func (b *uiBuilder) Table(data any, opts ...table.Option) table.Value {
+	tableOpts := &options.TableOptions{
+		OnSelect:     conv.NilValue(table.SelectionBehaviorIgnore.String()),
+		RowSelection: conv.NilValue(table.SelectionModeSingle.String()),
 	}
 
-	for _, option := range options {
-		option(opts)
+	for _, option := range opts {
+		option.Apply(tableOpts)
 	}
 
 	sess := b.session
@@ -41,32 +41,40 @@ func (b *uiBuilder) Table(data any, options ...table.Option) table.Value {
 	log.Printf("Path: %v\n", path)
 
 	widgetID := b.generateTableID(path)
-	state := sess.State.GetTable(widgetID)
-	if state == nil {
-		state = &table.State{
+	tableState := sess.State.GetTable(widgetID)
+	if tableState == nil {
+		tableState = &state.TableState{
 			ID:    widgetID,
-			Value: table.Value{},
+			Value: state.TableStateValue{},
 		}
 	}
-	state.Data = data
-	state.Header = opts.Header
-	state.Description = opts.Description
-	state.OnSelect = opts.OnSelect.String()
-	state.RowSelection = opts.RowSelection.String()
-	sess.State.Set(widgetID, state)
+	tableState.Data = data
+	tableState.Header = tableOpts.Header
+	tableState.Description = tableOpts.Description
+	tableState.OnSelect = tableOpts.OnSelect
+	tableState.RowSelection = tableOpts.RowSelection
+	sess.State.Set(widgetID, tableState)
 
 	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), websocket.MessageMethodRenderWidget, &websocket.RenderWidgetPayload{
 		SessionID:  sess.ID.String(),
 		PageID:     page.id.String(),
 		WidgetID:   widgetID.String(),
-		WidgetType: table.WidgetType,
+		WidgetType: state.WidgetTypeTable.String(),
 		Path:       path,
-		Data:       convertStateToTableData(state),
+		Data:       convertStateToTableData(tableState),
 	})
 
 	cursor.next()
 
-	return state.Value
+	value := table.Value{}
+	if tableState.Value.Selection != nil {
+		value.Selection = &table.Selection{
+			Row:  tableState.Value.Selection.Row,
+			Rows: tableState.Value.Selection.Rows,
+		}
+	}
+
+	return value
 }
 
 func (b *uiBuilder) generateTableID(path path) uuid.UUID {
@@ -74,10 +82,10 @@ func (b *uiBuilder) generateTableID(path path) uuid.UUID {
 	if page == nil {
 		return uuid.Nil
 	}
-	return uuid.NewV5(page.id, table.WidgetType+"-"+path.String())
+	return uuid.NewV5(page.id, state.WidgetTypeTable.String()+"-"+path.String())
 }
 
-func convertStateToTableData(state *table.State) *websocket.TableData {
+func convertStateToTableData(state *state.TableState) *websocket.TableData {
 	if state == nil {
 		return nil
 	}
@@ -98,24 +106,24 @@ func convertStateToTableData(state *table.State) *websocket.TableData {
 	return data
 }
 
-func convertTableDataToState(id uuid.UUID, data *websocket.TableData) *table.State {
+func convertTableDataToState(id uuid.UUID, data *websocket.TableData) *state.TableState {
 	if data == nil {
 		return nil
 	}
-	state := &table.State{
+	tableState := &state.TableState{
 		ID:           id,
 		Data:         data.Data,
 		Header:       data.Header,
 		Description:  data.Description,
 		OnSelect:     data.OnSelect,
 		RowSelection: data.RowSelection,
-		Value:        table.Value{},
+		Value:        state.TableStateValue{},
 	}
 	if data.Value.Selection != nil {
-		state.Value.Selection = &table.Selection{
+		tableState.Value.Selection = &state.TableStateValueSelection{
 			Row:  data.Value.Selection.Row,
 			Rows: data.Value.Selection.Rows,
 		}
 	}
-	return state
+	return tableState
 }

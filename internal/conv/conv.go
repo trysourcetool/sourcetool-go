@@ -12,8 +12,5 @@ func SafeValue[T comparable](in *T) T {
 }
 
 func NilValue[T comparable](in T) *T {
-	if lo.IsEmpty(in) {
-		return nil
-	}
 	return &in
 }

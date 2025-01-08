@@ -8,8 +8,8 @@ import (
 	"github.com/gofrs/uuid/v5"
 
 	externaldateinput "github.com/trysourcetool/sourcetool-go/dateinput"
-	"github.com/trysourcetool/sourcetool-go/internal/dateinput"
 	"github.com/trysourcetool/sourcetool-go/internal/session"
+	"github.com/trysourcetool/sourcetool-go/internal/session/state"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket/mock"
 )
@@ -20,7 +20,7 @@ func TestConvertStateToDateInputData(t *testing.T) {
 	maxDate := now.AddDate(1, 0, 0)
 	minDate := now.AddDate(-1, 0, 0)
 
-	state := &dateinput.State{
+	dateInputState := &state.DateInputState{
 		ID:           id,
 		Label:        "Test DateInput",
 		Value:        &now,
@@ -34,7 +34,7 @@ func TestConvertStateToDateInputData(t *testing.T) {
 		Location:     time.Local,
 	}
 
-	data := convertStateToDateInputData(state)
+	data := convertStateToDateInputData(dateInputState)
 
 	if data == nil {
 		t.Fatal("convertStateToDateInputData returned nil")
@@ -45,15 +45,15 @@ func TestConvertStateToDateInputData(t *testing.T) {
 		got  any
 		want any
 	}{
-		{"Label", data.Label, state.Label},
-		{"Value", data.Value, state.Value.Format(time.DateOnly)},
-		{"Placeholder", data.Placeholder, state.Placeholder},
-		{"DefaultValue", data.DefaultValue, state.DefaultValue.Format(time.DateOnly)},
-		{"Required", data.Required, state.Required},
-		{"Disabled", data.Disabled, state.Disabled},
-		{"Format", data.Format, state.Format},
-		{"MaxValue", data.MaxValue, state.MaxValue.Format(time.DateOnly)},
-		{"MinValue", data.MinValue, state.MinValue.Format(time.DateOnly)},
+		{"Label", data.Label, dateInputState.Label},
+		{"Value", data.Value, dateInputState.Value.Format(time.DateOnly)},
+		{"Placeholder", data.Placeholder, dateInputState.Placeholder},
+		{"DefaultValue", data.DefaultValue, dateInputState.DefaultValue.Format(time.DateOnly)},
+		{"Required", data.Required, dateInputState.Required},
+		{"Disabled", data.Disabled, dateInputState.Disabled},
+		{"Format", data.Format, dateInputState.Format},
+		{"MaxValue", data.MaxValue, dateInputState.MaxValue.Format(time.DateOnly)},
+		{"MinValue", data.MinValue, dateInputState.MinValue.Format(time.DateOnly)},
 	}
 
 	for _, tt := range tests {

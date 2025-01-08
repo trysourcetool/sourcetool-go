@@ -5,17 +5,14 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 
-	"github.com/trysourcetool/sourcetool-go/internal/markdown"
+	"github.com/trysourcetool/sourcetool-go/internal/options"
+	"github.com/trysourcetool/sourcetool-go/internal/session/state"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 )
 
-func (b *uiBuilder) Markdown(body string, options ...markdown.Option) {
-	opts := &markdown.Options{
+func (b *uiBuilder) Markdown(body string) {
+	markdownOpts := &options.MarkdownOptions{
 		Body: body,
-	}
-
-	for _, option := range options {
-		option(opts)
 	}
 
 	sess := b.session
@@ -37,22 +34,22 @@ func (b *uiBuilder) Markdown(body string, options ...markdown.Option) {
 	log.Printf("Path: %v\n", path)
 
 	widgetID := b.generateMarkdownID(body, path)
-	state := sess.State.GetMarkdown(widgetID)
-	if state == nil {
-		state = &markdown.State{
+	markdownState := sess.State.GetMarkdown(widgetID)
+	if markdownState == nil {
+		markdownState = &state.MarkdownState{
 			ID: widgetID,
 		}
 	}
-	state.Body = opts.Body
-	sess.State.Set(widgetID, state)
+	markdownState.Body = markdownOpts.Body
+	sess.State.Set(widgetID, markdownState)
 
 	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), websocket.MessageMethodRenderWidget, &websocket.RenderWidgetPayload{
 		SessionID:  sess.ID.String(),
 		PageID:     page.id.String(),
 		WidgetID:   widgetID.String(),
-		WidgetType: markdown.WidgetType,
+		WidgetType: state.WidgetTypeMarkdown.String(),
 		Path:       path,
-		Data:       convertStateToMarkdownData(state),
+		Data:       convertStateToMarkdownData(markdownState),
 	})
 
 	cursor.next()
@@ -63,17 +60,17 @@ func (b *uiBuilder) generateMarkdownID(body string, path path) uuid.UUID {
 	if page == nil {
 		return uuid.Nil
 	}
-	return uuid.NewV5(page.id, markdown.WidgetType+"-"+body+"-"+path.String())
+	return uuid.NewV5(page.id, state.WidgetTypeMarkdown.String()+"-"+body+"-"+path.String())
 }
 
-func convertStateToMarkdownData(state *markdown.State) *websocket.MarkdownData {
+func convertStateToMarkdownData(state *state.MarkdownState) *websocket.MarkdownData {
 	return &websocket.MarkdownData{
 		Body: state.Body,
 	}
 }
 
-func convertMarkdownDataToState(data *websocket.MarkdownData) *markdown.State {
-	return &markdown.State{
+func convertMarkdownDataToState(data *websocket.MarkdownData) *state.MarkdownState {
+	return &state.MarkdownState{
 		Body: data.Body,
 	}
 }

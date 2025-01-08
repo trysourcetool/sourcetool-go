@@ -7,9 +7,9 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 
-	externaldatetimeinput "github.com/trysourcetool/sourcetool-go/datetimeinput"
-	"github.com/trysourcetool/sourcetool-go/internal/datetimeinput"
+	"github.com/trysourcetool/sourcetool-go/datetimeinput"
 	"github.com/trysourcetool/sourcetool-go/internal/session"
+	"github.com/trysourcetool/sourcetool-go/internal/session/state"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket/mock"
 )
@@ -20,7 +20,7 @@ func TestConvertStateToDateTimeInputData(t *testing.T) {
 	maxDate := now.AddDate(1, 0, 0)
 	minDate := now.AddDate(-1, 0, 0)
 
-	state := &datetimeinput.State{
+	dateTimeInputState := &state.DateTimeInputState{
 		ID:           id,
 		Label:        "Test DateTimeInput",
 		Value:        &now,
@@ -34,7 +34,7 @@ func TestConvertStateToDateTimeInputData(t *testing.T) {
 		Location:     time.Local,
 	}
 
-	data := convertStateToDateTimeInputData(state)
+	data := convertStateToDateTimeInputData(dateTimeInputState)
 
 	if data == nil {
 		t.Fatal("convertStateToDateTimeInputData returned nil")
@@ -45,15 +45,15 @@ func TestConvertStateToDateTimeInputData(t *testing.T) {
 		got  any
 		want any
 	}{
-		{"Label", data.Label, state.Label},
-		{"Value", data.Value, state.Value.Format(time.DateTime)},
-		{"Placeholder", data.Placeholder, state.Placeholder},
-		{"DefaultValue", data.DefaultValue, state.DefaultValue.Format(time.DateTime)},
-		{"Required", data.Required, state.Required},
-		{"Disabled", data.Disabled, state.Disabled},
-		{"Format", data.Format, state.Format},
-		{"MaxValue", data.MaxValue, state.MaxValue.Format(time.DateTime)},
-		{"MinValue", data.MinValue, state.MinValue.Format(time.DateTime)},
+		{"Label", data.Label, dateTimeInputState.Label},
+		{"Value", data.Value, dateTimeInputState.Value.Format(time.DateTime)},
+		{"Placeholder", data.Placeholder, dateTimeInputState.Placeholder},
+		{"DefaultValue", data.DefaultValue, dateTimeInputState.DefaultValue.Format(time.DateTime)},
+		{"Required", data.Required, dateTimeInputState.Required},
+		{"Disabled", data.Disabled, dateTimeInputState.Disabled},
+		{"Format", data.Format, dateTimeInputState.Format},
+		{"MaxValue", data.MaxValue, dateTimeInputState.MaxValue.Format(time.DateTime)},
+		{"MinValue", data.MinValue, dateTimeInputState.MinValue.Format(time.DateTime)},
 	}
 
 	for _, tt := range tests {
@@ -161,14 +161,14 @@ func TestDateTimeInput(t *testing.T) {
 
 	// Create DateTimeInput component with all options
 	value := builder.DateTimeInput(label,
-		externaldatetimeinput.DefaultValue(now),
-		externaldatetimeinput.Placeholder(placeholder),
-		externaldatetimeinput.Required(true),
-		externaldatetimeinput.Disabled(true),
-		externaldatetimeinput.Format(format),
-		externaldatetimeinput.MaxValue(maxDate),
-		externaldatetimeinput.MinLength(minDate),
-		externaldatetimeinput.Location(location),
+		datetimeinput.DefaultValue(now),
+		datetimeinput.Placeholder(placeholder),
+		datetimeinput.Required(true),
+		datetimeinput.Disabled(true),
+		datetimeinput.Format(format),
+		datetimeinput.MaxValue(maxDate),
+		datetimeinput.MinLength(minDate),
+		datetimeinput.Location(location),
 	)
 
 	// Verify return value

@@ -5,12 +5,13 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 
-	"github.com/trysourcetool/sourcetool-go/internal/columnitem"
-	"github.com/trysourcetool/sourcetool-go/internal/columns"
+	"github.com/trysourcetool/sourcetool-go/columns"
+	"github.com/trysourcetool/sourcetool-go/internal/options"
+	"github.com/trysourcetool/sourcetool-go/internal/session/state"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 )
 
-func (b *uiBuilder) Columns(cols int, options ...columns.Option) []UIBuilder {
+func (b *uiBuilder) Columns(cols int, opts ...columns.Option) []UIBuilder {
 	if cols < 1 {
 		return nil
 	}
@@ -31,15 +32,15 @@ func (b *uiBuilder) Columns(cols int, options ...columns.Option) []UIBuilder {
 
 	log.Printf("Path: %v\n", path)
 
-	opts := &columns.Options{
+	columnsOpts := &options.ColumnsOptions{
 		Columns: cols,
 	}
-	for _, option := range options {
-		option(opts)
+	for _, option := range opts {
+		option.Apply(columnsOpts)
 	}
 
 	widgetID := b.generateColumnsID(path)
-	weights := opts.Weight
+	weights := columnsOpts.Weight
 	if len(weights) == 0 || len(weights) != cols {
 		weights = make([]int, cols)
 		for i := range weights {
@@ -62,7 +63,7 @@ func (b *uiBuilder) Columns(cols int, options ...columns.Option) []UIBuilder {
 		totalWeight += w
 	}
 
-	columnsState := &columns.State{
+	columnsState := &state.ColumnsState{
 		ID:      widgetID,
 		Columns: cols,
 	}
@@ -72,7 +73,7 @@ func (b *uiBuilder) Columns(cols int, options ...columns.Option) []UIBuilder {
 		SessionID:  sess.ID.String(),
 		PageID:     page.id.String(),
 		WidgetID:   widgetID.String(),
-		WidgetType: columns.WidgetType,
+		WidgetType: state.WidgetTypeColumns.String(),
 		Path:       path,
 		Data:       convertStateToColumnsData(columnsState),
 	})
@@ -84,7 +85,7 @@ func (b *uiBuilder) Columns(cols int, options ...columns.Option) []UIBuilder {
 
 		columnPath := append(path, i)
 		widgetID := b.generateColumnItemID(columnPath)
-		columnItemState := &columnitem.State{
+		columnItemState := &state.ColumnItemState{
 			ID:     widgetID,
 			Weight: float64(weights[i]) / float64(totalWeight),
 		}
@@ -96,7 +97,7 @@ func (b *uiBuilder) Columns(cols int, options ...columns.Option) []UIBuilder {
 			SessionID:  sess.ID.String(),
 			PageID:     page.id.String(),
 			WidgetID:   widgetID.String(),
-			WidgetType: columnitem.WidgetType,
+			WidgetType: state.WidgetTypeColumnItem.String(),
 			Path:       columnPath,
 			Data:       convertStateToColumnItemData(columnItemState),
 		})
@@ -120,7 +121,7 @@ func (b *uiBuilder) generateColumnsID(path path) uuid.UUID {
 	if page == nil {
 		return uuid.Nil
 	}
-	return uuid.NewV5(page.id, columns.WidgetType+"-"+path.String())
+	return uuid.NewV5(page.id, state.WidgetTypeColumns.String()+"-"+path.String())
 }
 
 func (b *uiBuilder) generateColumnItemID(path path) uuid.UUID {
@@ -128,29 +129,29 @@ func (b *uiBuilder) generateColumnItemID(path path) uuid.UUID {
 	if page == nil {
 		return uuid.Nil
 	}
-	return uuid.NewV5(page.id, columnitem.WidgetType+"-"+path.String())
+	return uuid.NewV5(page.id, state.WidgetTypeColumnItem.String()+"-"+path.String())
 }
 
-func convertStateToColumnsData(state *columns.State) *websocket.ColumnsData {
+func convertStateToColumnsData(state *state.ColumnsState) *websocket.ColumnsData {
 	return &websocket.ColumnsData{
 		Columns: state.Columns,
 	}
 }
 
-func convertColumnsDataToState(data *websocket.ColumnsData) *columns.State {
-	return &columns.State{
+func convertColumnsDataToState(data *websocket.ColumnsData) *state.ColumnsState {
+	return &state.ColumnsState{
 		Columns: data.Columns,
 	}
 }
 
-func convertStateToColumnItemData(state *columnitem.State) *websocket.ColumnItemData {
+func convertStateToColumnItemData(state *state.ColumnItemState) *websocket.ColumnItemData {
 	return &websocket.ColumnItemData{
 		Weight: state.Weight,
 	}
 }
 
-func convertColumnItemDataToState(data *websocket.ColumnItemData) *columnitem.State {
-	return &columnitem.State{
+func convertColumnItemDataToState(data *websocket.ColumnItemData) *state.ColumnItemState {
+	return &state.ColumnItemState{
 		Weight: data.Weight,
 	}
 }

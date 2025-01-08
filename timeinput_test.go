@@ -8,17 +8,17 @@ import (
 	"github.com/gofrs/uuid/v5"
 
 	"github.com/trysourcetool/sourcetool-go/internal/session"
-	"github.com/trysourcetool/sourcetool-go/internal/timeinput"
+	"github.com/trysourcetool/sourcetool-go/internal/session/state"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket/mock"
-	externaltimeinput "github.com/trysourcetool/sourcetool-go/timeinput"
+	"github.com/trysourcetool/sourcetool-go/timeinput"
 )
 
 func TestConvertStateToTimeInputData(t *testing.T) {
 	id := uuid.Must(uuid.NewV4())
 	now := time.Now()
 
-	state := &timeinput.State{
+	timeInputState := &state.TimeInputState{
 		ID:           id,
 		Label:        "Test TimeInput",
 		Value:        &now,
@@ -29,7 +29,7 @@ func TestConvertStateToTimeInputData(t *testing.T) {
 		Location:     time.Local,
 	}
 
-	data := convertStateToTimeInputData(state)
+	data := convertStateToTimeInputData(timeInputState)
 
 	if data == nil {
 		t.Fatal("convertStateToTimeInputData returned nil")
@@ -40,12 +40,12 @@ func TestConvertStateToTimeInputData(t *testing.T) {
 		got  any
 		want any
 	}{
-		{"Label", data.Label, state.Label},
-		{"Value", data.Value, state.Value.Format(time.TimeOnly)},
-		{"Placeholder", data.Placeholder, state.Placeholder},
-		{"DefaultValue", data.DefaultValue, state.DefaultValue.Format(time.TimeOnly)},
-		{"Required", data.Required, state.Required},
-		{"Disabled", data.Disabled, state.Disabled},
+		{"Label", data.Label, timeInputState.Label},
+		{"Value", data.Value, timeInputState.Value.Format(time.TimeOnly)},
+		{"Placeholder", data.Placeholder, timeInputState.Placeholder},
+		{"DefaultValue", data.DefaultValue, timeInputState.DefaultValue.Format(time.TimeOnly)},
+		{"Required", data.Required, timeInputState.Required},
+		{"Disabled", data.Disabled, timeInputState.Disabled},
 	}
 
 	for _, tt := range tests {
@@ -142,11 +142,11 @@ func TestTimeInput(t *testing.T) {
 
 	// Create TimeInput component with all options
 	value := builder.TimeInput(label,
-		externaltimeinput.DefaultValue(now),
-		externaltimeinput.Placeholder(placeholder),
-		externaltimeinput.Required(true),
-		externaltimeinput.Disabled(true),
-		externaltimeinput.Location(location),
+		timeinput.DefaultValue(now),
+		timeinput.Placeholder(placeholder),
+		timeinput.Required(true),
+		timeinput.Disabled(true),
+		timeinput.Location(location),
 	)
 
 	// Verify return value

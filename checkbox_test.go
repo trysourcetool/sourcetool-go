@@ -7,8 +7,8 @@ import (
 	"github.com/gofrs/uuid/v5"
 
 	externalcheckbox "github.com/trysourcetool/sourcetool-go/checkbox"
-	"github.com/trysourcetool/sourcetool-go/internal/checkbox"
 	"github.com/trysourcetool/sourcetool-go/internal/session"
+	"github.com/trysourcetool/sourcetool-go/internal/session/state"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket/mock"
 )
@@ -16,7 +16,7 @@ import (
 func TestConvertStateToCheckboxData(t *testing.T) {
 	id := uuid.Must(uuid.NewV4())
 
-	state := &checkbox.State{
+	checkboxState := &state.CheckboxState{
 		ID:           id,
 		Label:        "Test Checkbox",
 		Value:        true,
@@ -25,7 +25,7 @@ func TestConvertStateToCheckboxData(t *testing.T) {
 		Disabled:     false,
 	}
 
-	data := convertStateToCheckboxData(state)
+	data := convertStateToCheckboxData(checkboxState)
 
 	if data == nil {
 		t.Fatal("convertStateToCheckboxData returned nil")
@@ -36,11 +36,11 @@ func TestConvertStateToCheckboxData(t *testing.T) {
 		got  any
 		want any
 	}{
-		{"Label", data.Label, state.Label},
-		{"Value", data.Value, state.Value},
-		{"DefaultValue", data.DefaultValue, state.DefaultValue},
-		{"Required", data.Required, state.Required},
-		{"Disabled", data.Disabled, state.Disabled},
+		{"Label", data.Label, checkboxState.Label},
+		{"Value", data.Value, checkboxState.Value},
+		{"DefaultValue", data.DefaultValue, checkboxState.DefaultValue},
+		{"Required", data.Required, checkboxState.Required},
+		{"Disabled", data.Disabled, checkboxState.Disabled},
 	}
 
 	for _, tt := range tests {

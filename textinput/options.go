@@ -1,39 +1,67 @@
 package textinput
 
-import "github.com/trysourcetool/sourcetool-go/internal/textinput"
+import "github.com/trysourcetool/sourcetool-go/internal/options"
 
-func Placeholder(placeholder string) textinput.Option {
-	return func(opts *textinput.Options) {
-		opts.Placeholder = placeholder
-	}
+type Option interface {
+	Apply(*options.TextInputOptions)
 }
 
-func DefaultValue(value string) textinput.Option {
-	return func(opts *textinput.Options) {
-		opts.DefaultValue = value
-	}
+type placeholderOption string
+
+func (p placeholderOption) Apply(opts *options.TextInputOptions) {
+	opts.Placeholder = string(p)
 }
 
-func Required(required bool) textinput.Option {
-	return func(opts *textinput.Options) {
-		opts.Required = required
-	}
+func Placeholder(placeholder string) Option {
+	return placeholderOption(placeholder)
 }
 
-func Disabled(disabled bool) textinput.Option {
-	return func(opts *textinput.Options) {
-		opts.Disabled = disabled
-	}
+type defaultValueOption string
+
+func (d defaultValueOption) Apply(opts *options.TextInputOptions) {
+	opts.DefaultValue = string(d)
 }
 
-func MaxLength(length int) textinput.Option {
-	return func(opts *textinput.Options) {
-		opts.MaxLength = &length
-	}
+func DefaultValue(value string) Option {
+	return defaultValueOption(value)
 }
 
-func MinLength(length int) textinput.Option {
-	return func(opts *textinput.Options) {
-		opts.MinLength = &length
-	}
+type requiredOption bool
+
+func (r requiredOption) Apply(opts *options.TextInputOptions) {
+	opts.Required = bool(r)
+}
+
+func Required(required bool) Option {
+	return requiredOption(required)
+}
+
+type disabledOption bool
+
+func (d disabledOption) Apply(opts *options.TextInputOptions) {
+	opts.Disabled = bool(d)
+}
+
+func Disabled(disabled bool) Option {
+	return disabledOption(disabled)
+}
+
+type maxLengthOption int
+
+func (m maxLengthOption) Apply(opts *options.TextInputOptions) {
+	opts.MaxLength = (*int)(&m)
+}
+
+func MaxLength(length int) Option {
+	return maxLengthOption(length)
+}
+
+type minLengthOption int
+
+func (m minLengthOption) Apply(opts *options.TextInputOptions) {
+	opts.MinLength = (*int)(&m)
+}
+
+func MinLength(length int) Option {
+	return minLengthOption(length)
 }

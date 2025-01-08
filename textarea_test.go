@@ -7,10 +7,10 @@ import (
 	"github.com/gofrs/uuid/v5"
 
 	"github.com/trysourcetool/sourcetool-go/internal/session"
-	"github.com/trysourcetool/sourcetool-go/internal/textarea"
+	"github.com/trysourcetool/sourcetool-go/internal/session/state"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket/mock"
-	externaltextarea "github.com/trysourcetool/sourcetool-go/textarea"
+	"github.com/trysourcetool/sourcetool-go/textarea"
 )
 
 func TestConvertStateToTextAreaData(t *testing.T) {
@@ -20,7 +20,7 @@ func TestConvertStateToTextAreaData(t *testing.T) {
 	maxLines := 10
 	minLines := 3
 
-	state := &textarea.State{
+	textAreaState := &state.TextAreaState{
 		ID:           id,
 		Label:        "Test TextArea",
 		Value:        "test value",
@@ -35,7 +35,7 @@ func TestConvertStateToTextAreaData(t *testing.T) {
 		AutoResize:   true,
 	}
 
-	data := convertStateToTextAreaData(state)
+	data := convertStateToTextAreaData(textAreaState)
 
 	if data == nil {
 		t.Fatal("convertStateToTextAreaData returned nil")
@@ -46,17 +46,17 @@ func TestConvertStateToTextAreaData(t *testing.T) {
 		got  any
 		want any
 	}{
-		{"Label", data.Label, state.Label},
-		{"Value", data.Value, state.Value},
-		{"Placeholder", data.Placeholder, state.Placeholder},
-		{"DefaultValue", data.DefaultValue, state.DefaultValue},
-		{"Required", data.Required, state.Required},
-		{"Disabled", data.Disabled, state.Disabled},
-		{"MaxLength", *data.MaxLength, *state.MaxLength},
-		{"MinLength", *data.MinLength, *state.MinLength},
-		{"MaxLines", *data.MaxLines, *state.MaxLines},
-		{"MinLines", *data.MinLines, *state.MinLines},
-		{"AutoResize", data.AutoResize, state.AutoResize},
+		{"Label", data.Label, textAreaState.Label},
+		{"Value", data.Value, textAreaState.Value},
+		{"Placeholder", data.Placeholder, textAreaState.Placeholder},
+		{"DefaultValue", data.DefaultValue, textAreaState.DefaultValue},
+		{"Required", data.Required, textAreaState.Required},
+		{"Disabled", data.Disabled, textAreaState.Disabled},
+		{"MaxLength", *data.MaxLength, *textAreaState.MaxLength},
+		{"MinLength", *data.MinLength, *textAreaState.MinLength},
+		{"MaxLines", *data.MaxLines, *textAreaState.MaxLines},
+		{"MinLines", *data.MinLines, *textAreaState.MinLines},
+		{"AutoResize", data.AutoResize, textAreaState.AutoResize},
 	}
 
 	for _, tt := range tests {
@@ -152,15 +152,15 @@ func TestTextArea(t *testing.T) {
 
 	// Create TextArea component with all options
 	value := builder.TextArea(label,
-		externaltextarea.DefaultValue(defaultValue),
-		externaltextarea.Placeholder(placeholder),
-		externaltextarea.Required(true),
-		externaltextarea.Disabled(true),
-		externaltextarea.MaxLength(maxLength),
-		externaltextarea.MinLength(minLength),
-		externaltextarea.MaxLines(maxLines),
-		externaltextarea.MinLines(minLines),
-		externaltextarea.AutoResize(false),
+		textarea.DefaultValue(defaultValue),
+		textarea.Placeholder(placeholder),
+		textarea.Required(true),
+		textarea.Disabled(true),
+		textarea.MaxLength(maxLength),
+		textarea.MinLength(minLength),
+		textarea.MaxLines(maxLines),
+		textarea.MinLines(minLines),
+		textarea.AutoResize(false),
 	)
 
 	// Verify return value

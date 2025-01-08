@@ -7,12 +7,14 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 
-	"github.com/trysourcetool/sourcetool-go/internal/dateinput"
+	"github.com/trysourcetool/sourcetool-go/dateinput"
+	"github.com/trysourcetool/sourcetool-go/internal/options"
+	"github.com/trysourcetool/sourcetool-go/internal/session/state"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 )
 
-func (b *uiBuilder) DateInput(label string, options ...dateinput.Option) *time.Time {
-	opts := &dateinput.Options{
+func (b *uiBuilder) DateInput(label string, opts ...dateinput.Option) *time.Time {
+	dateInputOpts := &options.DateInputOptions{
 		Label:        label,
 		Placeholder:  "",
 		DefaultValue: nil,
@@ -24,8 +26,8 @@ func (b *uiBuilder) DateInput(label string, options ...dateinput.Option) *time.T
 		Location:     time.Local,
 	}
 
-	for _, option := range options {
-		option(opts)
+	for _, option := range opts {
+		option.Apply(dateInputOpts)
 	}
 
 	sess := b.session
@@ -47,36 +49,36 @@ func (b *uiBuilder) DateInput(label string, options ...dateinput.Option) *time.T
 	log.Printf("Path: %v\n", path)
 
 	widgetID := b.generateDateInputID(label, path)
-	state := sess.State.GetDateInput(widgetID)
-	if state == nil {
-		state = &dateinput.State{
+	dateInputState := sess.State.GetDateInput(widgetID)
+	if dateInputState == nil {
+		dateInputState = &state.DateInputState{
 			ID:    widgetID,
-			Value: opts.DefaultValue,
+			Value: dateInputOpts.DefaultValue,
 		}
 	}
-	state.Label = opts.Label
-	state.Placeholder = opts.Placeholder
-	state.DefaultValue = opts.DefaultValue
-	state.Required = opts.Required
-	state.Disabled = opts.Disabled
-	state.Format = opts.Format
-	state.MaxValue = opts.MaxValue
-	state.MinValue = opts.MinValue
-	state.Location = opts.Location
-	sess.State.Set(widgetID, state)
+	dateInputState.Label = dateInputOpts.Label
+	dateInputState.Placeholder = dateInputOpts.Placeholder
+	dateInputState.DefaultValue = dateInputOpts.DefaultValue
+	dateInputState.Required = dateInputOpts.Required
+	dateInputState.Disabled = dateInputOpts.Disabled
+	dateInputState.Format = dateInputOpts.Format
+	dateInputState.MaxValue = dateInputOpts.MaxValue
+	dateInputState.MinValue = dateInputOpts.MinValue
+	dateInputState.Location = dateInputOpts.Location
+	sess.State.Set(widgetID, dateInputState)
 
 	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), websocket.MessageMethodRenderWidget, &websocket.RenderWidgetPayload{
 		SessionID:  sess.ID.String(),
 		PageID:     page.id.String(),
 		WidgetID:   widgetID.String(),
-		WidgetType: dateinput.WidgetType,
+		WidgetType: state.WidgetTypeDateInput.String(),
 		Path:       path,
-		Data:       convertStateToDateInputData(state),
+		Data:       convertStateToDateInputData(dateInputState),
 	})
 
 	cursor.next()
 
-	return state.Value
+	return dateInputState.Value
 }
 
 func (b *uiBuilder) generateDateInputID(label string, path path) uuid.UUID {
@@ -84,10 +86,10 @@ func (b *uiBuilder) generateDateInputID(label string, path path) uuid.UUID {
 	if page == nil {
 		return uuid.Nil
 	}
-	return uuid.NewV5(page.id, dateinput.WidgetType+"-"+label+"-"+path.String())
+	return uuid.NewV5(page.id, state.WidgetTypeDateInput.String()+"-"+label+"-"+path.String())
 }
 
-func convertDateInputDataToState(id uuid.UUID, data *websocket.DateInputData, location *time.Location) (*dateinput.State, error) {
+func convertDateInputDataToState(id uuid.UUID, data *websocket.DateInputData, location *time.Location) (*state.DateInputState, error) {
 	if data == nil {
 		return nil, nil
 	}
@@ -123,7 +125,7 @@ func convertDateInputDataToState(id uuid.UUID, data *websocket.DateInputData, lo
 		return nil, err
 	}
 
-	return &dateinput.State{
+	return &state.DateInputState{
 		ID:           id,
 		Value:        value,
 		Label:        data.Label,
@@ -138,7 +140,7 @@ func convertDateInputDataToState(id uuid.UUID, data *websocket.DateInputData, lo
 	}, nil
 }
 
-func convertStateToDateInputData(state *dateinput.State) *websocket.DateInputData {
+func convertStateToDateInputData(state *state.DateInputState) *websocket.DateInputData {
 	if state == nil {
 		return nil
 	}

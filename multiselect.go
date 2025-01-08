@@ -5,12 +5,14 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 
-	"github.com/trysourcetool/sourcetool-go/internal/multiselect"
+	"github.com/trysourcetool/sourcetool-go/internal/options"
+	"github.com/trysourcetool/sourcetool-go/internal/session/state"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket"
+	"github.com/trysourcetool/sourcetool-go/multiselect"
 )
 
-func (b *uiBuilder) MultiSelect(label string, options ...multiselect.Option) *multiselect.Value {
-	opts := &multiselect.Options{
+func (b *uiBuilder) MultiSelect(label string, opts ...multiselect.Option) *multiselect.Value {
+	multiSelectOpts := &options.MultiSelectOptions{
 		Label:        label,
 		DefaultValue: nil,
 		Placeholder:  "",
@@ -19,8 +21,8 @@ func (b *uiBuilder) MultiSelect(label string, options ...multiselect.Option) *mu
 		FormatFunc:   nil,
 	}
 
-	for _, option := range options {
-		option(opts)
+	for _, option := range opts {
+		option.Apply(multiSelectOpts)
 	}
 
 	sess := b.session
@@ -42,9 +44,9 @@ func (b *uiBuilder) MultiSelect(label string, options ...multiselect.Option) *mu
 	log.Printf("Path: %v\n", path)
 
 	var defaultVal []int
-	if len(opts.DefaultValue) != 0 {
-		for _, o := range opts.DefaultValue {
-			for i, opt := range opts.Options {
+	if len(multiSelectOpts.DefaultValue) != 0 {
+		for _, o := range multiSelectOpts.DefaultValue {
+			for i, opt := range multiSelectOpts.Options {
 				if opt == o {
 					defaultVal = append(defaultVal, i)
 					break
@@ -54,51 +56,51 @@ func (b *uiBuilder) MultiSelect(label string, options ...multiselect.Option) *mu
 	}
 
 	widgetID := b.generateMultiSelectID(label, path)
-	state := sess.State.GetMultiSelect(widgetID)
-	if state == nil {
-		state = &multiselect.State{
+	multiSelectState := sess.State.GetMultiSelect(widgetID)
+	if multiSelectState == nil {
+		multiSelectState = &state.MultiSelectState{
 			ID:    widgetID,
 			Value: defaultVal,
 		}
 	}
-	if opts.FormatFunc == nil {
-		opts.FormatFunc = func(v string, i int) string {
+	if multiSelectOpts.FormatFunc == nil {
+		multiSelectOpts.FormatFunc = func(v string, i int) string {
 			return v
 		}
 	}
 
-	displayVals := make([]string, len(opts.Options))
-	for i, v := range opts.Options {
-		displayVals[i] = opts.FormatFunc(v, i)
+	displayVals := make([]string, len(multiSelectOpts.Options))
+	for i, v := range multiSelectOpts.Options {
+		displayVals[i] = multiSelectOpts.FormatFunc(v, i)
 	}
 
-	state.Label = opts.Label
-	state.Options = displayVals
-	state.Placeholder = opts.Placeholder
-	state.DefaultValue = defaultVal
-	state.Required = opts.Required
-	state.Disabled = opts.Disabled
-	sess.State.Set(widgetID, state)
+	multiSelectState.Label = multiSelectOpts.Label
+	multiSelectState.Options = displayVals
+	multiSelectState.Placeholder = multiSelectOpts.Placeholder
+	multiSelectState.DefaultValue = defaultVal
+	multiSelectState.Required = multiSelectOpts.Required
+	multiSelectState.Disabled = multiSelectOpts.Disabled
+	sess.State.Set(widgetID, multiSelectState)
 
 	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), websocket.MessageMethodRenderWidget, &websocket.RenderWidgetPayload{
 		SessionID:  sess.ID.String(),
 		PageID:     page.id.String(),
 		WidgetID:   widgetID.String(),
-		WidgetType: multiselect.WidgetType,
+		WidgetType: state.WidgetTypeMultiSelect.String(),
 		Path:       path,
-		Data:       convertStateToMultiSelectData(state),
+		Data:       convertStateToMultiSelectData(multiSelectState),
 	})
 
 	cursor.next()
 
 	var value *multiselect.Value
-	if state.Value != nil {
+	if multiSelectState.Value != nil {
 		value = &multiselect.Value{
-			Values:  make([]string, len(state.Value)),
-			Indexes: make([]int, len(state.Value)),
+			Values:  make([]string, len(multiSelectState.Value)),
+			Indexes: make([]int, len(multiSelectState.Value)),
 		}
-		for i, idx := range state.Value {
-			value.Values[i] = opts.Options[idx]
+		for i, idx := range multiSelectState.Value {
+			value.Values[i] = multiSelectOpts.Options[idx]
 			value.Indexes[i] = idx
 		}
 	}
@@ -111,10 +113,10 @@ func (b *uiBuilder) generateMultiSelectID(label string, path path) uuid.UUID {
 	if page == nil {
 		return uuid.Nil
 	}
-	return uuid.NewV5(page.id, multiselect.WidgetType+"-"+label+"-"+path.String())
+	return uuid.NewV5(page.id, state.WidgetTypeMultiSelect.String()+"-"+label+"-"+path.String())
 }
 
-func convertStateToMultiSelectData(state *multiselect.State) *websocket.MultiSelectData {
+func convertStateToMultiSelectData(state *state.MultiSelectState) *websocket.MultiSelectData {
 	if state == nil {
 		return nil
 	}
@@ -129,11 +131,11 @@ func convertStateToMultiSelectData(state *multiselect.State) *websocket.MultiSel
 	}
 }
 
-func convertMultiSelectDataToState(id uuid.UUID, data *websocket.MultiSelectData) *multiselect.State {
+func convertMultiSelectDataToState(id uuid.UUID, data *websocket.MultiSelectData) *state.MultiSelectState {
 	if data == nil {
 		return nil
 	}
-	return &multiselect.State{
+	return &state.MultiSelectState{
 		ID:           id,
 		Label:        data.Label,
 		Value:        data.Value,

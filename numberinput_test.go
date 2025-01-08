@@ -6,11 +6,11 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 
-	"github.com/trysourcetool/sourcetool-go/internal/numberinput"
 	"github.com/trysourcetool/sourcetool-go/internal/session"
+	"github.com/trysourcetool/sourcetool-go/internal/session/state"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket/mock"
-	externalnumberinput "github.com/trysourcetool/sourcetool-go/numberinput"
+	"github.com/trysourcetool/sourcetool-go/numberinput"
 )
 
 func TestConvertStateToNumberInputData(t *testing.T) {
@@ -20,7 +20,7 @@ func TestConvertStateToNumberInputData(t *testing.T) {
 	maxValue := 100.0
 	minValue := 0.0
 
-	state := &numberinput.State{
+	numberInputState := &state.NumberInputState{
 		ID:           id,
 		Label:        "Test NumberInput",
 		Value:        &value,
@@ -32,7 +32,7 @@ func TestConvertStateToNumberInputData(t *testing.T) {
 		MinValue:     &minValue,
 	}
 
-	data := convertStateToNumberInputData(state)
+	data := convertStateToNumberInputData(numberInputState)
 
 	if data == nil {
 		t.Fatal("convertStateToNumberInputData returned nil")
@@ -43,14 +43,14 @@ func TestConvertStateToNumberInputData(t *testing.T) {
 		got  any
 		want any
 	}{
-		{"Label", data.Label, state.Label},
-		{"Value", *data.Value, *state.Value},
-		{"Placeholder", data.Placeholder, state.Placeholder},
-		{"DefaultValue", *data.DefaultValue, *state.DefaultValue},
-		{"Required", data.Required, state.Required},
-		{"Disabled", data.Disabled, state.Disabled},
-		{"MaxValue", *data.MaxValue, *state.MaxValue},
-		{"MinValue", *data.MinValue, *state.MinValue},
+		{"Label", data.Label, numberInputState.Label},
+		{"Value", *data.Value, *numberInputState.Value},
+		{"Placeholder", data.Placeholder, numberInputState.Placeholder},
+		{"DefaultValue", *data.DefaultValue, *numberInputState.DefaultValue},
+		{"Required", data.Required, numberInputState.Required},
+		{"Disabled", data.Disabled, numberInputState.Disabled},
+		{"MaxValue", *data.MaxValue, *numberInputState.MaxValue},
+		{"MinValue", *data.MinValue, *numberInputState.MinValue},
 	}
 
 	for _, tt := range tests {
@@ -136,12 +136,12 @@ func TestNumberInput(t *testing.T) {
 
 	// Create NumberInput component with all options
 	value := builder.NumberInput(label,
-		externalnumberinput.DefaultValue(defaultValue),
-		externalnumberinput.Placeholder(placeholder),
-		externalnumberinput.Required(true),
-		externalnumberinput.Disabled(true),
-		externalnumberinput.MaxValue(maxValue),
-		externalnumberinput.MinValue(minValue),
+		numberinput.DefaultValue(defaultValue),
+		numberinput.Placeholder(placeholder),
+		numberinput.Required(true),
+		numberinput.Disabled(true),
+		numberinput.MaxValue(maxValue),
+		numberinput.MinValue(minValue),
 	)
 
 	// Verify return value

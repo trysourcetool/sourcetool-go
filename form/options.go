@@ -1,15 +1,27 @@
 package form
 
-import "github.com/trysourcetool/sourcetool-go/internal/form"
+import "github.com/trysourcetool/sourcetool-go/internal/options"
 
-func ButtonDisabled(buttonDisabled bool) form.Option {
-	return func(o *form.Options) {
-		o.ButtonDisabled = buttonDisabled
-	}
+type Option interface {
+	Apply(*options.FormOptions)
 }
 
-func ClearOnSubmit(clearOnSubmit bool) form.Option {
-	return func(o *form.Options) {
-		o.ClearOnSubmit = clearOnSubmit
-	}
+type buttonDisabledOption bool
+
+func (b buttonDisabledOption) Apply(opts *options.FormOptions) {
+	opts.ButtonDisabled = bool(b)
+}
+
+func ButtonDisabled(buttonDisabled bool) Option {
+	return buttonDisabledOption(buttonDisabled)
+}
+
+type clearOnSubmitOption bool
+
+func (c clearOnSubmitOption) Apply(opts *options.FormOptions) {
+	opts.ClearOnSubmit = bool(c)
+}
+
+func ClearOnSubmit(clearOnSubmit bool) Option {
+	return clearOnSubmitOption(clearOnSubmit)
 }

@@ -7,12 +7,14 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 
-	"github.com/trysourcetool/sourcetool-go/internal/timeinput"
+	"github.com/trysourcetool/sourcetool-go/internal/options"
+	"github.com/trysourcetool/sourcetool-go/internal/session/state"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket"
+	"github.com/trysourcetool/sourcetool-go/timeinput"
 )
 
-func (b *uiBuilder) TimeInput(label string, options ...timeinput.Option) *time.Time {
-	opts := &timeinput.Options{
+func (b *uiBuilder) TimeInput(label string, opts ...timeinput.Option) *time.Time {
+	timeInputOpts := &options.TimeInputOptions{
 		Label:        label,
 		Placeholder:  "",
 		DefaultValue: nil,
@@ -21,8 +23,8 @@ func (b *uiBuilder) TimeInput(label string, options ...timeinput.Option) *time.T
 		Location:     time.Local,
 	}
 
-	for _, option := range options {
-		option(opts)
+	for _, option := range opts {
+		option.Apply(timeInputOpts)
 	}
 
 	sess := b.session
@@ -44,33 +46,33 @@ func (b *uiBuilder) TimeInput(label string, options ...timeinput.Option) *time.T
 	log.Printf("Path: %v\n", path)
 
 	widgetID := b.generateTimeInputID(label, path)
-	state := sess.State.GetTimeInput(widgetID)
-	if state == nil {
-		state = &timeinput.State{
+	timeInputState := sess.State.GetTimeInput(widgetID)
+	if timeInputState == nil {
+		timeInputState = &state.TimeInputState{
 			ID:    widgetID,
-			Value: opts.DefaultValue,
+			Value: timeInputOpts.DefaultValue,
 		}
 	}
-	state.Label = opts.Label
-	state.Placeholder = opts.Placeholder
-	state.DefaultValue = opts.DefaultValue
-	state.Required = opts.Required
-	state.Disabled = opts.Disabled
-	state.Location = opts.Location
-	sess.State.Set(widgetID, state)
+	timeInputState.Label = timeInputOpts.Label
+	timeInputState.Placeholder = timeInputOpts.Placeholder
+	timeInputState.DefaultValue = timeInputOpts.DefaultValue
+	timeInputState.Required = timeInputOpts.Required
+	timeInputState.Disabled = timeInputOpts.Disabled
+	timeInputState.Location = timeInputOpts.Location
+	sess.State.Set(widgetID, timeInputState)
 
 	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), websocket.MessageMethodRenderWidget, &websocket.RenderWidgetPayload{
 		SessionID:  sess.ID.String(),
 		PageID:     page.id.String(),
 		WidgetID:   widgetID.String(),
-		WidgetType: timeinput.WidgetType,
+		WidgetType: state.WidgetTypeTimeInput.String(),
 		Path:       path,
-		Data:       convertStateToTimeInputData(state),
+		Data:       convertStateToTimeInputData(timeInputState),
 	})
 
 	cursor.next()
 
-	return state.Value
+	return timeInputState.Value
 }
 
 func (b *uiBuilder) generateTimeInputID(label string, path path) uuid.UUID {
@@ -78,10 +80,10 @@ func (b *uiBuilder) generateTimeInputID(label string, path path) uuid.UUID {
 	if page == nil {
 		return uuid.Nil
 	}
-	return uuid.NewV5(page.id, timeinput.WidgetType+"-"+label+"-"+path.String())
+	return uuid.NewV5(page.id, state.WidgetTypeTimeInput.String()+"-"+label+"-"+path.String())
 }
 
-func convertTimeInputDataToState(id uuid.UUID, data *websocket.TimeInputData, location *time.Location) (*timeinput.State, error) {
+func convertTimeInputDataToState(id uuid.UUID, data *websocket.TimeInputData, location *time.Location) (*state.TimeInputState, error) {
 	if data == nil {
 		return nil, nil
 	}
@@ -107,7 +109,7 @@ func convertTimeInputDataToState(id uuid.UUID, data *websocket.TimeInputData, lo
 		return nil, err
 	}
 
-	return &timeinput.State{
+	return &state.TimeInputState{
 		ID:           id,
 		Value:        value,
 		Label:        data.Label,
@@ -119,7 +121,7 @@ func convertTimeInputDataToState(id uuid.UUID, data *websocket.TimeInputData, lo
 	}, nil
 }
 
-func convertStateToTimeInputData(state *timeinput.State) *websocket.TimeInputData {
+func convertStateToTimeInputData(state *state.TimeInputState) *websocket.TimeInputData {
 	if state == nil {
 		return nil
 	}

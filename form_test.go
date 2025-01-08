@@ -6,16 +6,16 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 
-	externalform "github.com/trysourcetool/sourcetool-go/form"
-	"github.com/trysourcetool/sourcetool-go/internal/form"
+	"github.com/trysourcetool/sourcetool-go/form"
 	"github.com/trysourcetool/sourcetool-go/internal/session"
+	"github.com/trysourcetool/sourcetool-go/internal/session/state"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket/mock"
 )
 
 func TestConvertStateToFormData(t *testing.T) {
 	id := uuid.Must(uuid.NewV4())
-	state := &form.State{
+	formState := &state.FormState{
 		ID:             id,
 		Value:          true,
 		ButtonLabel:    "Submit",
@@ -23,7 +23,7 @@ func TestConvertStateToFormData(t *testing.T) {
 		ClearOnSubmit:  true,
 	}
 
-	data := convertStateToFormData(state)
+	data := convertStateToFormData(formState)
 
 	if data == nil {
 		t.Fatal("convertStateToFormData returned nil")
@@ -34,10 +34,10 @@ func TestConvertStateToFormData(t *testing.T) {
 		got  any
 		want any
 	}{
-		{"Value", data.Value, state.Value},
-		{"ButtonLabel", data.ButtonLabel, state.ButtonLabel},
-		{"ButtonDisabled", data.ButtonDisabled, state.ButtonDisabled},
-		{"ClearOnSubmit", data.ClearOnSubmit, state.ClearOnSubmit},
+		{"Value", data.Value, formState.Value},
+		{"ButtonLabel", data.ButtonLabel, formState.ButtonLabel},
+		{"ButtonDisabled", data.ButtonDisabled, formState.ButtonDisabled},
+		{"ClearOnSubmit", data.ClearOnSubmit, formState.ClearOnSubmit},
 	}
 
 	for _, tt := range tests {
@@ -170,8 +170,8 @@ func TestForm_WithOptions(t *testing.T) {
 
 	buttonLabel := "Submit"
 	childBuilder, submitted := builder.Form(buttonLabel,
-		externalform.ButtonDisabled(true),
-		externalform.ClearOnSubmit(true),
+		form.ButtonDisabled(true),
+		form.ClearOnSubmit(true),
 	)
 
 	if childBuilder == nil {

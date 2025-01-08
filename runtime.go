@@ -10,24 +10,8 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 
-	"github.com/trysourcetool/sourcetool-go/internal/button"
-	"github.com/trysourcetool/sourcetool-go/internal/checkbox"
-	"github.com/trysourcetool/sourcetool-go/internal/checkboxgroup"
-	"github.com/trysourcetool/sourcetool-go/internal/columnitem"
-	"github.com/trysourcetool/sourcetool-go/internal/columns"
-	"github.com/trysourcetool/sourcetool-go/internal/dateinput"
-	"github.com/trysourcetool/sourcetool-go/internal/datetimeinput"
-	"github.com/trysourcetool/sourcetool-go/internal/form"
-	"github.com/trysourcetool/sourcetool-go/internal/markdown"
-	"github.com/trysourcetool/sourcetool-go/internal/multiselect"
-	"github.com/trysourcetool/sourcetool-go/internal/numberinput"
-	"github.com/trysourcetool/sourcetool-go/internal/radio"
-	"github.com/trysourcetool/sourcetool-go/internal/selectbox"
 	"github.com/trysourcetool/sourcetool-go/internal/session"
-	"github.com/trysourcetool/sourcetool-go/internal/table"
-	"github.com/trysourcetool/sourcetool-go/internal/textarea"
-	"github.com/trysourcetool/sourcetool-go/internal/textinput"
-	"github.com/trysourcetool/sourcetool-go/internal/timeinput"
+	"github.com/trysourcetool/sourcetool-go/internal/session/state"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 )
 
@@ -213,30 +197,30 @@ func (r *runtime) handleCloseSession(msg *websocket.Message) error {
 
 func buildNewWidgetStates(states map[uuid.UUID]json.RawMessage, sess *session.Session) (map[uuid.UUID]session.WidgetState, error) {
 	widgetStates := make(map[uuid.UUID]session.WidgetState)
-	for id, state := range states {
+	for id, s := range states {
 		currentState := sess.State.Get(id)
 		if currentState == nil {
 			continue
 		}
 		switch currentState.GetType() {
-		case textinput.WidgetType:
+		case state.WidgetTypeTextInput:
 			var textInputData websocket.TextInputData
-			if err := json.Unmarshal(state, &textInputData); err != nil {
+			if err := json.Unmarshal(s, &textInputData); err != nil {
 				return nil, fmt.Errorf("failed to unmarshal text input state: %v", err)
 			}
 			widgetStates[id] = convertTextInputDataToState(id, &textInputData)
-		case numberinput.WidgetType:
+		case state.WidgetTypeNumberInput:
 			var numberInputData websocket.NumberInputData
-			if err := json.Unmarshal(state, &numberInputData); err != nil {
+			if err := json.Unmarshal(s, &numberInputData); err != nil {
 				return nil, fmt.Errorf("failed to unmarshal number input state: %v", err)
 			}
 			widgetStates[id] = convertNumberInputDataToState(&numberInputData)
-		case dateinput.WidgetType:
+		case state.WidgetTypeDateInput:
 			var dateInputData websocket.DateInputData
-			if err := json.Unmarshal(state, &dateInputData); err != nil {
+			if err := json.Unmarshal(s, &dateInputData); err != nil {
 				return nil, fmt.Errorf("failed to unmarshal date input state: %v", err)
 			}
-			dateInputState, ok := currentState.(*dateinput.State)
+			dateInputState, ok := currentState.(*state.DateInputState)
 			if !ok {
 				return nil, fmt.Errorf("invalid date input state: %v", currentState)
 			}
@@ -252,12 +236,12 @@ func buildNewWidgetStates(states map[uuid.UUID]json.RawMessage, sess *session.Se
 			}
 
 			widgetStates[id] = newState
-		case datetimeinput.WidgetType:
+		case state.WidgetTypeDateTimeInput:
 			var dateTimeInputData websocket.DateTimeInputData
-			if err := json.Unmarshal(state, &dateTimeInputData); err != nil {
+			if err := json.Unmarshal(s, &dateTimeInputData); err != nil {
 				return nil, fmt.Errorf("failed to unmarshal datetime input state: %v", err)
 			}
-			dateTimeInputState, ok := currentState.(*datetimeinput.State)
+			dateTimeInputState, ok := currentState.(*state.DateTimeInputState)
 			if !ok {
 				return nil, fmt.Errorf("invalid datetime input state: %v", currentState)
 			}
@@ -273,12 +257,12 @@ func buildNewWidgetStates(states map[uuid.UUID]json.RawMessage, sess *session.Se
 			}
 
 			widgetStates[id] = newState
-		case timeinput.WidgetType:
+		case state.WidgetTypeTimeInput:
 			var timeInputData websocket.TimeInputData
-			if err := json.Unmarshal(state, &timeInputData); err != nil {
+			if err := json.Unmarshal(s, &timeInputData); err != nil {
 				return nil, fmt.Errorf("failed to unmarshal time input state: %v", err)
 			}
-			timeInputState, ok := currentState.(*timeinput.State)
+			timeInputState, ok := currentState.(*state.TimeInputState)
 			if !ok {
 				return nil, fmt.Errorf("invalid time input state: %v", currentState)
 			}
@@ -294,75 +278,75 @@ func buildNewWidgetStates(states map[uuid.UUID]json.RawMessage, sess *session.Se
 			}
 
 			widgetStates[id] = newState
-		case form.WidgetType:
+		case state.WidgetTypeForm:
 			var formData websocket.FormData
-			if err := json.Unmarshal(state, &formData); err != nil {
+			if err := json.Unmarshal(s, &formData); err != nil {
 				return nil, fmt.Errorf("failed to unmarshal form state: %v", err)
 			}
 			widgetStates[id] = convertFormDataToState(&formData)
-		case button.WidgetType:
+		case state.WidgetTypeButton:
 			var buttonData websocket.ButtonData
-			if err := json.Unmarshal(state, &buttonData); err != nil {
+			if err := json.Unmarshal(s, &buttonData); err != nil {
 				return nil, fmt.Errorf("failed to unmarshal button state: %v", err)
 			}
 			widgetStates[id] = convertButtonDataToState(&buttonData)
-		case markdown.WidgetType:
+		case state.WidgetTypeMarkdown:
 			var markdownData websocket.MarkdownData
-			if err := json.Unmarshal(state, &markdownData); err != nil {
+			if err := json.Unmarshal(s, &markdownData); err != nil {
 				return nil, fmt.Errorf("failed to unmarshal markdown state: %v", err)
 			}
 			widgetStates[id] = convertMarkdownDataToState(&markdownData)
-		case columns.WidgetType:
+		case state.WidgetTypeColumns:
 			var columnsData websocket.ColumnsData
-			if err := json.Unmarshal(state, &columnsData); err != nil {
+			if err := json.Unmarshal(s, &columnsData); err != nil {
 				return nil, fmt.Errorf("failed to unmarshal columns state: %v", err)
 			}
 			widgetStates[id] = convertColumnsDataToState(&columnsData)
-		case columnitem.WidgetType:
+		case state.WidgetTypeColumnItem:
 			var columnItemData websocket.ColumnItemData
-			if err := json.Unmarshal(state, &columnItemData); err != nil {
+			if err := json.Unmarshal(s, &columnItemData); err != nil {
 				return nil, fmt.Errorf("failed to unmarshal column item state: %v", err)
 			}
 			widgetStates[id] = convertColumnItemDataToState(&columnItemData)
-		case table.WidgetType:
+		case state.WidgetTypeTable:
 			var tableData websocket.TableData
-			if err := json.Unmarshal(state, &tableData); err != nil {
+			if err := json.Unmarshal(s, &tableData); err != nil {
 				return nil, fmt.Errorf("failed to unmarshal table state: %v", err)
 			}
 			widgetStates[id] = convertTableDataToState(id, &tableData)
-		case selectbox.WidgetType:
+		case state.WidgetTypeSelectbox:
 			var selectboxData websocket.SelectboxData
-			if err := json.Unmarshal(state, &selectboxData); err != nil {
+			if err := json.Unmarshal(s, &selectboxData); err != nil {
 				return nil, fmt.Errorf("failed to unmarshal selectbox state: %v", err)
 			}
 			widgetStates[id] = convertSelectboxDataToState(id, &selectboxData)
-		case multiselect.WidgetType:
+		case state.WidgetTypeMultiSelect:
 			var multiSelectData websocket.MultiSelectData
-			if err := json.Unmarshal(state, &multiSelectData); err != nil {
+			if err := json.Unmarshal(s, &multiSelectData); err != nil {
 				return nil, fmt.Errorf("failed to unmarshal multiSelect state: %v", err)
 			}
 			widgetStates[id] = convertMultiSelectDataToState(id, &multiSelectData)
-		case checkbox.WidgetType:
+		case state.WidgetTypeCheckbox:
 			var checkboxData websocket.CheckboxData
-			if err := json.Unmarshal(state, &checkboxData); err != nil {
+			if err := json.Unmarshal(s, &checkboxData); err != nil {
 				return nil, fmt.Errorf("failed to unmarshal checkbox state: %v", err)
 			}
 			widgetStates[id] = convertCheckboxDataToState(id, &checkboxData)
-		case checkboxgroup.WidgetType:
+		case state.WidgetTypeCheckboxGroup:
 			var checkboxGroupData websocket.CheckboxGroupData
-			if err := json.Unmarshal(state, &checkboxGroupData); err != nil {
+			if err := json.Unmarshal(s, &checkboxGroupData); err != nil {
 				return nil, fmt.Errorf("failed to unmarshal checkbox group state: %v", err)
 			}
 			widgetStates[id] = convertCheckboxGroupDataToState(id, &checkboxGroupData)
-		case radio.WidgetType:
+		case state.WidgetTypeRadio:
 			var radioData websocket.RadioData
-			if err := json.Unmarshal(state, &radioData); err != nil {
+			if err := json.Unmarshal(s, &radioData); err != nil {
 				return nil, fmt.Errorf("failed to unmarshal radio group state: %v", err)
 			}
 			widgetStates[id] = convertRadioDataToState(id, &radioData)
-		case textarea.WidgetType:
+		case state.WidgetTypeTextArea:
 			var textareaData websocket.TextAreaData
-			if err := json.Unmarshal(state, &textareaData); err != nil {
+			if err := json.Unmarshal(s, &textareaData); err != nil {
 				return nil, fmt.Errorf("failed to unmarshal textarea state: %v", err)
 			}
 			widgetStates[id] = convertTextAreaDataToState(id, &textareaData)

@@ -6,11 +6,11 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 
-	"github.com/trysourcetool/sourcetool-go/internal/radio"
 	"github.com/trysourcetool/sourcetool-go/internal/session"
+	"github.com/trysourcetool/sourcetool-go/internal/session/state"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket/mock"
-	externalradio "github.com/trysourcetool/sourcetool-go/radio"
+	"github.com/trysourcetool/sourcetool-go/radio"
 )
 
 func TestConvertStateToRadioData(t *testing.T) {
@@ -19,7 +19,7 @@ func TestConvertStateToRadioData(t *testing.T) {
 	defaultValue := 0
 	options := []string{"Option 1", "Option 2"}
 
-	state := &radio.State{
+	radioState := &state.RadioState{
 		ID:           id,
 		Label:        "Test Radio",
 		Value:        &value,
@@ -29,7 +29,7 @@ func TestConvertStateToRadioData(t *testing.T) {
 		Disabled:     false,
 	}
 
-	data := convertStateToRadioData(state)
+	data := convertStateToRadioData(radioState)
 
 	if data == nil {
 		t.Fatal("convertStateToRadioData returned nil")
@@ -40,12 +40,12 @@ func TestConvertStateToRadioData(t *testing.T) {
 		got  any
 		want any
 	}{
-		{"Label", data.Label, state.Label},
-		{"Value", *data.Value, *state.Value},
-		{"Options length", len(data.Options), len(state.Options)},
-		{"DefaultValue", *data.DefaultValue, *state.DefaultValue},
-		{"Required", data.Required, state.Required},
-		{"Disabled", data.Disabled, state.Disabled},
+		{"Label", data.Label, radioState.Label},
+		{"Value", *data.Value, *radioState.Value},
+		{"Options length", len(data.Options), len(radioState.Options)},
+		{"DefaultValue", *data.DefaultValue, *radioState.DefaultValue},
+		{"Required", data.Required, radioState.Required},
+		{"Disabled", data.Disabled, radioState.Disabled},
 	}
 
 	for _, tt := range tests {
@@ -126,9 +126,9 @@ func TestRadio(t *testing.T) {
 
 	// Create Radio component
 	value := builder.Radio(label,
-		externalradio.Options(options...),
-		externalradio.DefaultValue(defaultValue),
-		externalradio.Required(true),
+		radio.Options(options...),
+		radio.DefaultValue(defaultValue),
+		radio.Required(true),
 	)
 
 	// Verify return value
@@ -204,8 +204,8 @@ func TestRadio_WithFormatFunc(t *testing.T) {
 	}
 
 	builder.Radio(label,
-		externalradio.Options(options...),
-		externalradio.FormatFunc(formatFunc),
+		radio.Options(options...),
+		radio.FormatFunc(formatFunc),
 	)
 
 	// Verify that format function is applied

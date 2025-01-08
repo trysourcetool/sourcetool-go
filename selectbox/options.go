@@ -1,39 +1,72 @@
 package selectbox
 
-import "github.com/trysourcetool/sourcetool-go/internal/selectbox"
+import "github.com/trysourcetool/sourcetool-go/internal/options"
 
-func Options(options ...string) selectbox.Option {
-	return func(o *selectbox.Options) {
-		o.Options = options
-	}
+type Value struct {
+	Value string
+	Index int
 }
 
-func Placeholder(placeholder string) selectbox.Option {
-	return func(o *selectbox.Options) {
-		o.Placeholder = placeholder
-	}
+type Option interface {
+	Apply(*options.SelectboxOptions)
 }
 
-func DefaultValue(defaultValue string) selectbox.Option {
-	return func(o *selectbox.Options) {
-		o.DefaultValue = &defaultValue
-	}
+type optionsOption []string
+
+func (o optionsOption) Apply(opts *options.SelectboxOptions) {
+	opts.Options = []string(o)
 }
 
-func Required(required bool) selectbox.Option {
-	return func(o *selectbox.Options) {
-		o.Required = required
-	}
+func Options(options ...string) Option {
+	return optionsOption(options)
 }
 
-func Disabled(disabled bool) selectbox.Option {
-	return func(o *selectbox.Options) {
-		o.Disabled = disabled
-	}
+type placeholderOption string
+
+func (p placeholderOption) Apply(opts *options.SelectboxOptions) {
+	opts.Placeholder = string(p)
 }
 
-func FormatFunc(formatFunc func(string, int) string) selectbox.Option {
-	return func(o *selectbox.Options) {
-		o.FormatFunc = formatFunc
-	}
+func Placeholder(placeholder string) Option {
+	return placeholderOption(placeholder)
+}
+
+type defaultValueOption string
+
+func (d defaultValueOption) Apply(opts *options.SelectboxOptions) {
+	opts.DefaultValue = (*string)(&d)
+}
+
+func DefaultValue(defaultValue string) Option {
+	return defaultValueOption(defaultValue)
+}
+
+type requiredOption bool
+
+func (r requiredOption) Apply(opts *options.SelectboxOptions) {
+	opts.Required = bool(r)
+}
+
+func Required(required bool) Option {
+	return requiredOption(required)
+}
+
+type disabledOption bool
+
+func (d disabledOption) Apply(opts *options.SelectboxOptions) {
+	opts.Disabled = bool(d)
+}
+
+func Disabled(disabled bool) Option {
+	return disabledOption(disabled)
+}
+
+type formatFuncOption func(string, int) string
+
+func (f formatFuncOption) Apply(opts *options.SelectboxOptions) {
+	opts.FormatFunc = f
+}
+
+func FormatFunc(formatFunc func(string, int) string) Option {
+	return formatFuncOption(formatFunc)
 }

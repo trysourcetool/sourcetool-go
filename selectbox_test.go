@@ -6,11 +6,11 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 
-	"github.com/trysourcetool/sourcetool-go/internal/selectbox"
 	"github.com/trysourcetool/sourcetool-go/internal/session"
+	"github.com/trysourcetool/sourcetool-go/internal/session/state"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket/mock"
-	externalselectbox "github.com/trysourcetool/sourcetool-go/selectbox"
+	"github.com/trysourcetool/sourcetool-go/selectbox"
 )
 
 func TestConvertStateToSelectboxData(t *testing.T) {
@@ -20,7 +20,7 @@ func TestConvertStateToSelectboxData(t *testing.T) {
 	options := []string{"Option 1", "Option 2"}
 	placeholder := "Select an option"
 
-	state := &selectbox.State{
+	selectboxState := &state.SelectboxState{
 		ID:           id,
 		Label:        "Test Selectbox",
 		Value:        &value,
@@ -31,7 +31,7 @@ func TestConvertStateToSelectboxData(t *testing.T) {
 		Disabled:     false,
 	}
 
-	data := convertStateToSelectboxData(state)
+	data := convertStateToSelectboxData(selectboxState)
 
 	if data == nil {
 		t.Fatal("convertStateToSelectboxData returned nil")
@@ -42,13 +42,13 @@ func TestConvertStateToSelectboxData(t *testing.T) {
 		got  any
 		want any
 	}{
-		{"Label", data.Label, state.Label},
-		{"Value", *data.Value, *state.Value},
-		{"Options length", len(data.Options), len(state.Options)},
-		{"Placeholder", data.Placeholder, state.Placeholder},
-		{"DefaultValue", *data.DefaultValue, *state.DefaultValue},
-		{"Required", data.Required, state.Required},
-		{"Disabled", data.Disabled, state.Disabled},
+		{"Label", data.Label, selectboxState.Label},
+		{"Value", *data.Value, *selectboxState.Value},
+		{"Options length", len(data.Options), len(selectboxState.Options)},
+		{"Placeholder", data.Placeholder, selectboxState.Placeholder},
+		{"DefaultValue", *data.DefaultValue, *selectboxState.DefaultValue},
+		{"Required", data.Required, selectboxState.Required},
+		{"Disabled", data.Disabled, selectboxState.Disabled},
 	}
 
 	for _, tt := range tests {
@@ -133,10 +133,10 @@ func TestSelectbox(t *testing.T) {
 
 	// Create Selectbox component
 	value := builder.Selectbox(label,
-		externalselectbox.Options(options...),
-		externalselectbox.DefaultValue(defaultValue),
-		externalselectbox.Placeholder(placeholder),
-		externalselectbox.Required(true),
+		selectbox.Options(options...),
+		selectbox.DefaultValue(defaultValue),
+		selectbox.Placeholder(placeholder),
+		selectbox.Required(true),
 	)
 
 	// Verify return value
@@ -213,8 +213,8 @@ func TestSelectbox_WithFormatFunc(t *testing.T) {
 	}
 
 	builder.Selectbox(label,
-		externalselectbox.Options(options...),
-		externalselectbox.FormatFunc(formatFunc),
+		selectbox.Options(options...),
+		selectbox.FormatFunc(formatFunc),
 	)
 
 	// Verify that format function is applied

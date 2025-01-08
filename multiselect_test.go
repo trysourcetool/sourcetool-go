@@ -7,11 +7,11 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 
-	"github.com/trysourcetool/sourcetool-go/internal/multiselect"
 	"github.com/trysourcetool/sourcetool-go/internal/session"
+	"github.com/trysourcetool/sourcetool-go/internal/session/state"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket/mock"
-	externalmultiselect "github.com/trysourcetool/sourcetool-go/multiselect"
+	"github.com/trysourcetool/sourcetool-go/multiselect"
 )
 
 func TestConvertStateToMultiSelectData(t *testing.T) {
@@ -20,7 +20,7 @@ func TestConvertStateToMultiSelectData(t *testing.T) {
 	defaultValue := []int{0}
 	options := []string{"Option 1", "Option 2", "Option 3"}
 
-	state := &multiselect.State{
+	multiSelectState := &state.MultiSelectState{
 		ID:           id,
 		Label:        "Test MultiSelect",
 		Value:        value,
@@ -31,7 +31,7 @@ func TestConvertStateToMultiSelectData(t *testing.T) {
 		Disabled:     false,
 	}
 
-	data := convertStateToMultiSelectData(state)
+	data := convertStateToMultiSelectData(multiSelectState)
 
 	if data == nil {
 		t.Fatal("convertStateToMultiSelectData returned nil")
@@ -42,13 +42,13 @@ func TestConvertStateToMultiSelectData(t *testing.T) {
 		got  any
 		want any
 	}{
-		{"Label", data.Label, state.Label},
-		{"Value", data.Value, state.Value},
-		{"Options length", len(data.Options), len(state.Options)},
-		{"Placeholder", data.Placeholder, state.Placeholder},
-		{"DefaultValue", data.DefaultValue, state.DefaultValue},
-		{"Required", data.Required, state.Required},
-		{"Disabled", data.Disabled, state.Disabled},
+		{"Label", data.Label, multiSelectState.Label},
+		{"Value", data.Value, multiSelectState.Value},
+		{"Options length", len(data.Options), len(multiSelectState.Options)},
+		{"Placeholder", data.Placeholder, multiSelectState.Placeholder},
+		{"DefaultValue", data.DefaultValue, multiSelectState.DefaultValue},
+		{"Required", data.Required, multiSelectState.Required},
+		{"Disabled", data.Disabled, multiSelectState.Disabled},
 	}
 
 	for _, tt := range tests {
@@ -132,11 +132,11 @@ func TestMultiSelect(t *testing.T) {
 
 	// Create MultiSelect component with all options
 	value := builder.MultiSelect(label,
-		externalmultiselect.Options(options...),
-		externalmultiselect.DefaultValue(defaultValue...),
-		externalmultiselect.Placeholder(placeholder),
-		externalmultiselect.Required(true),
-		externalmultiselect.Disabled(true),
+		multiselect.Options(options...),
+		multiselect.DefaultValue(defaultValue...),
+		multiselect.Placeholder(placeholder),
+		multiselect.Required(true),
+		multiselect.Disabled(true),
 	)
 
 	// Verify return value
@@ -214,8 +214,8 @@ func TestMultiSelect_WithFormatFunc(t *testing.T) {
 	}
 
 	builder.MultiSelect(label,
-		externalmultiselect.Options(options...),
-		externalmultiselect.FormatFunc(formatFunc),
+		multiselect.Options(options...),
+		multiselect.FormatFunc(formatFunc),
 	)
 
 	// Verify that format function is applied

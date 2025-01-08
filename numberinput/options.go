@@ -1,39 +1,67 @@
 package numberinput
 
-import "github.com/trysourcetool/sourcetool-go/internal/numberinput"
+import "github.com/trysourcetool/sourcetool-go/internal/options"
 
-func Placeholder(placeholder string) numberinput.Option {
-	return func(opts *numberinput.Options) {
-		opts.Placeholder = placeholder
-	}
+type Option interface {
+	Apply(*options.NumberInputOptions)
 }
 
-func DefaultValue(value float64) numberinput.Option {
-	return func(opts *numberinput.Options) {
-		opts.DefaultValue = &value
-	}
+type placeholderOption string
+
+func (p placeholderOption) Apply(opts *options.NumberInputOptions) {
+	opts.Placeholder = string(p)
 }
 
-func Required(required bool) numberinput.Option {
-	return func(opts *numberinput.Options) {
-		opts.Required = required
-	}
+func Placeholder(placeholder string) Option {
+	return placeholderOption(placeholder)
 }
 
-func Disabled(disabled bool) numberinput.Option {
-	return func(opts *numberinput.Options) {
-		opts.Disabled = disabled
-	}
+type defaultValueOption float64
+
+func (d defaultValueOption) Apply(opts *options.NumberInputOptions) {
+	opts.DefaultValue = (*float64)(&d)
 }
 
-func MaxValue(value float64) numberinput.Option {
-	return func(opts *numberinput.Options) {
-		opts.MaxValue = &value
-	}
+func DefaultValue(value float64) Option {
+	return defaultValueOption(value)
 }
 
-func MinValue(value float64) numberinput.Option {
-	return func(opts *numberinput.Options) {
-		opts.MinValue = &value
-	}
+type requiredOption bool
+
+func (r requiredOption) Apply(opts *options.NumberInputOptions) {
+	opts.Required = bool(r)
+}
+
+func Required(required bool) Option {
+	return requiredOption(required)
+}
+
+type disabledOption bool
+
+func (d disabledOption) Apply(opts *options.NumberInputOptions) {
+	opts.Disabled = bool(d)
+}
+
+func Disabled(disabled bool) Option {
+	return disabledOption(disabled)
+}
+
+type maxValueOption float64
+
+func (m maxValueOption) Apply(opts *options.NumberInputOptions) {
+	opts.MaxValue = (*float64)(&m)
+}
+
+func MaxValue(value float64) Option {
+	return maxValueOption(value)
+}
+
+type minValueOption float64
+
+func (m minValueOption) Apply(opts *options.NumberInputOptions) {
+	opts.MinValue = (*float64)(&m)
+}
+
+func MinValue(value float64) Option {
+	return minValueOption(value)
 }

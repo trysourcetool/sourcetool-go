@@ -5,12 +5,14 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 
-	"github.com/trysourcetool/sourcetool-go/internal/textinput"
+	"github.com/trysourcetool/sourcetool-go/internal/options"
+	"github.com/trysourcetool/sourcetool-go/internal/session/state"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket"
+	"github.com/trysourcetool/sourcetool-go/textinput"
 )
 
-func (b *uiBuilder) TextInput(label string, options ...textinput.Option) string {
-	opts := &textinput.Options{
+func (b *uiBuilder) TextInput(label string, opts ...textinput.Option) string {
+	textInputOpts := &options.TextInputOptions{
 		Label:        label,
 		Placeholder:  "",
 		DefaultValue: "",
@@ -20,8 +22,8 @@ func (b *uiBuilder) TextInput(label string, options ...textinput.Option) string 
 		MinLength:    nil,
 	}
 
-	for _, option := range options {
-		option(opts)
+	for _, option := range opts {
+		option.Apply(textInputOpts)
 	}
 
 	sess := b.session
@@ -43,34 +45,34 @@ func (b *uiBuilder) TextInput(label string, options ...textinput.Option) string 
 	log.Printf("Path: %v\n", path)
 
 	widgetID := b.generateTextInputID(label, path)
-	state := sess.State.GetTextInput(widgetID)
-	if state == nil {
-		state = &textinput.State{
+	textInputState := sess.State.GetTextInput(widgetID)
+	if textInputState == nil {
+		textInputState = &state.TextInputState{
 			ID:    widgetID,
-			Value: opts.DefaultValue,
+			Value: textInputOpts.DefaultValue,
 		}
 	}
-	state.Label = opts.Label
-	state.Placeholder = opts.Placeholder
-	state.DefaultValue = opts.DefaultValue
-	state.Required = opts.Required
-	state.Disabled = opts.Disabled
-	state.MaxLength = opts.MaxLength
-	state.MinLength = opts.MinLength
-	sess.State.Set(widgetID, state)
+	textInputState.Label = textInputOpts.Label
+	textInputState.Placeholder = textInputOpts.Placeholder
+	textInputState.DefaultValue = textInputOpts.DefaultValue
+	textInputState.Required = textInputOpts.Required
+	textInputState.Disabled = textInputOpts.Disabled
+	textInputState.MaxLength = textInputOpts.MaxLength
+	textInputState.MinLength = textInputOpts.MinLength
+	sess.State.Set(widgetID, textInputState)
 
 	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), websocket.MessageMethodRenderWidget, &websocket.RenderWidgetPayload{
 		SessionID:  sess.ID.String(),
 		PageID:     page.id.String(),
 		WidgetID:   widgetID.String(),
-		WidgetType: textinput.WidgetType,
+		WidgetType: state.WidgetTypeTextInput.String(),
 		Path:       path,
-		Data:       convertStateToTextInputData(state),
+		Data:       convertStateToTextInputData(textInputState),
 	})
 
 	cursor.next()
 
-	return state.Value
+	return textInputState.Value
 }
 
 func (b *uiBuilder) generateTextInputID(label string, path path) uuid.UUID {
@@ -78,10 +80,10 @@ func (b *uiBuilder) generateTextInputID(label string, path path) uuid.UUID {
 	if page == nil {
 		return uuid.Nil
 	}
-	return uuid.NewV5(page.id, textinput.WidgetType+"-"+label+"-"+path.String())
+	return uuid.NewV5(page.id, state.WidgetTypeTextInput.String()+"-"+label+"-"+path.String())
 }
 
-func convertStateToTextInputData(state *textinput.State) *websocket.TextInputData {
+func convertStateToTextInputData(state *state.TextInputState) *websocket.TextInputData {
 	if state == nil {
 		return nil
 	}
@@ -97,11 +99,11 @@ func convertStateToTextInputData(state *textinput.State) *websocket.TextInputDat
 	}
 }
 
-func convertTextInputDataToState(id uuid.UUID, data *websocket.TextInputData) *textinput.State {
+func convertTextInputDataToState(id uuid.UUID, data *websocket.TextInputData) *state.TextInputState {
 	if data == nil {
 		return nil
 	}
-	return &textinput.State{
+	return &state.TextInputState{
 		ID:           id,
 		Value:        data.Value,
 		Label:        data.Label,

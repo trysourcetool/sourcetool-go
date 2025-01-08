@@ -6,12 +6,14 @@ import (
 	"github.com/gofrs/uuid/v5"
 
 	"github.com/trysourcetool/sourcetool-go/internal/conv"
-	"github.com/trysourcetool/sourcetool-go/internal/numberinput"
+	"github.com/trysourcetool/sourcetool-go/internal/options"
+	"github.com/trysourcetool/sourcetool-go/internal/session/state"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket"
+	"github.com/trysourcetool/sourcetool-go/numberinput"
 )
 
-func (b *uiBuilder) NumberInput(label string, options ...numberinput.Option) *float64 {
-	opts := &numberinput.Options{
+func (b *uiBuilder) NumberInput(label string, opts ...numberinput.Option) *float64 {
+	numberInputOpts := &options.NumberInputOptions{
 		Label:        label,
 		Placeholder:  "",
 		DefaultValue: conv.NilValue(float64(0)),
@@ -21,8 +23,8 @@ func (b *uiBuilder) NumberInput(label string, options ...numberinput.Option) *fl
 		MinValue:     nil,
 	}
 
-	for _, option := range options {
-		option(opts)
+	for _, option := range opts {
+		option.Apply(numberInputOpts)
 	}
 
 	sess := b.session
@@ -44,34 +46,34 @@ func (b *uiBuilder) NumberInput(label string, options ...numberinput.Option) *fl
 	log.Printf("Path: %v\n", path)
 
 	widgetID := b.generateNumberInputID(label, path)
-	state := sess.State.GetNumberInput(widgetID)
-	if state == nil {
-		state = &numberinput.State{
+	numberInputState := sess.State.GetNumberInput(widgetID)
+	if numberInputState == nil {
+		numberInputState = &state.NumberInputState{
 			ID:    widgetID,
-			Value: opts.DefaultValue,
+			Value: numberInputOpts.DefaultValue,
 		}
 	}
-	state.Label = opts.Label
-	state.Placeholder = opts.Placeholder
-	state.DefaultValue = opts.DefaultValue
-	state.Required = opts.Required
-	state.Disabled = opts.Disabled
-	state.MaxValue = opts.MaxValue
-	state.MinValue = opts.MinValue
-	sess.State.Set(widgetID, state)
+	numberInputState.Label = numberInputOpts.Label
+	numberInputState.Placeholder = numberInputOpts.Placeholder
+	numberInputState.DefaultValue = numberInputOpts.DefaultValue
+	numberInputState.Required = numberInputOpts.Required
+	numberInputState.Disabled = numberInputOpts.Disabled
+	numberInputState.MaxValue = numberInputOpts.MaxValue
+	numberInputState.MinValue = numberInputOpts.MinValue
+	sess.State.Set(widgetID, numberInputState)
 
 	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), websocket.MessageMethodRenderWidget, &websocket.RenderWidgetPayload{
 		SessionID:  sess.ID.String(),
 		PageID:     page.id.String(),
 		WidgetID:   widgetID.String(),
-		WidgetType: numberinput.WidgetType,
+		WidgetType: state.WidgetTypeNumberInput.String(),
 		Path:       path,
-		Data:       convertStateToNumberInputData(state),
+		Data:       convertStateToNumberInputData(numberInputState),
 	})
 
 	cursor.next()
 
-	return state.Value
+	return numberInputState.Value
 }
 
 func (b *uiBuilder) generateNumberInputID(label string, path path) uuid.UUID {
@@ -79,10 +81,10 @@ func (b *uiBuilder) generateNumberInputID(label string, path path) uuid.UUID {
 	if page == nil {
 		return uuid.Nil
 	}
-	return uuid.NewV5(page.id, numberinput.WidgetType+"-"+label+"-"+path.String())
+	return uuid.NewV5(page.id, state.WidgetTypeNumberInput.String()+"-"+label+"-"+path.String())
 }
 
-func convertStateToNumberInputData(state *numberinput.State) *websocket.NumberInputData {
+func convertStateToNumberInputData(state *state.NumberInputState) *websocket.NumberInputData {
 	if state == nil {
 		return nil
 	}
@@ -98,11 +100,11 @@ func convertStateToNumberInputData(state *numberinput.State) *websocket.NumberIn
 	}
 }
 
-func convertNumberInputDataToState(data *websocket.NumberInputData) *numberinput.State {
+func convertNumberInputDataToState(data *websocket.NumberInputData) *state.NumberInputState {
 	if data == nil {
 		return nil
 	}
-	return &numberinput.State{
+	return &state.NumberInputState{
 		Value:        data.Value,
 		Label:        data.Label,
 		Placeholder:  data.Placeholder,

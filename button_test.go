@@ -7,8 +7,8 @@ import (
 	"github.com/gofrs/uuid/v5"
 
 	externalbutton "github.com/trysourcetool/sourcetool-go/button"
-	"github.com/trysourcetool/sourcetool-go/internal/button"
 	"github.com/trysourcetool/sourcetool-go/internal/session"
+	"github.com/trysourcetool/sourcetool-go/internal/session/state"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket/mock"
 )
@@ -16,14 +16,14 @@ import (
 func TestConvertStateToButtonData(t *testing.T) {
 	id := uuid.Must(uuid.NewV4())
 
-	state := &button.State{
+	buttonState := &state.ButtonState{
 		ID:       id,
 		Label:    "Test Button",
 		Value:    true,
 		Disabled: true,
 	}
 
-	data := convertStateToButtonData(state)
+	data := convertStateToButtonData(buttonState)
 
 	if data == nil {
 		t.Fatal("convertStateToButtonData returned nil")
@@ -34,9 +34,9 @@ func TestConvertStateToButtonData(t *testing.T) {
 		got  any
 		want any
 	}{
-		{"Label", data.Label, state.Label},
-		{"Value", data.Value, state.Value},
-		{"Disabled", data.Disabled, state.Disabled},
+		{"Label", data.Label, buttonState.Label},
+		{"Value", data.Value, buttonState.Value},
+		{"Disabled", data.Disabled, buttonState.Disabled},
 	}
 
 	for _, tt := range tests {

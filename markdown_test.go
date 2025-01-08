@@ -6,27 +6,27 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 
-	"github.com/trysourcetool/sourcetool-go/internal/markdown"
 	"github.com/trysourcetool/sourcetool-go/internal/session"
+	"github.com/trysourcetool/sourcetool-go/internal/session/state"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket/mock"
 )
 
 func TestConvertStateToMarkdownData(t *testing.T) {
 	id := uuid.Must(uuid.NewV4())
-	state := &markdown.State{
+	markdownState := &state.MarkdownState{
 		ID:   id,
 		Body: "# Test Markdown",
 	}
 
-	data := convertStateToMarkdownData(state)
+	data := convertStateToMarkdownData(markdownState)
 
 	if data == nil {
 		t.Fatal("convertStateToMarkdownData returned nil")
 	}
 
-	if data.Body != state.Body {
-		t.Errorf("Body = %v, want %v", data.Body, state.Body)
+	if data.Body != markdownState.Body {
+		t.Errorf("Body = %v, want %v", data.Body, markdownState.Body)
 	}
 }
 

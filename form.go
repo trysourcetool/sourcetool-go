@@ -2,19 +2,21 @@ package sourcetool
 
 import (
 	"github.com/gofrs/uuid/v5"
-	"github.com/trysourcetool/sourcetool-go/internal/form"
+	"github.com/trysourcetool/sourcetool-go/form"
+	"github.com/trysourcetool/sourcetool-go/internal/options"
+	"github.com/trysourcetool/sourcetool-go/internal/session/state"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 )
 
-func (b *uiBuilder) Form(buttonLabel string, options ...form.Option) (UIBuilder, bool) {
-	opts := &form.Options{
+func (b *uiBuilder) Form(buttonLabel string, opts ...form.Option) (UIBuilder, bool) {
+	formOpts := &options.FormOptions{
 		ButtonLabel:    buttonLabel,
 		ButtonDisabled: false,
 		ClearOnSubmit:  false,
 	}
 
-	for _, option := range options {
-		option(opts)
+	for _, option := range opts {
+		option.Apply(formOpts)
 	}
 
 	sess := b.session
@@ -32,25 +34,25 @@ func (b *uiBuilder) Form(buttonLabel string, options ...form.Option) (UIBuilder,
 	path := cursor.getPath()
 
 	widgetID := b.generateFormID(path)
-	state := sess.State.GetForm(widgetID)
-	if state == nil {
-		state = &form.State{
+	formState := sess.State.GetForm(widgetID)
+	if formState == nil {
+		formState = &state.FormState{
 			ID:    widgetID,
 			Value: false,
 		}
 	}
-	state.ButtonLabel = opts.ButtonLabel
-	state.ButtonDisabled = opts.ButtonDisabled
-	state.ClearOnSubmit = opts.ClearOnSubmit
-	sess.State.Set(widgetID, state)
+	formState.ButtonLabel = formOpts.ButtonLabel
+	formState.ButtonDisabled = formOpts.ButtonDisabled
+	formState.ClearOnSubmit = formOpts.ClearOnSubmit
+	sess.State.Set(widgetID, formState)
 
 	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), websocket.MessageMethodRenderWidget, &websocket.RenderWidgetPayload{
 		SessionID:  sess.ID.String(),
 		PageID:     page.id.String(),
 		WidgetID:   widgetID.String(),
-		WidgetType: form.WidgetType,
+		WidgetType: state.WidgetTypeForm.String(),
 		Path:       path,
-		Data:       convertStateToFormData(state),
+		Data:       convertStateToFormData(formState),
 	})
 
 	cursor.next()
@@ -65,7 +67,7 @@ func (b *uiBuilder) Form(buttonLabel string, options ...form.Option) (UIBuilder,
 		cursor:  childCursor,
 	}
 
-	return childBuilder, state.Value
+	return childBuilder, formState.Value
 }
 
 func (b *uiBuilder) generateFormID(path path) uuid.UUID {
@@ -73,10 +75,10 @@ func (b *uiBuilder) generateFormID(path path) uuid.UUID {
 	if page == nil {
 		return uuid.Nil
 	}
-	return uuid.NewV5(page.id, form.WidgetType+"-"+path.String())
+	return uuid.NewV5(page.id, state.WidgetTypeForm.String()+"-"+path.String())
 }
 
-func convertStateToFormData(state *form.State) *websocket.FormData {
+func convertStateToFormData(state *state.FormState) *websocket.FormData {
 	if state == nil {
 		return nil
 	}
@@ -88,11 +90,11 @@ func convertStateToFormData(state *form.State) *websocket.FormData {
 	}
 }
 
-func convertFormDataToState(data *websocket.FormData) *form.State {
+func convertFormDataToState(data *websocket.FormData) *state.FormState {
 	if data == nil {
 		return nil
 	}
-	return &form.State{
+	return &state.FormState{
 		Value:          data.Value,
 		ButtonLabel:    data.ButtonLabel,
 		ButtonDisabled: data.ButtonDisabled,

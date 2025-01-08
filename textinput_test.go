@@ -7,10 +7,10 @@ import (
 	"github.com/gofrs/uuid/v5"
 
 	"github.com/trysourcetool/sourcetool-go/internal/session"
-	"github.com/trysourcetool/sourcetool-go/internal/textinput"
+	"github.com/trysourcetool/sourcetool-go/internal/session/state"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket/mock"
-	externaltextinput "github.com/trysourcetool/sourcetool-go/textinput"
+	"github.com/trysourcetool/sourcetool-go/textinput"
 )
 
 func TestConvertStateToTextInputData(t *testing.T) {
@@ -18,7 +18,7 @@ func TestConvertStateToTextInputData(t *testing.T) {
 	maxLength := 100
 	minLength := 10
 
-	state := &textinput.State{
+	textInputState := &state.TextInputState{
 		ID:           id,
 		Label:        "Test TextInput",
 		Value:        "test value",
@@ -30,7 +30,7 @@ func TestConvertStateToTextInputData(t *testing.T) {
 		MinLength:    &minLength,
 	}
 
-	data := convertStateToTextInputData(state)
+	data := convertStateToTextInputData(textInputState)
 
 	if data == nil {
 		t.Fatal("convertStateToTextInputData returned nil")
@@ -41,14 +41,14 @@ func TestConvertStateToTextInputData(t *testing.T) {
 		got  any
 		want any
 	}{
-		{"Label", data.Label, state.Label},
-		{"Value", data.Value, state.Value},
-		{"Placeholder", data.Placeholder, state.Placeholder},
-		{"DefaultValue", data.DefaultValue, state.DefaultValue},
-		{"Required", data.Required, state.Required},
-		{"Disabled", data.Disabled, state.Disabled},
-		{"MaxLength", *data.MaxLength, *state.MaxLength},
-		{"MinLength", *data.MinLength, *state.MinLength},
+		{"Label", data.Label, textInputState.Label},
+		{"Value", data.Value, textInputState.Value},
+		{"Placeholder", data.Placeholder, textInputState.Placeholder},
+		{"DefaultValue", data.DefaultValue, textInputState.DefaultValue},
+		{"Required", data.Required, textInputState.Required},
+		{"Disabled", data.Disabled, textInputState.Disabled},
+		{"MaxLength", *data.MaxLength, *textInputState.MaxLength},
+		{"MinLength", *data.MinLength, *textInputState.MinLength},
 	}
 
 	for _, tt := range tests {
@@ -134,12 +134,12 @@ func TestTextInput(t *testing.T) {
 
 	// Create TextInput component with all options
 	value := builder.TextInput(label,
-		externaltextinput.DefaultValue(defaultValue),
-		externaltextinput.Placeholder(placeholder),
-		externaltextinput.Required(true),
-		externaltextinput.Disabled(true),
-		externaltextinput.MaxLength(maxLength),
-		externaltextinput.MinLength(minLength),
+		textinput.DefaultValue(defaultValue),
+		textinput.Placeholder(placeholder),
+		textinput.Required(true),
+		textinput.Disabled(true),
+		textinput.MaxLength(maxLength),
+		textinput.MinLength(minLength),
 	)
 
 	// Verify return value
