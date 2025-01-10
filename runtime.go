@@ -34,6 +34,7 @@ func startRuntime(apiKey, endpoint string, pages map[uuid.UUID]*page) *runtime {
 		wsClient, err := websocket.NewClient(websocket.Config{
 			URL:            endpoint,
 			APIKey:         apiKey,
+			InstanceID:     uuid.Must(uuid.NewV4()),
 			PingInterval:   1 * time.Second,
 			ReconnectDelay: 1 * time.Second,
 			OnReconnecting: func() {

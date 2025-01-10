@@ -8,18 +8,16 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gofrs/uuid/v5"
 	"github.com/gorilla/websocket"
 )
 
 type Client interface {
-	// Message handling
 	RegisterHandler(MessageMethod, MessageHandlerFunc)
 
-	// Send message methods
 	Enqueue(string, MessageMethod, any)
 	EnqueueWithResponse(string, MessageMethod, any) (*Message, error)
 
-	// Connection management
 	Close() error
 	Wait() error
 }
@@ -27,6 +25,7 @@ type Client interface {
 type Config struct {
 	URL            string
 	APIKey         string
+	InstanceID     uuid.UUID
 	PingInterval   time.Duration
 	ReconnectDelay time.Duration
 	OnReconnecting func()
@@ -112,6 +111,7 @@ func (c *client) handleMessage(msg *Message) error {
 func (c *client) connect() error {
 	header := http.Header{}
 	header.Set("Authorization", fmt.Sprintf("Bearer %s", c.config.APIKey))
+	header.Set("X-Instance-Id", c.config.InstanceID.String())
 
 	conn, _, err := c.dialer.Dial(c.config.URL, header)
 	if err != nil {
