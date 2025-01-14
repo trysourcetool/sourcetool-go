@@ -84,7 +84,7 @@ func (b *uiBuilder) CheckboxGroup(label string, opts ...checkboxgroup.Option) *c
 		SessionID:  sess.ID.String(),
 		PageID:     page.id.String(),
 		WidgetID:   widgetID.String(),
-		WidgetType: state.WidgetTypeCheckbox.String(),
+		WidgetType: state.WidgetTypeCheckboxGroup.String(),
 		Path:       path,
 		Data:       convertStateToCheckboxGroupData(checkboxGroupState),
 	})
