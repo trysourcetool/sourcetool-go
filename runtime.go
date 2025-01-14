@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"sync"
 	"time"
 
 	"github.com/gofrs/uuid/v5"
@@ -15,49 +14,44 @@ import (
 	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 )
 
-var once sync.Once
-
 type runtime struct {
 	wsClient       websocket.Client
 	sessionManager *session.SessionManager
 	pageManager    *pageManager
 }
 
-func startRuntime(apiKey, endpoint string, pages map[uuid.UUID]*page) *runtime {
-	var r *runtime
-	once.Do(func() {
-		r = &runtime{
-			sessionManager: session.NewSessionManager(),
-			pageManager:    newPageManager(pages),
-		}
+func startRuntime(apiKey, endpoint string, pages map[uuid.UUID]*page) (*runtime, error) {
+	r := &runtime{
+		sessionManager: session.NewSessionManager(),
+		pageManager:    newPageManager(pages),
+	}
 
-		wsClient, err := websocket.NewClient(websocket.Config{
-			URL:            endpoint,
-			APIKey:         apiKey,
-			InstanceID:     uuid.Must(uuid.NewV4()),
-			PingInterval:   1 * time.Second,
-			ReconnectDelay: 1 * time.Second,
-			OnReconnecting: func() {
-				log.Println("Reconnecting...")
-			},
-			OnReconnected: func() {
-				log.Println("Reconnected!")
-				r.sendInitializeHost(apiKey, pages)
-			},
-		})
-		if err != nil {
-			log.Fatalf("failed to create websocket client: %v", err)
-		}
-
-		r.wsClient = wsClient
-		wsClient.RegisterHandler(websocket.MessageMethodInitializeClient, r.handleInitializeCilent)
-		wsClient.RegisterHandler(websocket.MessageMethodRerunPage, r.handleRerunPage)
-		wsClient.RegisterHandler(websocket.MessageMethodCloseSession, r.handleCloseSession)
-
-		r.sendInitializeHost(apiKey, pages)
+	wsClient, err := websocket.NewClient(websocket.Config{
+		URL:            endpoint,
+		APIKey:         apiKey,
+		InstanceID:     uuid.Must(uuid.NewV4()),
+		PingInterval:   1 * time.Second,
+		ReconnectDelay: 1 * time.Second,
+		OnReconnecting: func() {
+			log.Println("Reconnecting...")
+		},
+		OnReconnected: func() {
+			log.Println("Reconnected!")
+			r.sendInitializeHost(apiKey, pages)
+		},
 	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create websocket client: %v", err)
+	}
 
-	return r
+	r.wsClient = wsClient
+	wsClient.RegisterHandler(websocket.MessageMethodInitializeClient, r.handleInitializeCilent)
+	wsClient.RegisterHandler(websocket.MessageMethodRerunPage, r.handleRerunPage)
+	wsClient.RegisterHandler(websocket.MessageMethodCloseSession, r.handleCloseSession)
+
+	r.sendInitializeHost(apiKey, pages)
+
+	return r, nil
 }
 
 func (r *runtime) sendInitializeHost(apiKey string, pages map[uuid.UUID]*page) {

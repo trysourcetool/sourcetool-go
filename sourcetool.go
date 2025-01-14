@@ -31,7 +31,10 @@ func New(apiKey string) *Sourcetool {
 }
 
 func (s *Sourcetool) Listen() error {
-	r := startRuntime(s.apiKey, s.endpoint, s.pages)
+	r, err := startRuntime(s.apiKey, s.endpoint, s.pages)
+	if err != nil {
+		return err
+	}
 	defer r.wsClient.Close()
 
 	s.runtime = r
