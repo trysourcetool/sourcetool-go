@@ -58,8 +58,9 @@ func (r *runtime) sendInitializeHost(apiKey string, pages map[uuid.UUID]*page) {
 	pagesPayload := make([]*websocket.InitializeHostPagePayload, 0, len(pages))
 	for _, page := range pages {
 		pagesPayload = append(pagesPayload, &websocket.InitializeHostPagePayload{
-			ID:   page.id.String(),
-			Name: page.name,
+			ID:     page.id.String(),
+			Name:   page.name,
+			Groups: page.accessGroups,
 		})
 	}
 

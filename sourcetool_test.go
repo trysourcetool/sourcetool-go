@@ -40,7 +40,8 @@ func TestPage(t *testing.T) {
 	pageName := "TestPage"
 	pageHandler := func(ui UIBuilder) error { return nil }
 
-	page := st.Page(pageName, pageHandler).AccessGroups("admin", "cs")
+	builder := st.Page(pageName, pageHandler).AccessGroups("admin", "cs")
+	page := builder.(*pageBuilder).currentPage()
 
 	pageID := st.generatePageID(pageName)
 	if _, exists := st.pages[pageID]; !exists {
@@ -94,12 +95,14 @@ func TestPage(t *testing.T) {
 	errorHandler := func(ui UIBuilder) error {
 		return errors.New("test error")
 	}
-	errorPage := st.Page("ErrorPage", errorHandler)
+	errorBuilder := st.Page("ErrorPage", errorHandler)
+	errorPage := errorBuilder.(*pageBuilder).currentPage()
 	if err := errorPage.run(nil); err == nil {
 		t.Error("Expected error from handler, got nil")
 	}
 
-	publicPage := st.Page("PublicPage", pageHandler)
+	publicBuilder := st.Page("PublicPage", pageHandler)
+	publicPage := publicBuilder.(*pageBuilder).currentPage()
 	if !publicPage.hasAccess([]string{}) {
 		t.Error("Public page should be accessible without groups")
 	}

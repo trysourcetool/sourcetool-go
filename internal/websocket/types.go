@@ -44,8 +44,9 @@ type InitializeHostPayload struct {
 }
 
 type InitializeHostPagePayload struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
+	ID     string   `json:"id"`
+	Name   string   `json:"name"`
+	Groups []string `json:"groups"`
 }
 
 type RenderWidgetPayload struct {
