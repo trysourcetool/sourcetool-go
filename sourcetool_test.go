@@ -41,13 +41,10 @@ func TestPage(t *testing.T) {
 	pageName := "TestPage"
 	pageHandler := func(ui UIBuilder) error { return nil }
 
-	// Add page
-	st.Page(pageName, pageHandler)
+	page := st.Page(pageName, pageHandler).AccessGroups("admin", "cs")
 
-	// Verify page was added
 	pageID := st.generatePageID(pageName)
-	page, exists := st.pages[pageID]
-	if !exists {
+	if _, exists := st.pages[pageID]; !exists {
 		t.Fatal("Page was not added to pages map")
 	}
 
@@ -58,6 +55,9 @@ func TestPage(t *testing.T) {
 	}{
 		{"Page ID", page.id, pageID},
 		{"Page name", page.name, pageName},
+		{"Access Groups Length", len(page.accessGroups), 2},
+		{"Access Groups[0]", page.accessGroups[0], "admin"},
+		{"Access Groups[1]", page.accessGroups[1], "cs"},
 	}
 
 	for _, tt := range tests {
@@ -68,20 +68,41 @@ func TestPage(t *testing.T) {
 		})
 	}
 
-	// Test handler execution
+	accessTests := []struct {
+		name       string
+		userGroups []string
+		want       bool
+	}{
+		{"Admin access", []string{"admin"}, true},
+		{"CS access", []string{"cs"}, true},
+		{"Multiple groups with access", []string{"user", "admin"}, true},
+		{"No access", []string{"user"}, false},
+		{"Empty groups", []string{}, false},
+	}
+
+	for _, tt := range accessTests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := page.hasAccess(tt.userGroups); got != tt.want {
+				t.Errorf("hasAccess() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+
 	if err := page.run(nil); err != nil {
 		t.Errorf("Page handler returned unexpected error: %v", err)
 	}
 
-	// Test handler with error
 	errorHandler := func(ui UIBuilder) error {
 		return errors.New("test error")
 	}
-	st.Page("ErrorPage", errorHandler)
-	errorPageID := st.generatePageID("ErrorPage")
-	errorPage := st.pages[errorPageID]
+	errorPage := st.Page("ErrorPage", errorHandler)
 	if err := errorPage.run(nil); err == nil {
 		t.Error("Expected error from handler, got nil")
+	}
+
+	publicPage := st.Page("PublicPage", pageHandler)
+	if !publicPage.hasAccess([]string{}) {
+		t.Error("Public page should be accessible without groups")
 	}
 }
 
@@ -89,7 +110,6 @@ func TestGeneratePageID(t *testing.T) {
 	st := New("test_api_key")
 	pageName := "TestPage"
 
-	// Test ID generation is deterministic
 	id1 := st.generatePageID(pageName)
 	id2 := st.generatePageID(pageName)
 
@@ -101,13 +121,11 @@ func TestGeneratePageID(t *testing.T) {
 		t.Error("Generated IDs are not deterministic")
 	}
 
-	// Test different page names generate different IDs
 	otherID := st.generatePageID("OtherPage")
 	if id1 == otherID {
 		t.Error("Different page names generated same ID")
 	}
 
-	// Test different subdomains generate different IDs
 	otherST := New("other_api_key")
 	otherSTID := otherST.generatePageID(pageName)
 	if id1 == otherSTID {
@@ -126,13 +144,11 @@ func TestPageManager(t *testing.T) {
 
 	pm := newPageManager(pages)
 
-	// Test getting existing page
 	got := pm.getPage(pageID)
 	if got != testPage {
 		t.Error("getPage returned wrong page")
 	}
 
-	// Test getting non-existent page
 	nonExistentID := uuid.Must(uuid.NewV4())
 	got = pm.getPage(nonExistentID)
 	if got != nil {

@@ -47,9 +47,10 @@ func (s *Sourcetool) Close() error {
 }
 
 type page struct {
-	id      uuid.UUID
-	name    string
-	handler func(UIBuilder) error
+	id           uuid.UUID
+	name         string
+	handler      func(UIBuilder) error
+	accessGroups []string
 }
 
 func (p *page) run(ui UIBuilder) error {
@@ -59,7 +60,27 @@ func (p *page) run(ui UIBuilder) error {
 	return nil
 }
 
-func (s *Sourcetool) Page(name string, handler func(UIBuilder) error) {
+func (p *page) AccessGroups(groups ...string) *page {
+	p.accessGroups = groups
+	return p
+}
+
+func (p *page) hasAccess(userGroups []string) bool {
+	if len(p.accessGroups) == 0 {
+		return true
+	}
+
+	for _, userGroup := range userGroups {
+		for _, requiredGroup := range p.accessGroups {
+			if userGroup == requiredGroup {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func (s *Sourcetool) Page(name string, handler func(UIBuilder) error) *page {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -74,6 +95,8 @@ func (s *Sourcetool) Page(name string, handler func(UIBuilder) error) {
 		currentNav := s.navigations[len(s.navigations)-1]
 		currentNav.pages = append(currentNav.pages, p)
 	}
+
+	return p
 }
 
 func (s *Sourcetool) generatePageID(pageName string) uuid.UUID {
