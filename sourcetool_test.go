@@ -23,7 +23,6 @@ func TestNew(t *testing.T) {
 		{"APIKey", st.apiKey, apiKey},
 		{"Subdomain", st.subdomain, "test"},
 		{"Endpoint", st.endpoint, "ws://test.local.trysourcetool.com:8080/ws"},
-		{"Navigations length", len(st.navigations), 0},
 		{"Pages length", len(st.pages), 0},
 	}
 

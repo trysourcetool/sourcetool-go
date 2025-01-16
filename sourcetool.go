@@ -9,23 +9,21 @@ import (
 )
 
 type Sourcetool struct {
-	apiKey      string
-	endpoint    string
-	subdomain   string
-	runtime     *runtime
-	navigations []*navigation
-	pages       map[uuid.UUID]*page
-	mu          sync.RWMutex
+	apiKey    string
+	endpoint  string
+	subdomain string
+	runtime   *runtime
+	pages     map[uuid.UUID]*page
+	mu        sync.RWMutex
 }
 
 func New(apiKey string) *Sourcetool {
 	subdomain := strings.Split(apiKey, "_")[0]
 	s := &Sourcetool{
-		apiKey:      apiKey,
-		subdomain:   subdomain,
-		endpoint:    fmt.Sprintf("ws://%s.local.trysourcetool.com:8080/ws", subdomain),
-		navigations: make([]*navigation, 0),
-		pages:       make(map[uuid.UUID]*page),
+		apiKey:    apiKey,
+		subdomain: subdomain,
+		endpoint:  fmt.Sprintf("ws://%s.local.trysourcetool.com:8080/ws", subdomain),
+		pages:     make(map[uuid.UUID]*page),
 	}
 	return s
 }
@@ -91,10 +89,6 @@ func (s *Sourcetool) Page(name string, handler func(UIBuilder) error) *page {
 	}
 
 	s.pages[p.id] = p
-	if len(s.navigations) > 0 {
-		currentNav := s.navigations[len(s.navigations)-1]
-		currentNav.pages = append(currentNav.pages, p)
-	}
 
 	return p
 }
@@ -119,21 +113,4 @@ func (s *pageManager) getPage(id uuid.UUID) *page {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return s.pages[id]
-}
-
-type navigation struct {
-	name  string
-	pages []*page
-}
-
-func (s *Sourcetool) Navigation(name string, handler func()) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	currentNav := &navigation{
-		name: name,
-	}
-	s.navigations = append(s.navigations, currentNav)
-
-	handler()
 }
