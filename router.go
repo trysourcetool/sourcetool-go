@@ -13,24 +13,18 @@ type Router interface {
 }
 
 type router struct {
-	parent         *router
-	sourcetool     *Sourcetool
-	basePath       string
-	namespaceDNS   string
-	routerGroups   []string
-	pageGroups     []string
-	nextIsPageCall bool
-	lastWasGroup   bool
+	parent       *router
+	sourcetool   *Sourcetool
+	basePath     string
+	namespaceDNS string
+	groups       []string
 }
 
 func newRouter(st *Sourcetool, namespaceDNS string) Router {
 	return &router{
-		routerGroups:   make([]string, 0),
-		pageGroups:     make([]string, 0),
-		sourcetool:     st,
-		namespaceDNS:   namespaceDNS,
-		nextIsPageCall: false,
-		lastWasGroup:   false,
+		groups:       make([]string, 0),
+		sourcetool:   st,
+		namespaceDNS: namespaceDNS,
 	}
 }
 
@@ -64,11 +58,11 @@ func removeDuplicates(groups []string) []string {
 	return result
 }
 
-func (r *router) collectRouterGroups() []string {
+func (r *router) collectGroups() []string {
 	groups := make([]string, 0)
 	current := r
 	for current != nil {
-		groups = append(groups, current.routerGroups...)
+		groups = append(groups, current.groups...)
 		current = current.parent
 	}
 	return groups
@@ -78,51 +72,30 @@ func (r *router) Page(path, name string, handler func(UIBuilder) error) {
 	fullPath := r.joinPath(path)
 	pageID := r.generatePageID(fullPath)
 
-	pageGroups := make([]string, 0)
-
-	pageGroups = append(pageGroups, r.collectRouterGroups()...)
-
-	if r.nextIsPageCall && !r.lastWasGroup {
-		pageGroups = append(pageGroups, r.pageGroups...)
-	}
-
-	r.nextIsPageCall = false
-	r.lastWasGroup = false
-	r.pageGroups = make([]string, 0)
-
 	page := &page{
 		id:           pageID,
 		name:         name,
 		path:         fullPath,
 		handler:      handler,
-		accessGroups: removeDuplicates(pageGroups),
+		accessGroups: removeDuplicates(r.collectGroups()),
 	}
 
 	r.sourcetool.addPage(pageID, page)
 }
 
 func (r *router) AccessGroups(groups ...string) Router {
-	if r.lastWasGroup {
-		r.routerGroups = append(r.routerGroups, groups...)
-		r.nextIsPageCall = false
-	} else {
-		r.pageGroups = append(r.pageGroups, groups...)
-		r.nextIsPageCall = true
-	}
-	r.lastWasGroup = false
+	r.groups = append(r.groups, groups...)
 	return r
 }
 
 func (r *router) Group(path string) Router {
 	newRouter := &router{
-		parent:         r,
-		sourcetool:     r.sourcetool,
-		basePath:       r.joinPath(path),
-		routerGroups:   make([]string, 0),
-		pageGroups:     make([]string, 0),
-		namespaceDNS:   r.namespaceDNS,
-		nextIsPageCall: false,
-		lastWasGroup:   true,
+		parent:       r,
+		sourcetool:   r.sourcetool,
+		basePath:     r.joinPath(path),
+		namespaceDNS: r.namespaceDNS,
+		groups:       make([]string, 0),
 	}
+
 	return newRouter
 }

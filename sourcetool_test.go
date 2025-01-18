@@ -111,7 +111,7 @@ func TestPage(t *testing.T) {
 		}{
 			{"/users/list", []string{"admin"}},
 			{"/users/create", []string{"admin", "customer_support"}},
-			{"/users/products/list", []string{"admin", "product_manager"}},
+			{"/users/products/list", []string{"admin", "customer_support", "product_manager"}},
 		}
 
 		for _, tt := range tests {

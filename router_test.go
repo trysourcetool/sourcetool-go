@@ -157,110 +157,172 @@ func TestGeneratePageID(t *testing.T) {
 func TestRouterAccessGroups(t *testing.T) {
 	pageHandler := func(ui UIBuilder) error { return nil }
 
-	t.Run("Router level access groups", func(t *testing.T) {
+	t.Run("Group creation before and after AccessGroups", func(t *testing.T) {
 		st := New("test_api_key")
-		users := st.Group("/users")
-		users.AccessGroups("admin")
-		users.Page("/list", "List users", pageHandler)
 
-		page := findPageByPath(st.pages, "/users/list")
-		if page == nil {
-			t.Fatal("Page not found")
+		st.AccessGroups("global")
+		admin := st.Group("/admin")
+		admin.Page("/dashboard", "Dashboard", pageHandler)
+
+		users := st.Group("/users")
+		users.AccessGroups("user_manager")
+		users.Page("/list", "User List", pageHandler)
+
+		tests := []struct {
+			path           string
+			expectedGroups []string
+		}{
+			{"/admin/dashboard", []string{"global"}},
+			{"/users/list", []string{"global", "user_manager"}},
 		}
 
-		if len(page.accessGroups) != 1 || page.accessGroups[0] != "admin" {
-			t.Errorf("Expected [admin] access group, got %v", page.accessGroups)
+		for _, tt := range tests {
+			t.Run(tt.path, func(t *testing.T) {
+				page := findPageByPath(st.pages, tt.path)
+				assertPageGroups(t, page, tt.expectedGroups)
+			})
 		}
 	})
 
-	t.Run("Page specific access groups", func(t *testing.T) {
+	t.Run("Multiple AccessGroups calls", func(t *testing.T) {
 		st := New("test_api_key")
-		users := st.Group("/users")
-		users.AccessGroups("admin")
-		users.AccessGroups("customer_support").Page("/create", "Create user", pageHandler)
+		admin := st.Group("/admin")
 
-		page := findPageByPath(st.pages, "/users/create")
-		if page == nil {
-			t.Fatal("Page not found")
+		admin.AccessGroups("admin")
+		admin.AccessGroups("super_admin")
+		admin.Page("/settings", "Settings", pageHandler)
+
+		userAdminGroup := admin.Group("/")
+		userAdminGroup.AccessGroups("user_admin").Page("/users", "Users", pageHandler)
+		systemAdminGroup := admin.Group("/")
+		systemAdminGroup.AccessGroups("system_admin").Page("/system", "System", pageHandler)
+
+		tests := []struct {
+			path           string
+			expectedGroups []string
+		}{
+			{"/admin/settings", []string{"admin", "super_admin"}},
+			{"/admin/users", []string{"admin", "super_admin", "user_admin"}},
+			{"/admin/system", []string{"admin", "super_admin", "system_admin"}},
 		}
 
-		expectedGroups := []string{"admin", "customer_support"}
-		if len(page.accessGroups) != len(expectedGroups) {
-			t.Errorf("Expected %v access groups, got %v", expectedGroups, page.accessGroups)
-		}
-
-		for _, group := range expectedGroups {
-			found := false
-			for _, actualGroup := range page.accessGroups {
-				if actualGroup == group {
-					found = true
-					break
-				}
-			}
-			if !found {
-				t.Errorf("Expected group %s not found in %v", group, page.accessGroups)
-			}
+		for _, tt := range tests {
+			t.Run(tt.path, func(t *testing.T) {
+				page := findPageByPath(st.pages, tt.path)
+				assertPageGroups(t, page, tt.expectedGroups)
+			})
 		}
 	})
 
-	t.Run("Nested groups inheritance", func(t *testing.T) {
+	t.Run("Sibling groups inheritance", func(t *testing.T) {
 		st := New("test_api_key")
+		st.AccessGroups("global")
+
 		users := st.Group("/users")
-		users.AccessGroups("admin")
-		products := users.Group("/products")
-		products.AccessGroups("product_manager")
-		products.Page("/list", "List products", pageHandler)
+		users.AccessGroups("user_admin")
+		users.Page("/list", "Users", pageHandler)
 
-		page := findPageByPath(st.pages, "/users/products/list")
-		if page == nil {
-			t.Fatal("Page not found")
+		products := st.Group("/products")
+		products.AccessGroups("product_admin")
+		products.Page("/list", "Products", pageHandler)
+
+		tests := []struct {
+			path           string
+			expectedGroups []string
+		}{
+			{"/users/list", []string{"global", "user_admin"}},
+			{"/products/list", []string{"global", "product_admin"}},
 		}
 
-		expectedGroups := []string{"admin", "product_manager"}
-		if len(page.accessGroups) != len(expectedGroups) {
-			t.Errorf("Expected %v access groups, got %v", expectedGroups, page.accessGroups)
-		}
-
-		for _, group := range expectedGroups {
-			found := false
-			for _, actualGroup := range page.accessGroups {
-				if actualGroup == group {
-					found = true
-					break
-				}
-			}
-			if !found {
-				t.Errorf("Expected group %s not found in %v", group, page.accessGroups)
-			}
+		for _, tt := range tests {
+			t.Run(tt.path, func(t *testing.T) {
+				page := findPageByPath(st.pages, tt.path)
+				assertPageGroups(t, page, tt.expectedGroups)
+			})
 		}
 	})
 
-	t.Run("Page specific groups do not affect siblings", func(t *testing.T) {
+	t.Run("Deep nested groups inheritance", func(t *testing.T) {
 		st := New("test_api_key")
-		users := st.Group("/users")
-		users.AccessGroups("admin")
-		users.Page("/list", "List users", pageHandler)
-		users.AccessGroups("customer_support").Page("/create", "Create user", pageHandler)
+		st.AccessGroups("global")
 
-		listPage := findPageByPath(st.pages, "/users/list")
-		if listPage == nil {
-			t.Fatal("List page not found")
+		api := st.Group("/api")
+		api.AccessGroups("api_user")
+
+		v1 := api.Group("/v1")
+		v1.AccessGroups("v1_user")
+
+		users := v1.Group("/users")
+		users.AccessGroups("user_admin")
+
+		settings := users.Group("/settings")
+		settings.AccessGroups("settings_admin")
+		settings.Page("/profile", "Profile Settings", pageHandler)
+
+		page := findPageByPath(st.pages, "/api/v1/users/settings/profile")
+		expectedGroups := []string{"global", "api_user", "v1_user", "user_admin", "settings_admin"}
+		assertPageGroups(t, page, expectedGroups)
+	})
+
+	t.Run("Mixed group and page specific access groups", func(t *testing.T) {
+		st := New("test_api_key")
+
+		admin := st.Group("/admin")
+		admin.AccessGroups("admin")
+		admin.Page("/dashboard", "Dashboard", pageHandler)
+
+		settings := admin.Group("/settings")
+		settings.AccessGroups("settings_admin")
+		settings.AccessGroups("system_admin")
+		settings.Page("/general", "General Settings", pageHandler)
+
+		users := settings.Group("/users")
+		users.AccessGroups("user_manager")
+		users.AccessGroups("profile_admin").Page("/profiles", "User Profiles", pageHandler)
+
+		tests := []struct {
+			path           string
+			expectedGroups []string
+		}{
+			{"/admin/dashboard", []string{"admin"}},
+			{"/admin/settings/general", []string{"admin", "settings_admin", "system_admin"}},
+			{"/admin/settings/users/profiles", []string{"admin", "settings_admin", "system_admin", "user_manager", "profile_admin"}},
 		}
 
-		if len(listPage.accessGroups) != 1 || listPage.accessGroups[0] != "admin" {
-			t.Errorf("Expected [admin] access group for list page, got %v", listPage.accessGroups)
-		}
-
-		createPage := findPageByPath(st.pages, "/users/create")
-		if createPage == nil {
-			t.Fatal("Create page not found")
-		}
-
-		expectedGroups := []string{"admin", "customer_support"}
-		if len(createPage.accessGroups) != len(expectedGroups) {
-			t.Errorf("Expected %v access groups for create page, got %v", expectedGroups, createPage.accessGroups)
+		for _, tt := range tests {
+			t.Run(tt.path, func(t *testing.T) {
+				page := findPageByPath(st.pages, tt.path)
+				assertPageGroups(t, page, tt.expectedGroups)
+			})
 		}
 	})
+}
+
+func assertPageGroups(t *testing.T, page *page, expectedGroups []string) {
+	t.Helper()
+
+	if page == nil {
+		t.Fatal("Page not found")
+	}
+
+	if len(page.accessGroups) != len(expectedGroups) {
+		t.Errorf("Expected %d access groups, got %d", len(expectedGroups), len(page.accessGroups))
+		t.Errorf("Expected groups: %v, got: %v", expectedGroups, page.accessGroups)
+		return
+	}
+
+	for _, expectedGroup := range expectedGroups {
+		found := false
+		for _, actualGroup := range page.accessGroups {
+			if actualGroup == expectedGroup {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Errorf("Expected group %s not found in %v", expectedGroup, page.accessGroups)
+		}
+	}
 }
 
 func TestRouterGroup(t *testing.T) {
@@ -296,38 +358,6 @@ func TestRouterGroup(t *testing.T) {
 
 		if page.path != "/api/v1/users/list" {
 			t.Errorf("Expected path /api/v1/users/list, got %s", page.path)
-		}
-	})
-
-	t.Run("Group access group inheritance", func(t *testing.T) {
-		st := New("test_api_key")
-		api := st.Group("/api")
-		api.AccessGroups("api_user")
-		v1 := api.Group("/v1")
-		v1.AccessGroups("v1_user")
-		v1.Page("/users", "Users API", pageHandler)
-
-		page := findPageByPath(st.pages, "/api/v1/users")
-		if page == nil {
-			t.Fatal("Page not found")
-		}
-
-		expectedGroups := []string{"api_user", "v1_user"}
-		if len(page.accessGroups) != len(expectedGroups) {
-			t.Errorf("Expected %v access groups, got %v", expectedGroups, page.accessGroups)
-		}
-
-		for _, group := range expectedGroups {
-			found := false
-			for _, actualGroup := range page.accessGroups {
-				if actualGroup == group {
-					found = true
-					break
-				}
-			}
-			if !found {
-				t.Errorf("Expected group %s not found in %v", group, page.accessGroups)
-			}
 		}
 	})
 }
