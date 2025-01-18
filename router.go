@@ -76,6 +76,7 @@ func (r *router) Page(relativePath, name string, handler func(UIBuilder) error) 
 		id:           pageID,
 		name:         name,
 		route:        fullPath,
+		path:         []int{len(r.sourcetool.pages)},
 		handler:      handler,
 		accessGroups: removeDuplicates(r.collectGroups()),
 	}

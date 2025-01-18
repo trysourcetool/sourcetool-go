@@ -10,6 +10,7 @@ type page struct {
 	id           uuid.UUID
 	name         string
 	route        string
+	path         []int
 	handler      func(UIBuilder) error
 	accessGroups []string
 }
