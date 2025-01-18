@@ -57,12 +57,12 @@ func startRuntime(apiKey, endpoint string, pages map[uuid.UUID]*page) (*runtime,
 func (r *runtime) sendInitializeHost(apiKey string, pages map[uuid.UUID]*page) {
 	pagesPayload := make([]*websocket.InitializeHostPagePayload, 0, len(pages))
 	for _, page := range pages {
-		log.Printf("Access groups for page %s: %v", page.path, page.accessGroups)
+		log.Printf("Access groups for page %s: %v", page.route, page.accessGroups)
 
 		pagesPayload = append(pagesPayload, &websocket.InitializeHostPagePayload{
 			ID:     page.id.String(),
 			Name:   page.name,
-			Path:   page.path,
+			Route:  page.route,
 			Groups: page.accessGroups,
 		})
 	}

@@ -339,8 +339,8 @@ func TestRouterGroup(t *testing.T) {
 			t.Fatal("Page not found")
 		}
 
-		if page.path != "/admin/settings/users" {
-			t.Errorf("Expected path /admin/settings/users, got %s", page.path)
+		if page.route != "/admin/settings/users" {
+			t.Errorf("Expected route /admin/settings/users, got %s", page.route)
 		}
 	})
 
@@ -356,8 +356,8 @@ func TestRouterGroup(t *testing.T) {
 			t.Fatal("Page not found")
 		}
 
-		if page.path != "/api/v1/users/list" {
-			t.Errorf("Expected path /api/v1/users/list, got %s", page.path)
+		if page.route != "/api/v1/users/list" {
+			t.Errorf("Expected route /api/v1/users/list, got %s", page.route)
 		}
 	})
 }

@@ -7,9 +7,9 @@ import (
 )
 
 type Router interface {
-	Page(path, name string, handler func(UIBuilder) error)
+	Page(relativePath, name string, handler func(UIBuilder) error)
 	AccessGroups(groups ...string) Router
-	Group(path string) Router
+	Group(relativePath string) Router
 }
 
 type router struct {
@@ -33,15 +33,15 @@ func (r *router) generatePageID(fullPath string) uuid.UUID {
 	return uuid.NewV5(ns, fullPath)
 }
 
-func (r *router) joinPath(path string) string {
-	if !strings.HasPrefix(path, "/") {
-		path = "/" + path
+func (r *router) joinPath(relativePath string) string {
+	if !strings.HasPrefix(relativePath, "/") {
+		relativePath = "/" + relativePath
 	}
 	if r.basePath == "" {
-		return path
+		return relativePath
 	}
 	basePath := strings.TrimSuffix(r.basePath, "/")
-	cleanPath := strings.TrimPrefix(path, "/")
+	cleanPath := strings.TrimPrefix(relativePath, "/")
 	return basePath + "/" + cleanPath
 }
 
@@ -68,14 +68,14 @@ func (r *router) collectGroups() []string {
 	return groups
 }
 
-func (r *router) Page(path, name string, handler func(UIBuilder) error) {
-	fullPath := r.joinPath(path)
+func (r *router) Page(relativePath, name string, handler func(UIBuilder) error) {
+	fullPath := r.joinPath(relativePath)
 	pageID := r.generatePageID(fullPath)
 
 	page := &page{
 		id:           pageID,
 		name:         name,
-		path:         fullPath,
+		route:        fullPath,
 		handler:      handler,
 		accessGroups: removeDuplicates(r.collectGroups()),
 	}
@@ -88,11 +88,11 @@ func (r *router) AccessGroups(groups ...string) Router {
 	return r
 }
 
-func (r *router) Group(path string) Router {
+func (r *router) Group(relativePath string) Router {
 	newRouter := &router{
 		parent:       r,
 		sourcetool:   r.sourcetool,
-		basePath:     r.joinPath(path),
+		basePath:     r.joinPath(relativePath),
 		namespaceDNS: r.namespaceDNS,
 		groups:       make([]string, 0),
 	}

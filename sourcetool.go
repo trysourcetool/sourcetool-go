@@ -58,15 +58,15 @@ func (s *Sourcetool) validatePages() error {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	pagePaths := make(map[string]struct{})
+	pageRoutes := make(map[string]struct{})
 	for _, p := range s.pages {
-		if p.path == "" {
-			return errors.New("page path cannot be empty")
+		if p.route == "" {
+			return errors.New("page route cannot be empty")
 		}
-		if _, exists := pagePaths[p.path]; exists {
-			return fmt.Errorf("duplicate page path: %s", p.path)
+		if _, exists := pageRoutes[p.route]; exists {
+			return fmt.Errorf("duplicate page route: %s", p.route)
 		}
-		pagePaths[p.path] = struct{}{}
+		pageRoutes[p.route] = struct{}{}
 	}
 	return nil
 }

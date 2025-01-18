@@ -9,7 +9,7 @@ import (
 type page struct {
 	id           uuid.UUID
 	name         string
-	path         string
+	route        string
 	handler      func(UIBuilder) error
 	accessGroups []string
 }

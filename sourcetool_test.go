@@ -225,7 +225,7 @@ func TestPage(t *testing.T) {
 
 func findPageByPath(pages map[uuid.UUID]*page, path string) *page {
 	for _, p := range pages {
-		if p.path == path {
+		if p.route == path {
 			return p
 		}
 	}
