@@ -46,6 +46,7 @@ type InitializeHostPayload struct {
 type InitializeHostPagePayload struct {
 	ID     string   `json:"id"`
 	Name   string   `json:"name"`
+	Path   string   `json:"path"`
 	Groups []string `json:"groups"`
 }
 

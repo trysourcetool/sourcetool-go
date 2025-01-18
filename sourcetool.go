@@ -10,8 +10,7 @@ import (
 )
 
 type Sourcetool struct {
-	*pageBuilder
-
+	Router
 	apiKey    string
 	endpoint  string
 	subdomain string
@@ -21,17 +20,15 @@ type Sourcetool struct {
 }
 
 func New(apiKey string) *Sourcetool {
-	subdomain := strings.Split(apiKey, "_")[0]
+	subdomain := subdomainFromAPIKey(apiKey)
+	namespaceDNS := fmt.Sprintf("%s.trysourcetool.com", subdomain)
 	s := &Sourcetool{
 		apiKey:    apiKey,
 		subdomain: subdomain,
 		endpoint:  fmt.Sprintf("ws://%s.local.trysourcetool.com:8080/ws", subdomain),
 		pages:     make(map[uuid.UUID]*page),
-		pageBuilder: &pageBuilder{
-			namespaceDNS: fmt.Sprintf("%s.trysourcetool.com", subdomain),
-		},
 	}
-	s.pageBuilder.sourcetool = s
+	s.Router = newRouter(s, namespaceDNS)
 	return s
 }
 
@@ -40,7 +37,9 @@ func (s *Sourcetool) Listen() error {
 		return err
 	}
 
+	s.mu.RLock()
 	r, err := startRuntime(s.apiKey, s.endpoint, s.pages)
+	s.mu.RUnlock()
 	if err != nil {
 		return err
 	}
@@ -56,15 +55,32 @@ func (s *Sourcetool) Close() error {
 }
 
 func (s *Sourcetool) validatePages() error {
-	pageNames := make(map[string]struct{})
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	pagePaths := make(map[string]struct{})
 	for _, p := range s.pages {
-		if p.name == "" {
-			return errors.New("page name cannot be empty")
+		if p.path == "" {
+			return errors.New("page path cannot be empty")
 		}
-		if _, exists := pageNames[p.name]; exists {
-			return fmt.Errorf("duplicate page name: %s", p.name)
+		if _, exists := pagePaths[p.path]; exists {
+			return fmt.Errorf("duplicate page path: %s", p.path)
 		}
-		pageNames[p.name] = struct{}{}
+		pagePaths[p.path] = struct{}{}
 	}
 	return nil
+}
+
+func (s *Sourcetool) addPage(id uuid.UUID, p *page) {
+	s.mu.Lock()
+	s.pages[id] = p
+	s.mu.Unlock()
+}
+
+func subdomainFromAPIKey(apiKey string) string {
+	subdomainSplit := strings.Split(apiKey, "_")
+	if len(subdomainSplit) < 2 {
+		panic("invalid api key")
+	}
+	return subdomainSplit[0]
 }

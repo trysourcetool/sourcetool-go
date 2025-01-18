@@ -6,52 +6,10 @@ import (
 	"github.com/gofrs/uuid/v5"
 )
 
-type PageBuilder interface {
-	Page(name string, handler func(UIBuilder) error) PageBuilder
-	AccessGroups(groups ...string) PageBuilder
-}
-
-type pageBuilder struct {
-	sourcetool   *Sourcetool
-	page         *page
-	namespaceDNS string
-}
-
-func (b *pageBuilder) currentPage() *page {
-	return b.page
-}
-
-func (b *pageBuilder) Page(name string, handler func(UIBuilder) error) PageBuilder {
-	b.page = &page{
-		id:      b.generatePageID(name),
-		name:    name,
-		handler: handler,
-	}
-
-	b.addPage()
-
-	return b
-}
-
-func (b *pageBuilder) AccessGroups(groups ...string) PageBuilder {
-	b.page.accessGroups = groups
-	return b
-}
-
-func (b *pageBuilder) generatePageID(pageName string) uuid.UUID {
-	ns := uuid.NewV5(uuid.NamespaceDNS, b.namespaceDNS)
-	return uuid.NewV5(ns, pageName)
-}
-
-func (b *pageBuilder) addPage() {
-	b.sourcetool.mu.Lock()
-	b.sourcetool.pages[b.page.id] = b.page
-	b.sourcetool.mu.Unlock()
-}
-
 type page struct {
 	id           uuid.UUID
 	name         string
+	path         string
 	handler      func(UIBuilder) error
 	accessGroups []string
 }
