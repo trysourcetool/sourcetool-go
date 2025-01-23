@@ -7,14 +7,15 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 
+	"github.com/trysourcetool/sourcetool-go/internal/conv"
 	"github.com/trysourcetool/sourcetool-go/internal/session"
 	"github.com/trysourcetool/sourcetool-go/internal/session/state"
-	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket/mock"
 	"github.com/trysourcetool/sourcetool-go/timeinput"
+	widgetv1 "github.com/trysourcetool/sourcetool-proto/go/widget/v1"
 )
 
-func TestConvertStateToTimeInputData(t *testing.T) {
+func TestConvertStateToTimeInputProto(t *testing.T) {
 	id := uuid.Must(uuid.NewV4())
 	now := time.Now()
 
@@ -29,10 +30,10 @@ func TestConvertStateToTimeInputData(t *testing.T) {
 		Location:     time.Local,
 	}
 
-	data := convertStateToTimeInputData(timeInputState)
+	data := convertStateToTimeInputProto(timeInputState)
 
 	if data == nil {
-		t.Fatal("convertStateToTimeInputData returned nil")
+		t.Fatal("convertStateToTimeInputProto returned nil")
 	}
 
 	tests := []struct {
@@ -41,9 +42,9 @@ func TestConvertStateToTimeInputData(t *testing.T) {
 		want any
 	}{
 		{"Label", data.Label, timeInputState.Label},
-		{"Value", data.Value, timeInputState.Value.Format(time.TimeOnly)},
+		{"Value", conv.SafeValue(data.Value), timeInputState.Value.Format(time.TimeOnly)},
 		{"Placeholder", data.Placeholder, timeInputState.Placeholder},
-		{"DefaultValue", data.DefaultValue, timeInputState.DefaultValue.Format(time.TimeOnly)},
+		{"DefaultValue", conv.SafeValue(data.DefaultValue), timeInputState.DefaultValue.Format(time.TimeOnly)},
 		{"Required", data.Required, timeInputState.Required},
 		{"Disabled", data.Disabled, timeInputState.Disabled},
 	}
@@ -57,27 +58,27 @@ func TestConvertStateToTimeInputData(t *testing.T) {
 	}
 }
 
-func TestConvertTimeInputDataToState(t *testing.T) {
+func TestConvertTimeInputProtoToState(t *testing.T) {
 	id := uuid.Must(uuid.NewV4())
 	now := time.Now()
 	timeStr := now.Format(time.TimeOnly)
 
-	data := &websocket.TimeInputData{
+	data := &widgetv1.TimeInput{
 		Label:        "Test TimeInput",
-		Value:        timeStr,
+		Value:        conv.NilValue(timeStr),
 		Placeholder:  "Select time",
-		DefaultValue: timeStr,
+		DefaultValue: conv.NilValue(timeStr),
 		Required:     true,
 		Disabled:     false,
 	}
 
-	state, err := convertTimeInputDataToState(id, data, time.Local)
+	state, err := convertTimeInputProtoToState(id, data, time.Local)
 	if err != nil {
-		t.Fatalf("convertTimeInputDataToState returned error: %v", err)
+		t.Fatalf("convertTimeInputProtoToState returned error: %v", err)
 	}
 
 	if state == nil {
-		t.Fatal("convertTimeInputDataToState returned nil")
+		t.Fatal("convertTimeInputProtoToState returned nil")
 	}
 
 	tests := []struct {
@@ -87,9 +88,9 @@ func TestConvertTimeInputDataToState(t *testing.T) {
 	}{
 		{"ID", state.ID, id},
 		{"Label", state.Label, data.Label},
-		{"Value", state.Value.Format(time.TimeOnly), data.Value},
+		{"Value", state.Value.Format(time.TimeOnly), conv.SafeValue(data.Value)},
 		{"Placeholder", state.Placeholder, data.Placeholder},
-		{"DefaultValue", state.DefaultValue.Format(time.TimeOnly), data.DefaultValue},
+		{"DefaultValue", state.DefaultValue.Format(time.TimeOnly), conv.SafeValue(data.DefaultValue)},
 		{"Required", state.Required, data.Required},
 		{"Disabled", state.Disabled, data.Disabled},
 		{"Location", state.Location.String(), time.Local.String()},
@@ -104,13 +105,13 @@ func TestConvertTimeInputDataToState(t *testing.T) {
 	}
 }
 
-func TestConvertTimeInputDataToState_InvalidTime(t *testing.T) {
+func TestConvertTimeInputProtoToState_InvalidTime(t *testing.T) {
 	id := uuid.Must(uuid.NewV4())
-	data := &websocket.TimeInputData{
-		Value: "invalid-time",
+	data := &widgetv1.TimeInput{
+		Value: conv.NilValue("invalid-time"),
 	}
 
-	_, err := convertTimeInputDataToState(id, data, time.Local)
+	_, err := convertTimeInputProtoToState(id, data, time.Local)
 	if err == nil {
 		t.Error("Expected error for invalid time, got nil")
 	}
@@ -121,7 +122,7 @@ func TestTimeInput(t *testing.T) {
 	pageID := uuid.Must(uuid.NewV4())
 	sess := session.New(sessionID, pageID)
 
-	mockWS := mock.NewMockWebSocketClient()
+	mockWS := mock.NewClient()
 
 	builder := &uiBuilder{
 		context: context.Background(),
@@ -140,7 +141,6 @@ func TestTimeInput(t *testing.T) {
 	placeholder := "Select time"
 	location := *time.UTC
 
-	// Create TimeInput component with all options
 	value := builder.TimeInput(label,
 		timeinput.DefaultValue(now),
 		timeinput.Placeholder(placeholder),
@@ -149,7 +149,6 @@ func TestTimeInput(t *testing.T) {
 		timeinput.Location(location),
 	)
 
-	// Verify return value
 	if value == nil {
 		t.Fatal("TimeInput returned nil")
 	}
@@ -157,16 +156,15 @@ func TestTimeInput(t *testing.T) {
 		t.Errorf("TimeInput value = %v, want %v", value, now)
 	}
 
-	// Verify WebSocket message
-	if len(mockWS.Messages) != 1 {
-		t.Errorf("WebSocket messages count = %d, want 1", len(mockWS.Messages))
+	messages := mockWS.Messages()
+	if len(messages) != 1 {
+		t.Errorf("WebSocket messages count = %d, want 1", len(messages))
 	}
-	msg := mockWS.Messages[0]
-	if msg.Method != websocket.MessageMethodRenderWidget {
-		t.Errorf("WebSocket message method = %v, want %v", msg.Method, websocket.MessageMethodRenderWidget)
+	msg := messages[0]
+	if v := msg.GetRenderWidget(); v == nil {
+		t.Fatal("WebSocket message type = nil, want RenderWidget")
 	}
 
-	// Verify state
 	widgetID := builder.generateTimeInputID(label, []int{0})
 	state := sess.State.GetTimeInput(widgetID)
 	if state == nil {
@@ -193,7 +191,6 @@ func TestTimeInput(t *testing.T) {
 		})
 	}
 
-	// Verify time values separately to handle time comparison
 	if !state.Value.Equal(*value) {
 		t.Errorf("Value = %v, want %v", state.Value, value)
 	}
@@ -207,7 +204,7 @@ func TestTimeInput_DefaultValues(t *testing.T) {
 	pageID := uuid.Must(uuid.NewV4())
 	sess := session.New(sessionID, pageID)
 
-	mockWS := mock.NewMockWebSocketClient()
+	mockWS := mock.NewClient()
 
 	builder := &uiBuilder{
 		context: context.Background(),
@@ -223,17 +220,14 @@ func TestTimeInput_DefaultValues(t *testing.T) {
 
 	label := "Test TimeInput"
 
-	// Create TimeInput component without options
 	builder.TimeInput(label)
 
-	// Verify state
 	widgetID := builder.generateTimeInputID(label, []int{0})
 	state := sess.State.GetTimeInput(widgetID)
 	if state == nil {
 		t.Fatal("TimeInput state not found")
 	}
 
-	// Verify default values
 	if state.Location != time.Local {
 		t.Errorf("Default Location = %v, want %v", state.Location, time.Local)
 	}

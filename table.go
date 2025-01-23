@@ -6,7 +6,6 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 
-	"github.com/trysourcetool/sourcetool-go/internal/conv"
 	"github.com/trysourcetool/sourcetool-go/internal/options"
 	"github.com/trysourcetool/sourcetool-go/internal/session/state"
 	"github.com/trysourcetool/sourcetool-go/table"
@@ -16,8 +15,8 @@ import (
 
 func (b *uiBuilder) Table(data any, opts ...table.Option) table.Value {
 	tableOpts := &options.TableOptions{
-		OnSelect:     conv.NilValue(table.SelectionBehaviorIgnore.String()),
-		RowSelection: conv.NilValue(table.SelectionModeSingle.String()),
+		OnSelect:     table.SelectionBehaviorIgnore.String(),
+		RowSelection: table.SelectionModeSingle.String(),
 	}
 
 	for _, o := range opts {
@@ -77,9 +76,13 @@ func (b *uiBuilder) Table(data any, opts ...table.Option) table.Value {
 
 	value := table.Value{}
 	if tableState.Value.Selection != nil {
+		rows := make([]int, len(tableState.Value.Selection.Rows))
+		for i, r := range tableState.Value.Selection.Rows {
+			rows[i] = int(r)
+		}
 		value.Selection = &table.Selection{
-			Row:  tableState.Value.Selection.Row,
-			Rows: tableState.Value.Selection.Rows,
+			Row:  int(tableState.Value.Selection.Row),
+			Rows: rows,
 		}
 	}
 
@@ -111,13 +114,9 @@ func convertStateToTableProto(state *state.TableState) (*widgetv1.Table, error) 
 		Value:        &widgetv1.TableValue{},
 	}
 	if state.Value.Selection != nil {
-		rows := make([]uint32, len(state.Value.Selection.Rows))
-		for i, r := range state.Value.Selection.Rows {
-			rows[i] = uint32(r)
-		}
 		data.Value.Selection = &widgetv1.TableValueSelection{
-			Row:  uint32(state.Value.Selection.Row),
-			Rows: rows,
+			Row:  state.Value.Selection.Row,
+			Rows: state.Value.Selection.Rows,
 		}
 	}
 	return data, nil
@@ -137,13 +136,9 @@ func convertTableProtoToState(id uuid.UUID, data *widgetv1.Table) *state.TableSt
 		Value:        state.TableStateValue{},
 	}
 	if data.Value.Selection != nil {
-		rows := make([]int, len(data.Value.Selection.Rows))
-		for i, r := range data.Value.Selection.Rows {
-			rows[i] = int(r)
-		}
 		tableState.Value.Selection = &state.TableStateValueSelection{
-			Row:  int(data.Value.Selection.Row),
-			Rows: rows,
+			Row:  data.Value.Selection.Row,
+			Rows: data.Value.Selection.Rows,
 		}
 	}
 	return tableState

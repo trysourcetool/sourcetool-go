@@ -8,13 +8,14 @@ import (
 	"github.com/gofrs/uuid/v5"
 
 	"github.com/trysourcetool/sourcetool-go/dateinput"
+	"github.com/trysourcetool/sourcetool-go/internal/conv"
 	"github.com/trysourcetool/sourcetool-go/internal/session"
 	"github.com/trysourcetool/sourcetool-go/internal/session/state"
-	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket/mock"
+	widgetv1 "github.com/trysourcetool/sourcetool-proto/go/widget/v1"
 )
 
-func TestConvertStateToDateInputData(t *testing.T) {
+func TestConvertStateToDateInputProto(t *testing.T) {
 	id := uuid.Must(uuid.NewV4())
 	now := time.Now()
 	maxDate := now.AddDate(1, 0, 0)
@@ -34,10 +35,10 @@ func TestConvertStateToDateInputData(t *testing.T) {
 		Location:     time.Local,
 	}
 
-	data := convertStateToDateInputData(dateInputState)
+	data := convertStateToDateInputProto(dateInputState)
 
 	if data == nil {
-		t.Fatal("convertStateToDateInputData returned nil")
+		t.Fatal("convertStateToDateInputProto returned nil")
 	}
 
 	tests := []struct {
@@ -46,9 +47,9 @@ func TestConvertStateToDateInputData(t *testing.T) {
 		want any
 	}{
 		{"Label", data.Label, dateInputState.Label},
-		{"Value", data.Value, dateInputState.Value.Format(time.DateOnly)},
+		{"Value", conv.SafeValue(data.Value), dateInputState.Value.Format(time.DateOnly)},
 		{"Placeholder", data.Placeholder, dateInputState.Placeholder},
-		{"DefaultValue", data.DefaultValue, dateInputState.DefaultValue.Format(time.DateOnly)},
+		{"DefaultValue", conv.SafeValue(data.DefaultValue), dateInputState.DefaultValue.Format(time.DateOnly)},
 		{"Required", data.Required, dateInputState.Required},
 		{"Disabled", data.Disabled, dateInputState.Disabled},
 		{"Format", data.Format, dateInputState.Format},
@@ -65,18 +66,18 @@ func TestConvertStateToDateInputData(t *testing.T) {
 	}
 }
 
-func TestConvertDateInputDataToState(t *testing.T) {
+func TestConvertDateInputProtoToState(t *testing.T) {
 	id := uuid.Must(uuid.NewV4())
 	now := time.Now()
 	dateStr := now.Format(time.DateOnly)
 	maxDateStr := now.AddDate(1, 0, 0).Format(time.DateOnly)
 	minDateStr := now.AddDate(-1, 0, 0).Format(time.DateOnly)
 
-	data := &websocket.DateInputData{
+	data := &widgetv1.DateInput{
 		Label:        "Test DateInput",
-		Value:        dateStr,
+		Value:        conv.NilValue(dateStr),
 		Placeholder:  "Select date",
-		DefaultValue: dateStr,
+		DefaultValue: conv.NilValue(dateStr),
 		Required:     true,
 		Disabled:     false,
 		Format:       "YYYY/MM/DD",
@@ -84,13 +85,13 @@ func TestConvertDateInputDataToState(t *testing.T) {
 		MinValue:     minDateStr,
 	}
 
-	state, err := convertDateInputDataToState(id, data, time.Local)
+	state, err := convertDateInputProtoToState(id, data, time.Local)
 	if err != nil {
-		t.Fatalf("convertDateInputDataToState returned error: %v", err)
+		t.Fatalf("convertDateInputProtoToState returned error: %v", err)
 	}
 
 	if state == nil {
-		t.Fatal("convertDateInputDataToState returned nil")
+		t.Fatal("convertDateInputProtoToState returned nil")
 	}
 
 	tests := []struct {
@@ -100,9 +101,9 @@ func TestConvertDateInputDataToState(t *testing.T) {
 	}{
 		{"ID", state.ID, id},
 		{"Label", state.Label, data.Label},
-		{"Value", state.Value.Format(time.DateOnly), data.Value},
+		{"Value", state.Value.Format(time.DateOnly), conv.SafeValue(data.Value)},
 		{"Placeholder", state.Placeholder, data.Placeholder},
-		{"DefaultValue", state.DefaultValue.Format(time.DateOnly), data.DefaultValue},
+		{"DefaultValue", state.DefaultValue.Format(time.DateOnly), conv.SafeValue(data.DefaultValue)},
 		{"Required", state.Required, data.Required},
 		{"Disabled", state.Disabled, data.Disabled},
 		{"Format", state.Format, data.Format},
@@ -120,13 +121,13 @@ func TestConvertDateInputDataToState(t *testing.T) {
 	}
 }
 
-func TestConvertDateInputDataToState_InvalidDate(t *testing.T) {
+func TestConvertDateInputProtoToState_InvalidDate(t *testing.T) {
 	id := uuid.Must(uuid.NewV4())
-	data := &websocket.DateInputData{
-		Value: "invalid-date",
+	data := &widgetv1.DateInput{
+		Value: conv.NilValue("invalid-date"),
 	}
 
-	_, err := convertDateInputDataToState(id, data, time.Local)
+	_, err := convertDateInputProtoToState(id, data, time.Local)
 	if err == nil {
 		t.Error("Expected error for invalid date, got nil")
 	}
@@ -137,7 +138,7 @@ func TestDateInput(t *testing.T) {
 	pageID := uuid.Must(uuid.NewV4())
 	sess := session.New(sessionID, pageID)
 
-	mockWS := mock.NewMockWebSocketClient()
+	mockWS := mock.NewClient()
 
 	builder := &uiBuilder{
 		context: context.Background(),
@@ -159,7 +160,6 @@ func TestDateInput(t *testing.T) {
 	format := "YYYY-MM-DD"
 	location := *time.UTC
 
-	// Create DateInput component with all options
 	value := builder.DateInput(label,
 		dateinput.DefaultValue(now),
 		dateinput.Placeholder(placeholder),
@@ -171,7 +171,6 @@ func TestDateInput(t *testing.T) {
 		dateinput.Location(location),
 	)
 
-	// Verify return value
 	if value == nil {
 		t.Fatal("DateInput returned nil")
 	}
@@ -179,16 +178,15 @@ func TestDateInput(t *testing.T) {
 		t.Errorf("DateInput value = %v, want %v", value, now)
 	}
 
-	// Verify WebSocket message
-	if len(mockWS.Messages) != 1 {
-		t.Errorf("WebSocket messages count = %d, want 1", len(mockWS.Messages))
+	messages := mockWS.Messages()
+	if len(messages) != 1 {
+		t.Errorf("WebSocket messages count = %d, want 1", len(messages))
 	}
-	msg := mockWS.Messages[0]
-	if msg.Method != websocket.MessageMethodRenderWidget {
-		t.Errorf("WebSocket message method = %v, want %v", msg.Method, websocket.MessageMethodRenderWidget)
+	msg := messages[0]
+	if v := msg.GetRenderWidget(); v == nil {
+		t.Fatal("WebSocket message type = nil, want RenderWidget")
 	}
 
-	// Verify state
 	widgetID := builder.generateDateInputID(label, []int{0})
 	state := sess.State.GetDateInput(widgetID)
 	if state == nil {
@@ -216,7 +214,6 @@ func TestDateInput(t *testing.T) {
 		})
 	}
 
-	// Verify time values separately to handle time comparison
 	if !state.Value.Equal(*value) {
 		t.Errorf("Value = %v, want %v", state.Value, value)
 	}
@@ -236,7 +233,7 @@ func TestDateInput_DefaultValues(t *testing.T) {
 	pageID := uuid.Must(uuid.NewV4())
 	sess := session.New(sessionID, pageID)
 
-	mockWS := mock.NewMockWebSocketClient()
+	mockWS := mock.NewClient()
 
 	builder := &uiBuilder{
 		context: context.Background(),
@@ -252,17 +249,14 @@ func TestDateInput_DefaultValues(t *testing.T) {
 
 	label := "Test DateInput"
 
-	// Create DateInput component without options
 	builder.DateInput(label)
 
-	// Verify state
 	widgetID := builder.generateDateInputID(label, []int{0})
 	state := sess.State.GetDateInput(widgetID)
 	if state == nil {
 		t.Fatal("DateInput state not found")
 	}
 
-	// Verify default values
 	if state.Format != "YYYY/MM/DD" {
 		t.Errorf("Default Format = %v, want YYYY/MM/DD", state.Format)
 	}

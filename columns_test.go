@@ -9,55 +9,55 @@ import (
 	"github.com/trysourcetool/sourcetool-go/columns"
 	"github.com/trysourcetool/sourcetool-go/internal/session"
 	"github.com/trysourcetool/sourcetool-go/internal/session/state"
-	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket/mock"
+	widgetv1 "github.com/trysourcetool/sourcetool-proto/go/widget/v1"
 )
 
-func TestConvertStateToColumnsData(t *testing.T) {
+func TestConvertStateToColumnsProto(t *testing.T) {
 	id := uuid.Must(uuid.NewV4())
 	columnsState := &state.ColumnsState{
 		ID:      id,
 		Columns: 3,
 	}
 
-	data := convertStateToColumnsData(columnsState)
+	data := convertStateToColumnsProto(columnsState)
 
 	if data == nil {
-		t.Fatal("convertStateToColumnsData returned nil")
+		t.Fatal("convertStateToColumnsProto returned nil")
 	}
 
-	if data.Columns != columnsState.Columns {
+	if int(data.Columns) != columnsState.Columns {
 		t.Errorf("Columns = %v, want %v", data.Columns, columnsState.Columns)
 	}
 }
 
-func TestConvertColumnsDataToState(t *testing.T) {
-	data := &websocket.ColumnsData{
+func TestConvertColumnsProtoToState(t *testing.T) {
+	data := &widgetv1.Columns{
 		Columns: 3,
 	}
 
-	state := convertColumnsDataToState(data)
+	state := convertColumnsProtoToState(uuid.Must(uuid.NewV4()), data)
 
 	if state == nil {
-		t.Fatal("convertColumnsDataToState returned nil")
+		t.Fatal("convertColumnsProtoToState returned nil")
 	}
 
-	if state.Columns != data.Columns {
+	if state.Columns != int(data.Columns) {
 		t.Errorf("Columns = %v, want %v", state.Columns, data.Columns)
 	}
 }
 
-func TestConvertStateToColumnItemData(t *testing.T) {
+func TestConvertStateToColumnItemProto(t *testing.T) {
 	id := uuid.Must(uuid.NewV4())
 	columnItemState := &state.ColumnItemState{
 		ID:     id,
 		Weight: 0.5,
 	}
 
-	data := convertStateToColumnItemData(columnItemState)
+	data := convertStateToColumnItemProto(columnItemState)
 
 	if data == nil {
-		t.Fatal("convertStateToColumnItemData returned nil")
+		t.Fatal("convertStateToColumnItemProto returned nil")
 	}
 
 	if data.Weight != columnItemState.Weight {
@@ -65,15 +65,15 @@ func TestConvertStateToColumnItemData(t *testing.T) {
 	}
 }
 
-func TestConvertColumnItemDataToState(t *testing.T) {
-	data := &websocket.ColumnItemData{
+func TestConvertColumnItemProtoToState(t *testing.T) {
+	data := &widgetv1.ColumnItem{
 		Weight: 0.5,
 	}
 
-	state := convertColumnItemDataToState(data)
+	state := convertColumnItemProtoToState(uuid.Must(uuid.NewV4()), data)
 
 	if state == nil {
-		t.Fatal("convertColumnItemDataToState returned nil")
+		t.Fatal("convertColumnItemProtoToState returned nil")
 	}
 
 	if state.Weight != data.Weight {
@@ -86,7 +86,7 @@ func TestColumns(t *testing.T) {
 	pageID := uuid.Must(uuid.NewV4())
 	sess := session.New(sessionID, pageID)
 
-	mockWS := mock.NewMockWebSocketClient()
+	mockWS := mock.NewClient()
 
 	builder := &uiBuilder{
 		context: context.Background(),
@@ -100,11 +100,9 @@ func TestColumns(t *testing.T) {
 		},
 	}
 
-	// Test with default options
 	cols := 3
 	builders := builder.Columns(cols)
 
-	// Verify return value
 	if builders == nil {
 		t.Fatal("Columns returned nil")
 	}
@@ -112,13 +110,12 @@ func TestColumns(t *testing.T) {
 		t.Errorf("Builders length = %v, want %v", len(builders), cols)
 	}
 
-	// Verify WebSocket messages
+	messages := mockWS.Messages()
 	expectedMessages := cols + 1 // columns widget + column items
-	if len(mockWS.Messages) != expectedMessages {
-		t.Errorf("WebSocket messages count = %d, want %d", len(mockWS.Messages), expectedMessages)
+	if len(messages) != expectedMessages {
+		t.Errorf("WebSocket messages count = %d, want %d", len(messages), expectedMessages)
 	}
 
-	// Verify columns state
 	widgetID := builder.generateColumnsID([]int{0})
 	columnsState := sess.State.GetColumns(widgetID)
 	if columnsState == nil {
@@ -129,7 +126,6 @@ func TestColumns(t *testing.T) {
 		t.Errorf("Columns = %v, want %v", columnsState.Columns, cols)
 	}
 
-	// Verify column items state
 	for i := 0; i < cols; i++ {
 		columnPath := []int{0, i}
 		columnID := builder.generateColumnItemID(columnPath)
@@ -154,7 +150,7 @@ func TestColumns_WithWeight(t *testing.T) {
 	pageID := uuid.Must(uuid.NewV4())
 	sess := session.New(sessionID, pageID)
 
-	mockWS := mock.NewMockWebSocketClient()
+	mockWS := mock.NewClient()
 
 	builder := &uiBuilder{
 		context: context.Background(),
@@ -178,7 +174,6 @@ func TestColumns_WithWeight(t *testing.T) {
 		t.Fatal("Columns returned nil")
 	}
 
-	// Verify column items weights
 	for i := 0; i < cols; i++ {
 		columnPath := []int{0, i}
 		columnID := builder.generateColumnItemID(columnPath)
@@ -203,7 +198,7 @@ func TestColumns_InvalidInput(t *testing.T) {
 	pageID := uuid.Must(uuid.NewV4())
 	sess := session.New(sessionID, pageID)
 
-	mockWS := mock.NewMockWebSocketClient()
+	mockWS := mock.NewClient()
 
 	builder := &uiBuilder{
 		context: context.Background(),
@@ -243,7 +238,6 @@ func TestColumns_InvalidInput(t *testing.T) {
 			}
 
 			if tt.cols > 0 && builders != nil {
-				// Verify weights are normalized
 				for i := 0; i < tt.cols; i++ {
 					columnPath := []int{0, i}
 					columnID := builder.generateColumnItemID(columnPath)

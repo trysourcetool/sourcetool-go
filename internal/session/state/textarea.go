@@ -6,16 +6,16 @@ const WidgetTypeTextArea WidgetType = "textArea"
 
 type TextAreaState struct {
 	ID           uuid.UUID
-	Value        string
+	Value        *string
 	Label        string
 	Placeholder  string
-	DefaultValue string
+	DefaultValue *string
 	Required     bool
 	Disabled     bool
-	MaxLength    *int
-	MinLength    *int
-	MaxLines     *int
-	MinLines     *int
+	MaxLength    *int32
+	MinLength    *int32
+	MaxLines     *int32
+	MinLines     *int32
 	AutoResize   bool
 }
 

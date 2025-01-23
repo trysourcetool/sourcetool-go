@@ -7,10 +7,10 @@ const WidgetTypeMultiSelect WidgetType = "multiSelect"
 type MultiSelectState struct {
 	ID           uuid.UUID
 	Label        string
-	Value        []int
+	Value        []int32
 	Options      []string
 	Placeholder  string
-	DefaultValue []int
+	DefaultValue []int32
 	Required     bool
 	Disabled     bool
 }

@@ -7,6 +7,7 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 
+	"github.com/trysourcetool/sourcetool-go/internal/conv"
 	"github.com/trysourcetool/sourcetool-go/internal/options"
 	"github.com/trysourcetool/sourcetool-go/internal/session/state"
 	"github.com/trysourcetool/sourcetool-go/timeinput"
@@ -104,12 +105,12 @@ func convertTimeInputProtoToState(id uuid.UUID, data *widgetv1.TimeInput, locati
 		return &t, nil
 	}
 
-	value, err := parseTime(data.Value)
+	value, err := parseTime(conv.SafeValue(data.Value))
 	if err != nil {
 		return nil, err
 	}
 
-	defaultValue, err := parseTime(data.DefaultValue)
+	defaultValue, err := parseTime(conv.SafeValue(data.DefaultValue))
 	if err != nil {
 		return nil, err
 	}
@@ -138,10 +139,10 @@ func convertStateToTimeInputProto(state *state.TimeInputState) *widgetv1.TimeInp
 		defaultValue = state.DefaultValue.Format(time.TimeOnly)
 	}
 	return &widgetv1.TimeInput{
-		Value:        value,
+		Value:        conv.NilValue(value),
 		Label:        state.Label,
 		Placeholder:  state.Placeholder,
-		DefaultValue: defaultValue,
+		DefaultValue: conv.NilValue(defaultValue),
 		Required:     state.Required,
 		Disabled:     state.Disabled,
 	}

@@ -19,7 +19,7 @@ func Placeholder(placeholder string) Option {
 type defaultValueOption string
 
 func (d defaultValueOption) Apply(opts *options.TextAreaOptions) {
-	opts.DefaultValue = string(d)
+	opts.DefaultValue = (*string)(&d)
 }
 
 func DefaultValue(value string) Option {
@@ -46,43 +46,43 @@ func Disabled(disabled bool) Option {
 	return disabledOption(disabled)
 }
 
-type maxLengthOption int
+type maxLengthOption int32
 
 func (m maxLengthOption) Apply(opts *options.TextAreaOptions) {
-	opts.MaxLength = (*int)(&m)
+	opts.MaxLength = (*int32)(&m)
 }
 
-func MaxLength(length int) Option {
+func MaxLength(length int32) Option {
 	return maxLengthOption(length)
 }
 
-type minLengthOption int
+type minLengthOption int32
 
 func (m minLengthOption) Apply(opts *options.TextAreaOptions) {
-	opts.MinLength = (*int)(&m)
+	opts.MinLength = (*int32)(&m)
 }
 
-func MinLength(length int) Option {
+func MinLength(length int32) Option {
 	return minLengthOption(length)
 }
 
-type maxLinesOption int
+type maxLinesOption int32
 
 func (m maxLinesOption) Apply(opts *options.TextAreaOptions) {
-	opts.MaxLines = (*int)(&m)
+	opts.MaxLines = (*int32)(&m)
 }
 
-func MaxLines(lines int) Option {
+func MaxLines(lines int32) Option {
 	return maxLinesOption(lines)
 }
 
-type minLinesOption int
+type minLinesOption int32
 
 func (m minLinesOption) Apply(opts *options.TextAreaOptions) {
-	opts.MinLines = (*int)(&m)
+	opts.MinLines = (*int32)(&m)
 }
 
-func MinLines(lines int) Option {
+func MinLines(lines int32) Option {
 	return minLinesOption(lines)
 }
 

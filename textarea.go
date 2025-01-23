@@ -5,6 +5,7 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 
+	"github.com/trysourcetool/sourcetool-go/internal/conv"
 	"github.com/trysourcetool/sourcetool-go/internal/options"
 	"github.com/trysourcetool/sourcetool-go/internal/session/state"
 	"github.com/trysourcetool/sourcetool-go/textarea"
@@ -13,11 +14,11 @@ import (
 )
 
 func (b *uiBuilder) TextArea(label string, opts ...textarea.Option) string {
-	defaultMinLines := 2
+	defaultMinLines := int32(2)
 	textAreaOpts := &options.TextAreaOptions{
 		Label:        label,
 		Placeholder:  "",
-		DefaultValue: "",
+		DefaultValue: nil,
 		Required:     false,
 		Disabled:     false,
 		MaxLength:    nil,
@@ -84,7 +85,7 @@ func (b *uiBuilder) TextArea(label string, opts ...textarea.Option) string {
 
 	cursor.next()
 
-	return textAreaState.Value
+	return conv.SafeValue(textAreaState.Value)
 }
 
 func (b *uiBuilder) generateTextAreaID(label string, path path) uuid.UUID {
@@ -99,23 +100,6 @@ func convertStateToTextAreaProto(state *state.TextAreaState) *widgetv1.TextArea 
 	if state == nil {
 		return nil
 	}
-	var maxLength, minLength, maxLines, minLines *uint32
-	if state.MaxLength != nil {
-		val := uint32(*state.MaxLength)
-		maxLength = &val
-	}
-	if state.MinLength != nil {
-		val := uint32(*state.MinLength)
-		minLength = &val
-	}
-	if state.MaxLines != nil {
-		val := uint32(*state.MaxLines)
-		maxLines = &val
-	}
-	if state.MinLines != nil {
-		val := uint32(*state.MinLines)
-		minLines = &val
-	}
 	return &widgetv1.TextArea{
 		Value:        state.Value,
 		Label:        state.Label,
@@ -123,10 +107,10 @@ func convertStateToTextAreaProto(state *state.TextAreaState) *widgetv1.TextArea 
 		DefaultValue: state.DefaultValue,
 		Required:     state.Required,
 		Disabled:     state.Disabled,
-		MaxLength:    maxLength,
-		MinLength:    minLength,
-		MaxLines:     maxLines,
-		MinLines:     minLines,
+		MaxLength:    state.MaxLength,
+		MinLength:    state.MinLength,
+		MaxLines:     state.MaxLines,
+		MinLines:     state.MinLines,
 		AutoResize:   state.AutoResize,
 	}
 }
@@ -134,23 +118,6 @@ func convertStateToTextAreaProto(state *state.TextAreaState) *widgetv1.TextArea 
 func convertTextAreaProtoToState(id uuid.UUID, data *widgetv1.TextArea) *state.TextAreaState {
 	if data == nil {
 		return nil
-	}
-	var maxLength, minLength, maxLines, minLines *int
-	if data.MaxLength != nil {
-		val := int(*data.MaxLength)
-		maxLength = &val
-	}
-	if data.MinLength != nil {
-		val := int(*data.MinLength)
-		minLength = &val
-	}
-	if data.MaxLines != nil {
-		val := int(*data.MaxLines)
-		maxLines = &val
-	}
-	if data.MinLines != nil {
-		val := int(*data.MinLines)
-		minLines = &val
 	}
 	return &state.TextAreaState{
 		ID:           id,
@@ -160,10 +127,10 @@ func convertTextAreaProtoToState(id uuid.UUID, data *widgetv1.TextArea) *state.T
 		DefaultValue: data.DefaultValue,
 		Required:     data.Required,
 		Disabled:     data.Disabled,
-		MaxLength:    maxLength,
-		MinLength:    minLength,
-		MaxLines:     maxLines,
-		MinLines:     minLines,
+		MaxLength:    data.MaxLength,
+		MinLength:    data.MinLength,
+		MaxLines:     data.MaxLines,
+		MinLines:     data.MinLines,
 		AutoResize:   data.AutoResize,
 	}
 }

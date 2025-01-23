@@ -9,7 +9,7 @@ type Option interface {
 type headerOption string
 
 func (h headerOption) Apply(opts *options.TableOptions) {
-	opts.Header = (*string)(&h)
+	opts.Header = string(h)
 }
 
 func Header(header string) Option {
@@ -19,7 +19,7 @@ func Header(header string) Option {
 type descriptionOption string
 
 func (d descriptionOption) Apply(opts *options.TableOptions) {
-	opts.Description = (*string)(&d)
+	opts.Description = string(d)
 }
 
 func Description(description string) Option {
@@ -29,7 +29,7 @@ func Description(description string) Option {
 type onSelectOption SelectionBehavior
 
 func (o onSelectOption) Apply(opts *options.TableOptions) {
-	opts.OnSelect = (*string)((*SelectionBehavior)(&o))
+	opts.OnSelect = SelectionBehavior(o).String()
 }
 
 func OnSelect(behavior SelectionBehavior) Option {
@@ -39,7 +39,7 @@ func OnSelect(behavior SelectionBehavior) Option {
 type rowSelectionOption SelectionMode
 
 func (r rowSelectionOption) Apply(opts *options.TableOptions) {
-	opts.RowSelection = (*string)((*SelectionMode)(&r))
+	opts.RowSelection = SelectionMode(r).String()
 }
 
 func RowSelection(mode SelectionMode) Option {

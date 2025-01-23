@@ -9,11 +9,11 @@ import (
 	"github.com/trysourcetool/sourcetool-go/form"
 	"github.com/trysourcetool/sourcetool-go/internal/session"
 	"github.com/trysourcetool/sourcetool-go/internal/session/state"
-	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket/mock"
+	widgetv1 "github.com/trysourcetool/sourcetool-proto/go/widget/v1"
 )
 
-func TestConvertStateToFormData(t *testing.T) {
+func TestConvertStateToFormProto(t *testing.T) {
 	id := uuid.Must(uuid.NewV4())
 	formState := &state.FormState{
 		ID:             id,
@@ -23,10 +23,10 @@ func TestConvertStateToFormData(t *testing.T) {
 		ClearOnSubmit:  true,
 	}
 
-	data := convertStateToFormData(formState)
+	data := convertStateToFormProto(formState)
 
 	if data == nil {
-		t.Fatal("convertStateToFormData returned nil")
+		t.Fatal("convertStateToFormProto returned nil")
 	}
 
 	tests := []struct {
@@ -49,18 +49,18 @@ func TestConvertStateToFormData(t *testing.T) {
 	}
 }
 
-func TestConvertFormDataToState(t *testing.T) {
-	data := &websocket.FormData{
+func TestConvertFormProtoToState(t *testing.T) {
+	data := &widgetv1.Form{
 		Value:          true,
 		ButtonLabel:    "Submit",
 		ButtonDisabled: true,
 		ClearOnSubmit:  true,
 	}
 
-	state := convertFormDataToState(data)
+	state := convertFormProtoToState(uuid.Must(uuid.NewV4()), data)
 
 	if state == nil {
-		t.Fatal("convertFormDataToState returned nil")
+		t.Fatal("convertFormProtoToState returned nil")
 	}
 
 	tests := []struct {
@@ -88,7 +88,7 @@ func TestForm(t *testing.T) {
 	pageID := uuid.Must(uuid.NewV4())
 	sess := session.New(sessionID, pageID)
 
-	mockWS := mock.NewMockWebSocketClient()
+	mockWS := mock.NewClient()
 
 	builder := &uiBuilder{
 		context: context.Background(),
@@ -105,7 +105,6 @@ func TestForm(t *testing.T) {
 	buttonLabel := "Submit"
 	childBuilder, submitted := builder.Form(buttonLabel)
 
-	// Verify return values
 	if childBuilder == nil {
 		t.Fatal("Form returned nil builder")
 	}
@@ -113,16 +112,15 @@ func TestForm(t *testing.T) {
 		t.Error("Form returned true for submitted, want false")
 	}
 
-	// Verify WebSocket message
-	if len(mockWS.Messages) != 1 {
-		t.Errorf("WebSocket messages count = %d, want 1", len(mockWS.Messages))
+	messages := mockWS.Messages()
+	if len(messages) != 1 {
+		t.Errorf("WebSocket messages count = %d, want 1", len(messages))
 	}
-	msg := mockWS.Messages[0]
-	if msg.Method != websocket.MessageMethodRenderWidget {
-		t.Errorf("WebSocket message method = %v, want %v", msg.Method, websocket.MessageMethodRenderWidget)
+	msg := messages[0]
+	if v := msg.GetRenderWidget(); v == nil {
+		t.Fatal("WebSocket message type = nil, want RenderWidget")
 	}
 
-	// Verify form state
 	widgetID := builder.generateFormID([]int{0})
 	state := sess.State.GetForm(widgetID)
 	if state == nil {
@@ -154,7 +152,7 @@ func TestForm_WithOptions(t *testing.T) {
 	pageID := uuid.Must(uuid.NewV4())
 	sess := session.New(sessionID, pageID)
 
-	mockWS := mock.NewMockWebSocketClient()
+	mockWS := mock.NewClient()
 
 	builder := &uiBuilder{
 		context: context.Background(),
@@ -181,7 +179,6 @@ func TestForm_WithOptions(t *testing.T) {
 		t.Error("Form returned true for submitted, want false")
 	}
 
-	// Verify form state with options
 	widgetID := builder.generateFormID([]int{0})
 	state := sess.State.GetForm(widgetID)
 	if state == nil {

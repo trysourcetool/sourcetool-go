@@ -143,7 +143,7 @@ func (b *uiBuilder) generateColumnItemID(path path) uuid.UUID {
 
 func convertStateToColumnsProto(state *state.ColumnsState) *widgetv1.Columns {
 	return &widgetv1.Columns{
-		Columns: uint32(state.Columns),
+		Columns: int32(state.Columns),
 	}
 }
 

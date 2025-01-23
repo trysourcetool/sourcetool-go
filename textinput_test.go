@@ -6,34 +6,35 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 
+	"github.com/trysourcetool/sourcetool-go/internal/conv"
 	"github.com/trysourcetool/sourcetool-go/internal/session"
 	"github.com/trysourcetool/sourcetool-go/internal/session/state"
-	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket/mock"
 	"github.com/trysourcetool/sourcetool-go/textinput"
+	widgetv1 "github.com/trysourcetool/sourcetool-proto/go/widget/v1"
 )
 
-func TestConvertStateToTextInputData(t *testing.T) {
+func TestConvertStateToTextInputProto(t *testing.T) {
 	id := uuid.Must(uuid.NewV4())
-	maxLength := 100
-	minLength := 10
+	maxLength := int32(100)
+	minLength := int32(10)
 
 	textInputState := &state.TextInputState{
 		ID:           id,
 		Label:        "Test TextInput",
-		Value:        "test value",
+		Value:        conv.NilValue("test value"),
 		Placeholder:  "Enter text",
-		DefaultValue: "default",
+		DefaultValue: conv.NilValue("default"),
 		Required:     true,
 		Disabled:     false,
 		MaxLength:    &maxLength,
 		MinLength:    &minLength,
 	}
 
-	data := convertStateToTextInputData(textInputState)
+	data := convertStateToTextInputProto(textInputState)
 
 	if data == nil {
-		t.Fatal("convertStateToTextInputData returned nil")
+		t.Fatal("convertStateToTextInputProto returned nil")
 	}
 
 	tests := []struct {
@@ -42,9 +43,9 @@ func TestConvertStateToTextInputData(t *testing.T) {
 		want any
 	}{
 		{"Label", data.Label, textInputState.Label},
-		{"Value", data.Value, textInputState.Value},
+		{"Value", conv.SafeValue(data.Value), conv.SafeValue(textInputState.Value)},
 		{"Placeholder", data.Placeholder, textInputState.Placeholder},
-		{"DefaultValue", data.DefaultValue, textInputState.DefaultValue},
+		{"DefaultValue", conv.SafeValue(data.DefaultValue), conv.SafeValue(textInputState.DefaultValue)},
 		{"Required", data.Required, textInputState.Required},
 		{"Disabled", data.Disabled, textInputState.Disabled},
 		{"MaxLength", *data.MaxLength, *textInputState.MaxLength},
@@ -60,26 +61,26 @@ func TestConvertStateToTextInputData(t *testing.T) {
 	}
 }
 
-func TestConvertTextInputDataToState(t *testing.T) {
+func TestConvertTextInputProtoToState(t *testing.T) {
 	id := uuid.Must(uuid.NewV4())
-	maxLength := 100
-	minLength := 10
+	maxLength := int32(100)
+	minLength := int32(10)
 
-	data := &websocket.TextInputData{
+	data := &widgetv1.TextInput{
 		Label:        "Test TextInput",
-		Value:        "test value",
+		Value:        conv.NilValue("test value"),
 		Placeholder:  "Enter text",
-		DefaultValue: "default",
+		DefaultValue: conv.NilValue("default"),
 		Required:     true,
 		Disabled:     false,
 		MaxLength:    &maxLength,
 		MinLength:    &minLength,
 	}
 
-	state := convertTextInputDataToState(id, data)
+	state := convertTextInputProtoToState(id, data)
 
 	if state == nil {
-		t.Fatal("convertTextInputDataToState returned nil")
+		t.Fatal("convertTextInputProtoToState returned nil")
 	}
 
 	tests := []struct {
@@ -89,9 +90,9 @@ func TestConvertTextInputDataToState(t *testing.T) {
 	}{
 		{"ID", state.ID, id},
 		{"Label", state.Label, data.Label},
-		{"Value", state.Value, data.Value},
+		{"Value", conv.SafeValue(state.Value), conv.SafeValue(data.Value)},
 		{"Placeholder", state.Placeholder, data.Placeholder},
-		{"DefaultValue", state.DefaultValue, data.DefaultValue},
+		{"DefaultValue", conv.SafeValue(state.DefaultValue), conv.SafeValue(data.DefaultValue)},
 		{"Required", state.Required, data.Required},
 		{"Disabled", state.Disabled, data.Disabled},
 		{"MaxLength", *state.MaxLength, *data.MaxLength},
@@ -112,7 +113,7 @@ func TestTextInput(t *testing.T) {
 	pageID := uuid.Must(uuid.NewV4())
 	sess := session.New(sessionID, pageID)
 
-	mockWS := mock.NewMockWebSocketClient()
+	mockWS := mock.NewClient()
 
 	builder := &uiBuilder{
 		context: context.Background(),
@@ -129,10 +130,9 @@ func TestTextInput(t *testing.T) {
 	label := "Test TextInput"
 	defaultValue := "default value"
 	placeholder := "Enter text"
-	maxLength := 100
-	minLength := 10
+	maxLength := int32(100)
+	minLength := int32(10)
 
-	// Create TextInput component with all options
 	value := builder.TextInput(label,
 		textinput.DefaultValue(defaultValue),
 		textinput.Placeholder(placeholder),
@@ -142,21 +142,19 @@ func TestTextInput(t *testing.T) {
 		textinput.MinLength(minLength),
 	)
 
-	// Verify return value
 	if value != defaultValue {
 		t.Errorf("TextInput value = %v, want %v", value, defaultValue)
 	}
 
-	// Verify WebSocket message
-	if len(mockWS.Messages) != 1 {
-		t.Errorf("WebSocket messages count = %d, want 1", len(mockWS.Messages))
+	messages := mockWS.Messages()
+	if len(messages) != 1 {
+		t.Errorf("WebSocket messages count = %d, want 1", len(messages))
 	}
-	msg := mockWS.Messages[0]
-	if msg.Method != websocket.MessageMethodRenderWidget {
-		t.Errorf("WebSocket message method = %v, want %v", msg.Method, websocket.MessageMethodRenderWidget)
+	msg := messages[0]
+	if v := msg.GetRenderWidget(); v == nil {
+		t.Fatal("WebSocket message type = nil, want RenderWidget")
 	}
 
-	// Verify state
 	widgetID := builder.generateTextInputID(label, []int{0})
 	state := sess.State.GetTextInput(widgetID)
 	if state == nil {
@@ -169,9 +167,9 @@ func TestTextInput(t *testing.T) {
 		want any
 	}{
 		{"Label", state.Label, label},
-		{"Value", state.Value, defaultValue},
+		{"Value", conv.SafeValue(state.Value), defaultValue},
 		{"Placeholder", state.Placeholder, placeholder},
-		{"DefaultValue", state.DefaultValue, defaultValue},
+		{"DefaultValue", conv.SafeValue(state.DefaultValue), defaultValue},
 		{"Required", state.Required, true},
 		{"Disabled", state.Disabled, true},
 		{"MaxLength", *state.MaxLength, maxLength},

@@ -45,11 +45,12 @@ func (b *uiBuilder) Selectbox(label string, opts ...selectbox.Option) *selectbox
 	log.Printf("Page ID: %s", page.id.String())
 	log.Printf("Path: %v\n", path)
 
-	var defaultVal *int
+	var defaultVal *int32
 	if selectboxOpts.DefaultValue != nil {
 		for i, o := range selectboxOpts.Options {
 			if conv.SafeValue(selectboxOpts.DefaultValue) == o {
-				defaultVal = &i
+				v := int32(i)
+				defaultVal = &v
 				break
 			}
 		}
@@ -103,7 +104,7 @@ func (b *uiBuilder) Selectbox(label string, opts ...selectbox.Option) *selectbox
 	if selectboxState.Value != nil {
 		value = &selectbox.Value{
 			Value: selectboxOpts.Options[*selectboxState.Value],
-			Index: conv.SafeValue(selectboxState.Value),
+			Index: int(conv.SafeValue(selectboxState.Value)),
 		}
 	}
 
@@ -122,22 +123,12 @@ func convertStateToSelectboxProto(state *state.SelectboxState) *widgetv1.Selectb
 	if state == nil {
 		return nil
 	}
-	var value *int64
-	if state.Value != nil {
-		v := int64(*state.Value)
-		value = &v
-	}
-	var defaultValue *int64
-	if state.DefaultValue != nil {
-		v := int64(*state.DefaultValue)
-		defaultValue = &v
-	}
 	return &widgetv1.Selectbox{
 		Label:        state.Label,
-		Value:        value,
+		Value:        state.Value,
 		Options:      state.Options,
 		Placeholder:  state.Placeholder,
-		DefaultValue: defaultValue,
+		DefaultValue: state.DefaultValue,
 		Required:     state.Required,
 		Disabled:     state.Disabled,
 	}
@@ -147,23 +138,13 @@ func convertSelectboxProtoToState(id uuid.UUID, data *widgetv1.Selectbox) *state
 	if data == nil {
 		return nil
 	}
-	var value *int
-	if data.Value != nil {
-		v := int(*data.Value)
-		value = &v
-	}
-	var defaultValue *int
-	if data.DefaultValue != nil {
-		v := int(*data.DefaultValue)
-		defaultValue = &v
-	}
 	return &state.SelectboxState{
 		ID:           id,
 		Label:        data.Label,
-		Value:        value,
+		Value:        data.Value,
 		Options:      data.Options,
 		Placeholder:  data.Placeholder,
-		DefaultValue: defaultValue,
+		DefaultValue: data.DefaultValue,
 		Required:     data.Required,
 		Disabled:     data.Disabled,
 	}

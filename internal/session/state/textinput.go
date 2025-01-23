@@ -6,14 +6,14 @@ const WidgetTypeTextInput WidgetType = "textInput"
 
 type TextInputState struct {
 	ID           uuid.UUID
-	Value        string
+	Value        *string
 	Label        string
 	Placeholder  string
-	DefaultValue string
+	DefaultValue *string
 	Required     bool
 	Disabled     bool
-	MaxLength    *int
-	MinLength    *int
+	MaxLength    *int32
+	MinLength    *int32
 }
 
 func (s *TextInputState) IsWidgetState()      {}

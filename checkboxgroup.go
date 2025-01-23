@@ -43,12 +43,12 @@ func (b *uiBuilder) CheckboxGroup(label string, opts ...checkboxgroup.Option) *c
 	log.Printf("Page ID: %s", page.id.String())
 	log.Printf("Path: %v\n", path)
 
-	var defaultVal []int
+	var defaultVal []int32
 	if len(checkboxGroupOpts.DefaultValue) != 0 {
 		for _, o := range checkboxGroupOpts.DefaultValue {
 			for i, opt := range checkboxGroupOpts.Options {
 				if opt == o {
-					defaultVal = append(defaultVal, i)
+					defaultVal = append(defaultVal, int32(i))
 					break
 				}
 			}
@@ -104,7 +104,7 @@ func (b *uiBuilder) CheckboxGroup(label string, opts ...checkboxgroup.Option) *c
 		}
 		for i, idx := range checkboxGroupState.Value {
 			value.Values[i] = checkboxGroupOpts.Options[idx]
-			value.Indexes[i] = idx
+			value.Indexes[i] = int(idx)
 		}
 	}
 
@@ -123,23 +123,11 @@ func convertStateToCheckboxGroupProto(state *state.CheckboxGroupState) *widgetv1
 	if state == nil {
 		return nil
 	}
-	value := make([]int64, len(state.Value))
-	if len(state.Value) != 0 {
-		for i, v := range state.Value {
-			value[i] = int64(v)
-		}
-	}
-	defaultValue := make([]int64, len(state.DefaultValue))
-	if len(state.DefaultValue) != 0 {
-		for i, v := range state.DefaultValue {
-			defaultValue[i] = int64(v)
-		}
-	}
 	return &widgetv1.CheckboxGroup{
 		Label:        state.Label,
-		Value:        value,
+		Value:        state.Value,
 		Options:      state.Options,
-		DefaultValue: defaultValue,
+		DefaultValue: state.DefaultValue,
 		Required:     state.Required,
 		Disabled:     state.Disabled,
 	}
@@ -149,24 +137,12 @@ func convertCheckboxGroupProtoToState(id uuid.UUID, data *widgetv1.CheckboxGroup
 	if data == nil {
 		return nil
 	}
-	value := make([]int, len(data.Value))
-	if len(data.Value) != 0 {
-		for i, v := range data.Value {
-			value[i] = int(v)
-		}
-	}
-	defaultValue := make([]int, len(data.DefaultValue))
-	if len(data.DefaultValue) != 0 {
-		for i, v := range data.DefaultValue {
-			defaultValue[i] = int(v)
-		}
-	}
 	return &state.CheckboxGroupState{
 		ID:           id,
 		Label:        data.Label,
-		Value:        value,
+		Value:        data.Value,
 		Options:      data.Options,
-		DefaultValue: defaultValue,
+		DefaultValue: data.DefaultValue,
 		Required:     data.Required,
 		Disabled:     data.Disabled,
 	}

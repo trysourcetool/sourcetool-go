@@ -44,11 +44,12 @@ func (b *uiBuilder) Radio(label string, opts ...radio.Option) *radio.Value {
 	log.Printf("Page ID: %s", page.id.String())
 	log.Printf("Path: %v\n", path)
 
-	var defaultVal *int
+	var defaultVal *int32
 	if radioOpts.DefaultValue != nil {
 		for i, o := range radioOpts.Options {
 			if conv.SafeValue(radioOpts.DefaultValue) == o {
-				defaultVal = &i
+				v := int32(i)
+				defaultVal = &v
 				break
 			}
 		}
@@ -101,7 +102,7 @@ func (b *uiBuilder) Radio(label string, opts ...radio.Option) *radio.Value {
 	if radioState.Value != nil {
 		value = &radio.Value{
 			Value: radioOpts.Options[*radioState.Value],
-			Index: conv.SafeValue(radioState.Value),
+			Index: int(conv.SafeValue(radioState.Value)),
 		}
 	}
 
@@ -120,21 +121,11 @@ func convertStateToRadioProto(state *state.RadioState) *widgetv1.Radio {
 	if state == nil {
 		return nil
 	}
-	var value *int64
-	if state.Value != nil {
-		val := int64(*state.Value)
-		value = &val
-	}
-	var defaultValue *int64
-	if state.DefaultValue != nil {
-		val := int64(*state.DefaultValue)
-		defaultValue = &val
-	}
 	return &widgetv1.Radio{
 		Label:        state.Label,
-		Value:        value,
+		Value:        state.Value,
 		Options:      state.Options,
-		DefaultValue: defaultValue,
+		DefaultValue: state.DefaultValue,
 		Required:     state.Required,
 		Disabled:     state.Disabled,
 	}
@@ -144,22 +135,12 @@ func convertRadioProtoToState(id uuid.UUID, data *widgetv1.Radio) *state.RadioSt
 	if data == nil {
 		return nil
 	}
-	var value *int
-	if data.Value != nil {
-		val := int(*data.Value)
-		value = &val
-	}
-	var defaultValue *int
-	if data.DefaultValue != nil {
-		val := int(*data.DefaultValue)
-		defaultValue = &val
-	}
 	return &state.RadioState{
 		ID:           id,
 		Label:        data.Label,
-		Value:        value,
+		Value:        data.Value,
 		Options:      data.Options,
-		DefaultValue: defaultValue,
+		DefaultValue: data.DefaultValue,
 		Required:     data.Required,
 		Disabled:     data.Disabled,
 	}

@@ -5,6 +5,7 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 
+	"github.com/trysourcetool/sourcetool-go/internal/conv"
 	"github.com/trysourcetool/sourcetool-go/internal/options"
 	"github.com/trysourcetool/sourcetool-go/internal/session/state"
 	"github.com/trysourcetool/sourcetool-go/textinput"
@@ -24,7 +25,7 @@ func (b *uiBuilder) TextInput(label string, opts ...textinput.Option) string {
 	textInputOpts := &options.TextInputOptions{
 		Label:        label,
 		Placeholder:  "",
-		DefaultValue: "",
+		DefaultValue: nil,
 		Required:     false,
 		Disabled:     false,
 		MaxLength:    nil,
@@ -85,7 +86,7 @@ func (b *uiBuilder) TextInput(label string, opts ...textinput.Option) string {
 
 	cursor.next()
 
-	return textInputState.Value
+	return conv.SafeValue(textInputState.Value)
 }
 
 func (b *uiBuilder) generateTextInputID(label string, path path) uuid.UUID {
@@ -100,15 +101,6 @@ func convertStateToTextInputProto(state *state.TextInputState) *widgetv1.TextInp
 	if state == nil {
 		return nil
 	}
-	var maxLength, minLength *uint32
-	if state.MaxLength != nil {
-		val := uint32(*state.MaxLength)
-		maxLength = &val
-	}
-	if state.MinLength != nil {
-		val := uint32(*state.MinLength)
-		minLength = &val
-	}
 	return &widgetv1.TextInput{
 		Value:        state.Value,
 		Label:        state.Label,
@@ -116,23 +108,14 @@ func convertStateToTextInputProto(state *state.TextInputState) *widgetv1.TextInp
 		DefaultValue: state.DefaultValue,
 		Required:     state.Required,
 		Disabled:     state.Disabled,
-		MaxLength:    maxLength,
-		MinLength:    minLength,
+		MaxLength:    state.MaxLength,
+		MinLength:    state.MinLength,
 	}
 }
 
 func convertTextInputProtoToState(id uuid.UUID, data *widgetv1.TextInput) *state.TextInputState {
 	if data == nil {
 		return nil
-	}
-	var maxLength, minLength *int
-	if data.MaxLength != nil {
-		val := int(*data.MaxLength)
-		maxLength = &val
-	}
-	if data.MinLength != nil {
-		val := int(*data.MinLength)
-		minLength = &val
 	}
 	return &state.TextInputState{
 		ID:           id,
@@ -142,7 +125,7 @@ func convertTextInputProtoToState(id uuid.UUID, data *widgetv1.TextInput) *state
 		DefaultValue: data.DefaultValue,
 		Required:     data.Required,
 		Disabled:     data.Disabled,
-		MaxLength:    maxLength,
-		MinLength:    minLength,
+		MaxLength:    data.MaxLength,
+		MinLength:    data.MinLength,
 	}
 }

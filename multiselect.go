@@ -44,12 +44,12 @@ func (b *uiBuilder) MultiSelect(label string, opts ...multiselect.Option) *multi
 	log.Printf("Page ID: %s", page.id.String())
 	log.Printf("Path: %v\n", path)
 
-	var defaultVal []int
+	var defaultVal []int32
 	if len(multiSelectOpts.DefaultValue) != 0 {
 		for _, o := range multiSelectOpts.DefaultValue {
 			for i, opt := range multiSelectOpts.Options {
 				if opt == o {
-					defaultVal = append(defaultVal, i)
+					defaultVal = append(defaultVal, int32(i))
 					break
 				}
 			}
@@ -106,7 +106,7 @@ func (b *uiBuilder) MultiSelect(label string, opts ...multiselect.Option) *multi
 		}
 		for i, idx := range multiSelectState.Value {
 			value.Values[i] = multiSelectOpts.Options[idx]
-			value.Indexes[i] = idx
+			value.Indexes[i] = int(idx)
 		}
 	}
 
@@ -125,20 +125,12 @@ func convertStateToMultiSelectProto(state *state.MultiSelectState) *widgetv1.Mul
 	if state == nil {
 		return nil
 	}
-	value := make([]int64, len(state.Value))
-	for i, v := range state.Value {
-		value[i] = int64(v)
-	}
-	defaultValue := make([]int64, len(state.DefaultValue))
-	for i, v := range state.DefaultValue {
-		defaultValue[i] = int64(v)
-	}
 	return &widgetv1.MultiSelect{
 		Label:        state.Label,
-		Value:        value,
+		Value:        state.Value,
 		Options:      state.Options,
 		Placeholder:  state.Placeholder,
-		DefaultValue: defaultValue,
+		DefaultValue: state.DefaultValue,
 		Required:     state.Required,
 		Disabled:     state.Disabled,
 	}
@@ -148,21 +140,13 @@ func convertMultiSelectProtoToState(id uuid.UUID, data *widgetv1.MultiSelect) *s
 	if data == nil {
 		return nil
 	}
-	value := make([]int, len(data.Value))
-	for i, v := range data.Value {
-		value[i] = int(v)
-	}
-	defaultValue := make([]int, len(data.DefaultValue))
-	for i, v := range data.DefaultValue {
-		defaultValue[i] = int(v)
-	}
 	return &state.MultiSelectState{
 		ID:           id,
 		Label:        data.Label,
-		Value:        value,
+		Value:        data.Value,
 		Options:      data.Options,
 		Placeholder:  data.Placeholder,
-		DefaultValue: defaultValue,
+		DefaultValue: data.DefaultValue,
 		Required:     data.Required,
 		Disabled:     data.Disabled,
 	}

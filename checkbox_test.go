@@ -9,11 +9,11 @@ import (
 	"github.com/trysourcetool/sourcetool-go/checkbox"
 	"github.com/trysourcetool/sourcetool-go/internal/session"
 	"github.com/trysourcetool/sourcetool-go/internal/session/state"
-	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket/mock"
+	widgetv1 "github.com/trysourcetool/sourcetool-proto/go/widget/v1"
 )
 
-func TestConvertStateToCheckboxData(t *testing.T) {
+func TestConvertStateToCheckboxProto(t *testing.T) {
 	id := uuid.Must(uuid.NewV4())
 
 	checkboxState := &state.CheckboxState{
@@ -25,10 +25,10 @@ func TestConvertStateToCheckboxData(t *testing.T) {
 		Disabled:     false,
 	}
 
-	data := convertStateToCheckboxData(checkboxState)
+	data := convertStateToCheckboxProto(checkboxState)
 
 	if data == nil {
-		t.Fatal("convertStateToCheckboxData returned nil")
+		t.Fatal("convertStateToCheckboxProto returned nil")
 	}
 
 	tests := []struct {
@@ -52,10 +52,8 @@ func TestConvertStateToCheckboxData(t *testing.T) {
 	}
 }
 
-func TestConvertCheckboxDataToState(t *testing.T) {
-	id := uuid.Must(uuid.NewV4())
-
-	data := &websocket.CheckboxData{
+func TestConvertCheckboxProtoToState(t *testing.T) {
+	data := &widgetv1.Checkbox{
 		Label:        "Test Checkbox",
 		Value:        true,
 		DefaultValue: false,
@@ -63,10 +61,10 @@ func TestConvertCheckboxDataToState(t *testing.T) {
 		Disabled:     false,
 	}
 
-	state := convertCheckboxDataToState(id, data)
+	state := convertCheckboxProtoToState(uuid.Must(uuid.NewV4()), data)
 
 	if state == nil {
-		t.Fatal("convertCheckboxDataToState returned nil")
+		t.Fatal("convertCheckboxProtoToState returned nil")
 	}
 
 	tests := []struct {
@@ -74,7 +72,7 @@ func TestConvertCheckboxDataToState(t *testing.T) {
 		got  any
 		want any
 	}{
-		{"ID", state.ID, id},
+		{"ID", state.ID, state.ID},
 		{"Label", state.Label, data.Label},
 		{"Value", state.Value, data.Value},
 		{"DefaultValue", state.DefaultValue, data.DefaultValue},
@@ -96,7 +94,7 @@ func TestCheckbox(t *testing.T) {
 	pageID := uuid.Must(uuid.NewV4())
 	sess := session.New(sessionID, pageID)
 
-	mockWS := mock.NewMockWebSocketClient()
+	mockWS := mock.NewClient()
 
 	builder := &uiBuilder{
 		context: context.Background(),
@@ -124,13 +122,13 @@ func TestCheckbox(t *testing.T) {
 		t.Error("Checkbox value = false, want true")
 	}
 
-	// Verify WebSocket message
-	if len(mockWS.Messages) != 1 {
-		t.Errorf("WebSocket messages count = %d, want 1", len(mockWS.Messages))
+	messages := mockWS.Messages()
+	if len(messages) != 1 {
+		t.Errorf("WebSocket messages count = %d, want 1", len(messages))
 	}
-	msg := mockWS.Messages[0]
-	if msg.Method != websocket.MessageMethodRenderWidget {
-		t.Errorf("WebSocket message method = %v, want %v", msg.Method, websocket.MessageMethodRenderWidget)
+	msg := messages[0]
+	if v := msg.GetRenderWidget(); v == nil {
+		t.Fatal("WebSocket message type = nil, want RenderWidget")
 	}
 
 	// Verify state
