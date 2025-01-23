@@ -1,6 +1,7 @@
 package sourcetool
 
 import (
+	"encoding/json"
 	"log"
 
 	"github.com/gofrs/uuid/v5"
@@ -8,8 +9,9 @@ import (
 	"github.com/trysourcetool/sourcetool-go/internal/conv"
 	"github.com/trysourcetool/sourcetool-go/internal/options"
 	"github.com/trysourcetool/sourcetool-go/internal/session/state"
-	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 	"github.com/trysourcetool/sourcetool-go/table"
+	websocketv1 "github.com/trysourcetool/sourcetool-proto/go/websocket/v1"
+	widgetv1 "github.com/trysourcetool/sourcetool-proto/go/widget/v1"
 )
 
 func (b *uiBuilder) Table(data any, opts ...table.Option) table.Value {
@@ -55,13 +57,20 @@ func (b *uiBuilder) Table(data any, opts ...table.Option) table.Value {
 	tableState.RowSelection = tableOpts.RowSelection
 	sess.State.Set(widgetID, tableState)
 
-	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), websocket.MessageMethodRenderWidget, &websocket.RenderWidgetPayload{
-		SessionID:  sess.ID.String(),
-		PageID:     page.id.String(),
-		WidgetID:   widgetID.String(),
-		WidgetType: state.WidgetTypeTable.String(),
-		Path:       path,
-		Data:       convertStateToTableData(tableState),
+	tableProto, err := convertStateToTableProto(tableState)
+	if err != nil {
+		return table.Value{}
+	}
+	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), &websocketv1.RenderWidget{
+		SessionId: sess.ID.String(),
+		PageId:    page.id.String(),
+		Path:      convertPathToInt32Slice(path),
+		Widget: &widgetv1.Widget{
+			Id: widgetID.String(),
+			Type: &widgetv1.Widget_Table{
+				Table: tableProto,
+			},
+		},
 	})
 
 	cursor.next()
@@ -85,28 +94,36 @@ func (b *uiBuilder) generateTableID(path path) uuid.UUID {
 	return uuid.NewV5(page.id, state.WidgetTypeTable.String()+"-"+path.String())
 }
 
-func convertStateToTableData(state *state.TableState) *websocket.TableData {
+func convertStateToTableProto(state *state.TableState) (*widgetv1.Table, error) {
 	if state == nil {
-		return nil
+		return nil, nil
 	}
-	data := &websocket.TableData{
-		Data:         state.Data,
+	dataBytes, err := json.Marshal(state.Data)
+	if err != nil {
+		return nil, err
+	}
+	data := &widgetv1.Table{
+		Data:         dataBytes,
 		Header:       state.Header,
 		Description:  state.Description,
 		OnSelect:     state.OnSelect,
 		RowSelection: state.RowSelection,
-		Value:        websocket.TableDataValue{},
+		Value:        &widgetv1.TableValue{},
 	}
 	if state.Value.Selection != nil {
-		data.Value.Selection = &websocket.TableDataValueSelection{
-			Row:  state.Value.Selection.Row,
-			Rows: state.Value.Selection.Rows,
+		rows := make([]uint32, len(state.Value.Selection.Rows))
+		for i, r := range state.Value.Selection.Rows {
+			rows[i] = uint32(r)
+		}
+		data.Value.Selection = &widgetv1.TableValueSelection{
+			Row:  uint32(state.Value.Selection.Row),
+			Rows: rows,
 		}
 	}
-	return data
+	return data, nil
 }
 
-func convertTableDataToState(id uuid.UUID, data *websocket.TableData) *state.TableState {
+func convertTableProtoToState(id uuid.UUID, data *widgetv1.Table) *state.TableState {
 	if data == nil {
 		return nil
 	}
@@ -120,9 +137,13 @@ func convertTableDataToState(id uuid.UUID, data *websocket.TableData) *state.Tab
 		Value:        state.TableStateValue{},
 	}
 	if data.Value.Selection != nil {
+		rows := make([]int, len(data.Value.Selection.Rows))
+		for i, r := range data.Value.Selection.Rows {
+			rows[i] = int(r)
+		}
 		tableState.Value.Selection = &state.TableStateValueSelection{
-			Row:  data.Value.Selection.Row,
-			Rows: data.Value.Selection.Rows,
+			Row:  int(data.Value.Selection.Row),
+			Rows: rows,
 		}
 	}
 	return tableState

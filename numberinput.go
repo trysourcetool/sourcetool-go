@@ -8,8 +8,9 @@ import (
 	"github.com/trysourcetool/sourcetool-go/internal/conv"
 	"github.com/trysourcetool/sourcetool-go/internal/options"
 	"github.com/trysourcetool/sourcetool-go/internal/session/state"
-	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 	"github.com/trysourcetool/sourcetool-go/numberinput"
+	websocketv1 "github.com/trysourcetool/sourcetool-proto/go/websocket/v1"
+	widgetv1 "github.com/trysourcetool/sourcetool-proto/go/widget/v1"
 )
 
 func (b *uiBuilder) NumberInput(label string, opts ...numberinput.Option) *float64 {
@@ -62,13 +63,17 @@ func (b *uiBuilder) NumberInput(label string, opts ...numberinput.Option) *float
 	numberInputState.MinValue = numberInputOpts.MinValue
 	sess.State.Set(widgetID, numberInputState)
 
-	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), websocket.MessageMethodRenderWidget, &websocket.RenderWidgetPayload{
-		SessionID:  sess.ID.String(),
-		PageID:     page.id.String(),
-		WidgetID:   widgetID.String(),
-		WidgetType: state.WidgetTypeNumberInput.String(),
-		Path:       path,
-		Data:       convertStateToNumberInputData(numberInputState),
+	numberInput := convertStateToNumberInputProto(numberInputState)
+	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), &websocketv1.RenderWidget{
+		SessionId: sess.ID.String(),
+		PageId:    page.id.String(),
+		Path:      convertPathToInt32Slice(path),
+		Widget: &widgetv1.Widget{
+			Id: widgetID.String(),
+			Type: &widgetv1.Widget_NumberInput{
+				NumberInput: numberInput,
+			},
+		},
 	})
 
 	cursor.next()
@@ -84,11 +89,11 @@ func (b *uiBuilder) generateNumberInputID(label string, path path) uuid.UUID {
 	return uuid.NewV5(page.id, state.WidgetTypeNumberInput.String()+"-"+label+"-"+path.String())
 }
 
-func convertStateToNumberInputData(state *state.NumberInputState) *websocket.NumberInputData {
+func convertStateToNumberInputProto(state *state.NumberInputState) *widgetv1.NumberInput {
 	if state == nil {
 		return nil
 	}
-	return &websocket.NumberInputData{
+	return &widgetv1.NumberInput{
 		Value:        state.Value,
 		Label:        state.Label,
 		Placeholder:  state.Placeholder,
@@ -100,11 +105,12 @@ func convertStateToNumberInputData(state *state.NumberInputState) *websocket.Num
 	}
 }
 
-func convertNumberInputDataToState(data *websocket.NumberInputData) *state.NumberInputState {
+func convertNumberInputProtoToState(id uuid.UUID, data *widgetv1.NumberInput) *state.NumberInputState {
 	if data == nil {
 		return nil
 	}
 	return &state.NumberInputState{
+		ID:           id,
 		Value:        data.Value,
 		Label:        data.Label,
 		Placeholder:  data.Placeholder,

@@ -1,234 +1,58 @@
 package websocket
 
 import (
-	"encoding/json"
+	"fmt"
+
+	exceptionv1 "github.com/trysourcetool/sourcetool-proto/go/exception/v1"
+	websocketv1 "github.com/trysourcetool/sourcetool-proto/go/websocket/v1"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 )
 
-type MessageKind string
+type MessageHandlerFunc func(*websocketv1.Message) error
 
-const (
-	MessageKindCall     MessageKind = "CALL"
-	MessageKindResponse MessageKind = "RESPONSE"
-)
-
-type MessageMethod string
-
-const (
-	MessageMethodInitializeHost   MessageMethod = "INITIALIZE_HOST"
-	MessageMethodInitializeClient MessageMethod = "INITIALIZE_CLIENT"
-	MessageMethodRenderWidget     MessageMethod = "RENDER_WIDGET"
-	MessageMethodRerunPage        MessageMethod = "RERUN_PAGE"
-	MessageMethodCloseSession     MessageMethod = "CLOSE_SESSION"
-)
-
-type MessageHandlerFunc func(*Message) error
-
-type Message struct {
-	ID      string          `json:"id"`
-	Kind    MessageKind     `json:"kind"`
-	Method  MessageMethod   `json:"method"`
-	Payload json.RawMessage `json:"payload"`
-	Error   *MessageError   `json:"error"`
+func UnmarshalMessage(data []byte) (*websocketv1.Message, error) {
+	var msg websocketv1.Message
+	if err := protojson.Unmarshal(data, &msg); err != nil {
+		return nil, err
+	}
+	return &msg, nil
 }
 
-type MessageError struct {
-	Code    int    `json:"code"`
-	Message string `json:"message"`
+func MarshalMessage(msg *websocketv1.Message) ([]byte, error) {
+	return protojson.Marshal(msg)
 }
 
-type InitializeHostPayload struct {
-	APIKey     string                       `json:"apiKey"`
-	SDKName    string                       `json:"sdkName"`
-	SDKVersion string                       `json:"sdkVersion"`
-	Pages      []*InitializeHostPagePayload `json:"pages"`
+func NewErrorMessage(id string, _ int32, message string) *websocketv1.Message {
+	return &websocketv1.Message{
+		Id: id,
+		Type: &websocketv1.Message_Exception{
+			Exception: &exceptionv1.Exception{
+				Message: message,
+			},
+		},
+	}
 }
 
-type InitializeHostPagePayload struct {
-	ID     string   `json:"id"`
-	Name   string   `json:"name"`
-	Route  string   `json:"route"`
-	Path   []int    `json:"path"`
-	Groups []string `json:"groups"`
-}
+func NewMessage(id string, payload proto.Message) (*websocketv1.Message, error) {
+	msg := &websocketv1.Message{
+		Id: id,
+	}
 
-type RenderWidgetPayload struct {
-	SessionID  string `json:"sessionId"`
-	PageID     string `json:"pageId"`
-	WidgetID   string `json:"widgetId"`
-	WidgetType string `json:"widgetType"`
-	Path       []int  `json:"path"`
-	Data       any    `json:"data"`
-}
+	switch p := payload.(type) {
+	case *websocketv1.InitializeHost:
+		msg.Type = &websocketv1.Message_InitializeHost{InitializeHost: p}
+	case *websocketv1.InitializeClient:
+		msg.Type = &websocketv1.Message_InitializeClient{InitializeClient: p}
+	case *websocketv1.RenderWidget:
+		msg.Type = &websocketv1.Message_RenderWidget{RenderWidget: p}
+	case *websocketv1.RerunPage:
+		msg.Type = &websocketv1.Message_RerunPage{RerunPage: p}
+	case *websocketv1.CloseSession:
+		msg.Type = &websocketv1.Message_CloseSession{CloseSession: p}
+	default:
+		return nil, fmt.Errorf("unsupported message type: %T", payload)
+	}
 
-type InitializeClientPayload struct {
-	SessionID string `json:"sessionId"`
-	PageID    string `json:"pageId"`
-}
-
-type RerunPagePayload struct {
-	SessionID string          `json:"sessionId"`
-	PageID    string          `json:"pageId"`
-	State     json.RawMessage `json:"state"`
-}
-
-type CloseSessionPayload struct {
-	SessionID string `json:"sessionId"`
-}
-
-type TextInputData struct {
-	Value        string `json:"value"`
-	Label        string `json:"label"`
-	Placeholder  string `json:"placeholder"`
-	DefaultValue string `json:"defaultValue"`
-	Required     bool   `json:"required"`
-	Disabled     bool   `json:"disabled"`
-	MaxLength    *int   `json:"maxLength"`
-	MinLength    *int   `json:"minLength"`
-}
-
-type NumberInputData struct {
-	Value        *float64 `json:"value"`
-	Label        string   `json:"label"`
-	Placeholder  string   `json:"placeholder"`
-	DefaultValue *float64 `json:"defaultValue"`
-	Required     bool     `json:"required"`
-	Disabled     bool     `json:"disabled"`
-	MaxValue     *float64 `json:"maxValue"`
-	MinValue     *float64 `json:"minValue"`
-}
-
-type DateInputData struct {
-	Value        string `json:"value"`
-	Label        string `json:"label"`
-	Placeholder  string `json:"placeholder"`
-	DefaultValue string `json:"defaultValue"`
-	Required     bool   `json:"required"`
-	Disabled     bool   `json:"disabled"`
-	Format       string `json:"format"`
-	MaxValue     string `json:"maxValue"`
-	MinValue     string `json:"minValue"`
-}
-
-type DateTimeInputData struct {
-	Value        string `json:"value"`
-	Label        string `json:"label"`
-	Placeholder  string `json:"placeholder"`
-	DefaultValue string `json:"defaultValue"`
-	Required     bool   `json:"required"`
-	Disabled     bool   `json:"disabled"`
-	Format       string `json:"format"`
-	MaxValue     string `json:"maxValue"`
-	MinValue     string `json:"minValue"`
-}
-
-type TimeInputData struct {
-	Value        string `json:"value"`
-	Label        string `json:"label"`
-	Placeholder  string `json:"placeholder"`
-	DefaultValue string `json:"defaultValue"`
-	Required     bool   `json:"required"`
-	Disabled     bool   `json:"disabled"`
-}
-
-type SelectboxData struct {
-	Value        *int     `json:"value"`
-	Label        string   `json:"label"`
-	Options      []string `json:"options"`
-	Placeholder  string   `json:"placeholder"`
-	DefaultValue *int     `json:"defaultValue"`
-	Required     bool     `json:"required"`
-	Disabled     bool     `json:"disabled"`
-}
-
-type MultiSelectData struct {
-	Value        []int    `json:"value"`
-	Label        string   `json:"label"`
-	Options      []string `json:"options"`
-	Placeholder  string   `json:"placeholder"`
-	DefaultValue []int    `json:"defaultValue"`
-	Required     bool     `json:"required"`
-	Disabled     bool     `json:"disabled"`
-}
-
-type CheckboxData struct {
-	Value        bool   `json:"value"`
-	Label        string `json:"label"`
-	DefaultValue bool   `json:"defaultValue"`
-	Required     bool   `json:"required"`
-	Disabled     bool   `json:"disabled"`
-}
-
-type CheckboxGroupData struct {
-	Value        []int    `json:"value"`
-	Label        string   `json:"label"`
-	Options      []string `json:"options"`
-	DefaultValue []int    `json:"defaultValue"`
-	Required     bool     `json:"required"`
-	Disabled     bool     `json:"disabled"`
-}
-
-type RadioData struct {
-	Value        *int     `json:"value"`
-	Label        string   `json:"label"`
-	Options      []string `json:"options"`
-	DefaultValue *int     `json:"defaultValue"`
-	Required     bool     `json:"required"`
-	Disabled     bool     `json:"disabled"`
-}
-
-type TextAreaData struct {
-	Value        string `json:"value"`
-	Label        string `json:"label"`
-	Placeholder  string `json:"placeholder"`
-	DefaultValue string `json:"defaultValue"`
-	Required     bool   `json:"required"`
-	Disabled     bool   `json:"disabled"`
-	MaxLength    *int   `json:"maxLength"`
-	MinLength    *int   `json:"minLength"`
-	MaxLines     *int   `json:"maxLines"`
-	MinLines     *int   `json:"minLines"`
-	AutoResize   bool   `json:"autoResize"`
-}
-
-type FormData struct {
-	Value          bool   `json:"value"`
-	ButtonLabel    string `json:"buttonLabel"`
-	ButtonDisabled bool   `json:"buttonDisabled"`
-	ClearOnSubmit  bool   `json:"clearOnSubmit"`
-}
-
-type ButtonData struct {
-	Value    bool   `json:"value"`
-	Label    string `json:"label"`
-	Disabled bool   `json:"disabled"`
-}
-
-type MarkdownData struct {
-	Body string `json:"body"`
-}
-
-type TableData struct {
-	Data         any            `json:"data"`
-	Value        TableDataValue `json:"value"`
-	Header       *string        `json:"header"`
-	Description  *string        `json:"description"`
-	OnSelect     *string        `json:"onSelect"`
-	RowSelection *string        `json:"rowSelection"`
-}
-
-type TableDataValue struct {
-	Selection *TableDataValueSelection `json:"selection"`
-}
-
-type TableDataValueSelection struct {
-	Row  int   `json:"row"`
-	Rows []int `json:"rows"`
-}
-
-type ColumnsData struct {
-	Columns int `json:"columns"`
-}
-
-type ColumnItemData struct {
-	Weight float64 `json:"weight"`
+	return msg, nil
 }

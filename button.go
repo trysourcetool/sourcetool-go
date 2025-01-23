@@ -8,7 +8,8 @@ import (
 	"github.com/trysourcetool/sourcetool-go/button"
 	"github.com/trysourcetool/sourcetool-go/internal/options"
 	"github.com/trysourcetool/sourcetool-go/internal/session/state"
-	"github.com/trysourcetool/sourcetool-go/internal/websocket"
+	websocketv1 "github.com/trysourcetool/sourcetool-proto/go/websocket/v1"
+	widgetv1 "github.com/trysourcetool/sourcetool-proto/go/widget/v1"
 )
 
 func (b *uiBuilder) Button(label string, opts ...button.Option) bool {
@@ -51,13 +52,17 @@ func (b *uiBuilder) Button(label string, opts ...button.Option) bool {
 	buttonState.Disabled = buttonOpts.Disabled
 	sess.State.Set(widgetID, buttonState)
 
-	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), websocket.MessageMethodRenderWidget, &websocket.RenderWidgetPayload{
-		SessionID:  sess.ID.String(),
-		PageID:     page.id.String(),
-		WidgetID:   widgetID.String(),
-		WidgetType: state.WidgetTypeButton.String(),
-		Path:       path,
-		Data:       convertStateToButtonData(buttonState),
+	button := convertStateToButtonProto(buttonState)
+	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), &websocketv1.RenderWidget{
+		SessionId: sess.ID.String(),
+		PageId:    page.id.String(),
+		Path:      convertPathToInt32Slice(path),
+		Widget: &widgetv1.Widget{
+			Id: widgetID.String(),
+			Type: &widgetv1.Widget_Button{
+				Button: button,
+			},
+		},
 	})
 
 	cursor.next()
@@ -73,19 +78,20 @@ func (b *uiBuilder) generateButtonInputID(label string, path path) uuid.UUID {
 	return uuid.NewV5(page.id, state.WidgetTypeButton.String()+"-"+label+"-"+path.String())
 }
 
-func convertStateToButtonData(state *state.ButtonState) *websocket.ButtonData {
-	return &websocket.ButtonData{
+func convertStateToButtonProto(state *state.ButtonState) *widgetv1.Button {
+	return &widgetv1.Button{
 		Value:    state.Value,
 		Label:    state.Label,
 		Disabled: state.Disabled,
 	}
 }
 
-func convertButtonDataToState(data *websocket.ButtonData) *state.ButtonState {
+func convertButtonProtoToState(id uuid.UUID, data *widgetv1.Button) *state.ButtonState {
 	if data == nil {
 		return nil
 	}
 	return &state.ButtonState{
+		ID:       id,
 		Value:    data.Value,
 		Label:    data.Label,
 		Disabled: data.Disabled,

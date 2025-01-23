@@ -7,9 +7,18 @@ import (
 
 	"github.com/trysourcetool/sourcetool-go/internal/options"
 	"github.com/trysourcetool/sourcetool-go/internal/session/state"
-	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 	"github.com/trysourcetool/sourcetool-go/textinput"
+	websocketv1 "github.com/trysourcetool/sourcetool-proto/go/websocket/v1"
+	widgetv1 "github.com/trysourcetool/sourcetool-proto/go/widget/v1"
 )
+
+func convertPathToInt32Slice(p path) []int32 {
+	result := make([]int32, len(p))
+	for i, v := range p {
+		result[i] = int32(v)
+	}
+	return result
+}
 
 func (b *uiBuilder) TextInput(label string, opts ...textinput.Option) string {
 	textInputOpts := &options.TextInputOptions{
@@ -61,13 +70,17 @@ func (b *uiBuilder) TextInput(label string, opts ...textinput.Option) string {
 	textInputState.MinLength = textInputOpts.MinLength
 	sess.State.Set(widgetID, textInputState)
 
-	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), websocket.MessageMethodRenderWidget, &websocket.RenderWidgetPayload{
-		SessionID:  sess.ID.String(),
-		PageID:     page.id.String(),
-		WidgetID:   widgetID.String(),
-		WidgetType: state.WidgetTypeTextInput.String(),
-		Path:       path,
-		Data:       convertStateToTextInputData(textInputState),
+	textInput := convertStateToTextInputProto(textInputState)
+	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), &websocketv1.RenderWidget{
+		SessionId: sess.ID.String(),
+		PageId:    page.id.String(),
+		Path:      convertPathToInt32Slice(path),
+		Widget: &widgetv1.Widget{
+			Id: widgetID.String(),
+			Type: &widgetv1.Widget_TextInput{
+				TextInput: textInput,
+			},
+		},
 	})
 
 	cursor.next()
@@ -83,25 +96,43 @@ func (b *uiBuilder) generateTextInputID(label string, path path) uuid.UUID {
 	return uuid.NewV5(page.id, state.WidgetTypeTextInput.String()+"-"+label+"-"+path.String())
 }
 
-func convertStateToTextInputData(state *state.TextInputState) *websocket.TextInputData {
+func convertStateToTextInputProto(state *state.TextInputState) *widgetv1.TextInput {
 	if state == nil {
 		return nil
 	}
-	return &websocket.TextInputData{
+	var maxLength, minLength *uint32
+	if state.MaxLength != nil {
+		val := uint32(*state.MaxLength)
+		maxLength = &val
+	}
+	if state.MinLength != nil {
+		val := uint32(*state.MinLength)
+		minLength = &val
+	}
+	return &widgetv1.TextInput{
 		Value:        state.Value,
 		Label:        state.Label,
 		Placeholder:  state.Placeholder,
 		DefaultValue: state.DefaultValue,
 		Required:     state.Required,
 		Disabled:     state.Disabled,
-		MaxLength:    state.MaxLength,
-		MinLength:    state.MinLength,
+		MaxLength:    maxLength,
+		MinLength:    minLength,
 	}
 }
 
-func convertTextInputDataToState(id uuid.UUID, data *websocket.TextInputData) *state.TextInputState {
+func convertTextInputProtoToState(id uuid.UUID, data *widgetv1.TextInput) *state.TextInputState {
 	if data == nil {
 		return nil
+	}
+	var maxLength, minLength *int
+	if data.MaxLength != nil {
+		val := int(*data.MaxLength)
+		maxLength = &val
+	}
+	if data.MinLength != nil {
+		val := int(*data.MinLength)
+		minLength = &val
 	}
 	return &state.TextInputState{
 		ID:           id,
@@ -111,7 +142,7 @@ func convertTextInputDataToState(id uuid.UUID, data *websocket.TextInputData) *s
 		DefaultValue: data.DefaultValue,
 		Required:     data.Required,
 		Disabled:     data.Disabled,
-		MaxLength:    data.MaxLength,
-		MinLength:    data.MinLength,
+		MaxLength:    maxLength,
+		MinLength:    minLength,
 	}
 }
