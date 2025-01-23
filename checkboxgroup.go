@@ -8,7 +8,8 @@ import (
 	"github.com/trysourcetool/sourcetool-go/checkboxgroup"
 	"github.com/trysourcetool/sourcetool-go/internal/options"
 	"github.com/trysourcetool/sourcetool-go/internal/session/state"
-	"github.com/trysourcetool/sourcetool-go/internal/websocket"
+	websocketv1 "github.com/trysourcetool/sourcetool-proto/go/websocket/v1"
+	widgetv1 "github.com/trysourcetool/sourcetool-proto/go/widget/v1"
 )
 
 func (b *uiBuilder) CheckboxGroup(label string, opts ...checkboxgroup.Option) *checkboxgroup.Value {
@@ -80,13 +81,17 @@ func (b *uiBuilder) CheckboxGroup(label string, opts ...checkboxgroup.Option) *c
 	checkboxGroupState.Disabled = checkboxGroupOpts.Disabled
 	sess.State.Set(widgetID, checkboxGroupState)
 
-	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), websocket.MessageMethodRenderWidget, &websocket.RenderWidgetPayload{
-		SessionID:  sess.ID.String(),
-		PageID:     page.id.String(),
-		WidgetID:   widgetID.String(),
-		WidgetType: state.WidgetTypeCheckboxGroup.String(),
-		Path:       path,
-		Data:       convertStateToCheckboxGroupData(checkboxGroupState),
+	checkboxGroupProto := convertStateToCheckboxGroupProto(checkboxGroupState)
+	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), &websocketv1.RenderWidget{
+		SessionId: sess.ID.String(),
+		PageId:    page.id.String(),
+		Path:      convertPathToInt32Slice(path),
+		Widget: &widgetv1.Widget{
+			Id: widgetID.String(),
+			Type: &widgetv1.Widget_CheckboxGroup{
+				CheckboxGroup: checkboxGroupProto,
+			},
+		},
 	})
 
 	cursor.next()
@@ -114,30 +119,54 @@ func (b *uiBuilder) generateCheckboxGroupID(label string, path path) uuid.UUID {
 	return uuid.NewV5(page.id, state.WidgetTypeCheckboxGroup.String()+"-"+label+"-"+path.String())
 }
 
-func convertStateToCheckboxGroupData(state *state.CheckboxGroupState) *websocket.CheckboxGroupData {
+func convertStateToCheckboxGroupProto(state *state.CheckboxGroupState) *widgetv1.CheckboxGroup {
 	if state == nil {
 		return nil
 	}
-	return &websocket.CheckboxGroupData{
+	value := make([]int64, len(state.Value))
+	if len(state.Value) != 0 {
+		for i, v := range state.Value {
+			value[i] = int64(v)
+		}
+	}
+	defaultValue := make([]int64, len(state.DefaultValue))
+	if len(state.DefaultValue) != 0 {
+		for i, v := range state.DefaultValue {
+			defaultValue[i] = int64(v)
+		}
+	}
+	return &widgetv1.CheckboxGroup{
 		Label:        state.Label,
-		Value:        state.Value,
+		Value:        value,
 		Options:      state.Options,
-		DefaultValue: state.DefaultValue,
+		DefaultValue: defaultValue,
 		Required:     state.Required,
 		Disabled:     state.Disabled,
 	}
 }
 
-func convertCheckboxGroupDataToState(id uuid.UUID, data *websocket.CheckboxGroupData) *state.CheckboxGroupState {
+func convertCheckboxGroupProtoToState(id uuid.UUID, data *widgetv1.CheckboxGroup) *state.CheckboxGroupState {
 	if data == nil {
 		return nil
+	}
+	value := make([]int, len(data.Value))
+	if len(data.Value) != 0 {
+		for i, v := range data.Value {
+			value[i] = int(v)
+		}
+	}
+	defaultValue := make([]int, len(data.DefaultValue))
+	if len(data.DefaultValue) != 0 {
+		for i, v := range data.DefaultValue {
+			defaultValue[i] = int(v)
+		}
 	}
 	return &state.CheckboxGroupState{
 		ID:           id,
 		Label:        data.Label,
-		Value:        data.Value,
+		Value:        value,
 		Options:      data.Options,
-		DefaultValue: data.DefaultValue,
+		DefaultValue: defaultValue,
 		Required:     data.Required,
 		Disabled:     data.Disabled,
 	}

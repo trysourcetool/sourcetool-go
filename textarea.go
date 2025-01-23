@@ -7,8 +7,9 @@ import (
 
 	"github.com/trysourcetool/sourcetool-go/internal/options"
 	"github.com/trysourcetool/sourcetool-go/internal/session/state"
-	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 	"github.com/trysourcetool/sourcetool-go/textarea"
+	websocketv1 "github.com/trysourcetool/sourcetool-proto/go/websocket/v1"
+	widgetv1 "github.com/trysourcetool/sourcetool-proto/go/widget/v1"
 )
 
 func (b *uiBuilder) TextArea(label string, opts ...textarea.Option) string {
@@ -68,13 +69,17 @@ func (b *uiBuilder) TextArea(label string, opts ...textarea.Option) string {
 	textAreaState.AutoResize = textAreaOpts.AutoResize
 	sess.State.Set(widgetID, textAreaState)
 
-	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), websocket.MessageMethodRenderWidget, &websocket.RenderWidgetPayload{
-		SessionID:  sess.ID.String(),
-		PageID:     page.id.String(),
-		WidgetID:   widgetID.String(),
-		WidgetType: state.WidgetTypeTextArea.String(),
-		Path:       path,
-		Data:       convertStateToTextAreaData(textAreaState),
+	textAreaProto := convertStateToTextAreaProto(textAreaState)
+	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), &websocketv1.RenderWidget{
+		SessionId: sess.ID.String(),
+		PageId:    page.id.String(),
+		Path:      convertPathToInt32Slice(path),
+		Widget: &widgetv1.Widget{
+			Id: widgetID.String(),
+			Type: &widgetv1.Widget_TextArea{
+				TextArea: textAreaProto,
+			},
+		},
 	})
 
 	cursor.next()
@@ -90,28 +95,62 @@ func (b *uiBuilder) generateTextAreaID(label string, path path) uuid.UUID {
 	return uuid.NewV5(page.id, state.WidgetTypeTextArea.String()+"-"+label+"-"+path.String())
 }
 
-func convertStateToTextAreaData(state *state.TextAreaState) *websocket.TextAreaData {
+func convertStateToTextAreaProto(state *state.TextAreaState) *widgetv1.TextArea {
 	if state == nil {
 		return nil
 	}
-	return &websocket.TextAreaData{
+	var maxLength, minLength, maxLines, minLines *uint32
+	if state.MaxLength != nil {
+		val := uint32(*state.MaxLength)
+		maxLength = &val
+	}
+	if state.MinLength != nil {
+		val := uint32(*state.MinLength)
+		minLength = &val
+	}
+	if state.MaxLines != nil {
+		val := uint32(*state.MaxLines)
+		maxLines = &val
+	}
+	if state.MinLines != nil {
+		val := uint32(*state.MinLines)
+		minLines = &val
+	}
+	return &widgetv1.TextArea{
 		Value:        state.Value,
 		Label:        state.Label,
 		Placeholder:  state.Placeholder,
 		DefaultValue: state.DefaultValue,
 		Required:     state.Required,
 		Disabled:     state.Disabled,
-		MaxLength:    state.MaxLength,
-		MinLength:    state.MinLength,
-		MaxLines:     state.MaxLines,
-		MinLines:     state.MinLines,
+		MaxLength:    maxLength,
+		MinLength:    minLength,
+		MaxLines:     maxLines,
+		MinLines:     minLines,
 		AutoResize:   state.AutoResize,
 	}
 }
 
-func convertTextAreaDataToState(id uuid.UUID, data *websocket.TextAreaData) *state.TextAreaState {
+func convertTextAreaProtoToState(id uuid.UUID, data *widgetv1.TextArea) *state.TextAreaState {
 	if data == nil {
 		return nil
+	}
+	var maxLength, minLength, maxLines, minLines *int
+	if data.MaxLength != nil {
+		val := int(*data.MaxLength)
+		maxLength = &val
+	}
+	if data.MinLength != nil {
+		val := int(*data.MinLength)
+		minLength = &val
+	}
+	if data.MaxLines != nil {
+		val := int(*data.MaxLines)
+		maxLines = &val
+	}
+	if data.MinLines != nil {
+		val := int(*data.MinLines)
+		minLines = &val
 	}
 	return &state.TextAreaState{
 		ID:           id,
@@ -121,10 +160,10 @@ func convertTextAreaDataToState(id uuid.UUID, data *websocket.TextAreaData) *sta
 		DefaultValue: data.DefaultValue,
 		Required:     data.Required,
 		Disabled:     data.Disabled,
-		MaxLength:    data.MaxLength,
-		MinLength:    data.MinLength,
-		MaxLines:     data.MaxLines,
-		MinLines:     data.MinLines,
+		MaxLength:    maxLength,
+		MinLength:    minLength,
+		MaxLines:     maxLines,
+		MinLines:     minLines,
 		AutoResize:   data.AutoResize,
 	}
 }

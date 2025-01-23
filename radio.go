@@ -8,8 +8,9 @@ import (
 	"github.com/trysourcetool/sourcetool-go/internal/conv"
 	"github.com/trysourcetool/sourcetool-go/internal/options"
 	"github.com/trysourcetool/sourcetool-go/internal/session/state"
-	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 	"github.com/trysourcetool/sourcetool-go/radio"
+	websocketv1 "github.com/trysourcetool/sourcetool-proto/go/websocket/v1"
+	widgetv1 "github.com/trysourcetool/sourcetool-proto/go/widget/v1"
 )
 
 func (b *uiBuilder) Radio(label string, opts ...radio.Option) *radio.Value {
@@ -81,13 +82,17 @@ func (b *uiBuilder) Radio(label string, opts ...radio.Option) *radio.Value {
 	radioState.Disabled = radioOpts.Disabled
 	sess.State.Set(widgetID, radioState)
 
-	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), websocket.MessageMethodRenderWidget, &websocket.RenderWidgetPayload{
-		SessionID:  sess.ID.String(),
-		PageID:     page.id.String(),
-		WidgetID:   widgetID.String(),
-		WidgetType: state.WidgetTypeRadio.String(),
-		Path:       path,
-		Data:       convertStateToRadioData(radioState),
+	radioProto := convertStateToRadioProto(radioState)
+	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), &websocketv1.RenderWidget{
+		SessionId: sess.ID.String(),
+		PageId:    page.id.String(),
+		Path:      convertPathToInt32Slice(path),
+		Widget: &widgetv1.Widget{
+			Id: widgetID.String(),
+			Type: &widgetv1.Widget_Radio{
+				Radio: radioProto,
+			},
+		},
 	})
 
 	cursor.next()
@@ -111,30 +116,50 @@ func (b *uiBuilder) generateRadioID(label string, path path) uuid.UUID {
 	return uuid.NewV5(page.id, state.WidgetTypeRadio.String()+"-"+label+"-"+path.String())
 }
 
-func convertStateToRadioData(state *state.RadioState) *websocket.RadioData {
+func convertStateToRadioProto(state *state.RadioState) *widgetv1.Radio {
 	if state == nil {
 		return nil
 	}
-	return &websocket.RadioData{
+	var value *int64
+	if state.Value != nil {
+		val := int64(*state.Value)
+		value = &val
+	}
+	var defaultValue *int64
+	if state.DefaultValue != nil {
+		val := int64(*state.DefaultValue)
+		defaultValue = &val
+	}
+	return &widgetv1.Radio{
 		Label:        state.Label,
-		Value:        state.Value,
+		Value:        value,
 		Options:      state.Options,
-		DefaultValue: state.DefaultValue,
+		DefaultValue: defaultValue,
 		Required:     state.Required,
 		Disabled:     state.Disabled,
 	}
 }
 
-func convertRadioDataToState(id uuid.UUID, data *websocket.RadioData) *state.RadioState {
+func convertRadioProtoToState(id uuid.UUID, data *widgetv1.Radio) *state.RadioState {
 	if data == nil {
 		return nil
+	}
+	var value *int
+	if data.Value != nil {
+		val := int(*data.Value)
+		value = &val
+	}
+	var defaultValue *int
+	if data.DefaultValue != nil {
+		val := int(*data.DefaultValue)
+		defaultValue = &val
 	}
 	return &state.RadioState{
 		ID:           id,
 		Label:        data.Label,
-		Value:        data.Value,
+		Value:        value,
 		Options:      data.Options,
-		DefaultValue: data.DefaultValue,
+		DefaultValue: defaultValue,
 		Required:     data.Required,
 		Disabled:     data.Disabled,
 	}
