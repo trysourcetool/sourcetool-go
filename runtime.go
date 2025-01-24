@@ -3,13 +3,14 @@ package sourcetool
 import (
 	"context"
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/gofrs/uuid/v5"
+	"go.uber.org/zap"
 
 	"github.com/trysourcetool/sourcetool-go/internal/conv"
 	"github.com/trysourcetool/sourcetool-go/internal/errdefs"
+	"github.com/trysourcetool/sourcetool-go/internal/logger"
 	"github.com/trysourcetool/sourcetool-go/internal/session"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 	pagev1 "github.com/trysourcetool/sourcetool-proto/go/page/v1"
@@ -36,10 +37,10 @@ func startRuntime(apiKey, endpoint string, pages map[uuid.UUID]*page) (*runtime,
 		PingInterval:   1 * time.Second,
 		ReconnectDelay: 1 * time.Second,
 		OnReconnecting: func() {
-			log.Println("Reconnecting...")
+			logger.Log.Info("Reconnecting...")
 		},
 		OnReconnected: func() {
-			log.Println("Reconnected!")
+			logger.Log.Info("Reconnected!")
 			r.sendInitializeHost(apiKey, pages)
 		},
 	})
@@ -87,14 +88,14 @@ func (r *runtime) sendInitializeHost(apiKey string, pages map[uuid.UUID]*page) {
 
 	resp, err := r.wsClient.EnqueueWithResponse(uuid.Must(uuid.NewV4()).String(), msg)
 	if err != nil {
-		log.Fatalf("failed to send initialize host message: %v", err)
+		logger.Log.Fatal("failed to send initialize host message", zap.Error(err))
 	}
 
 	if e := resp.GetException(); e != nil {
-		log.Fatalf("initialize host message failed: %v", e.Message)
+		logger.Log.Fatal("initialize host message failed", zap.String("message", e.Message))
 	}
 
-	log.Printf("initialize host message sent: %v", resp)
+	logger.Log.Info("initialize host message sent", zap.Any("response", resp))
 }
 
 func (r *runtime) handleInitializeClient(msg *websocketv1.InitializeClient) error {

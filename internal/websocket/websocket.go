@@ -2,13 +2,15 @@ package websocket
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"sync"
 	"time"
 
 	"github.com/gofrs/uuid/v5"
 	"github.com/gorilla/websocket"
+	"go.uber.org/zap"
+
+	"github.com/trysourcetool/sourcetool-go/internal/logger"
 	websocketv1 "github.com/trysourcetool/sourcetool-proto/go/websocket/v1"
 	"google.golang.org/protobuf/proto"
 )
@@ -139,7 +141,9 @@ func (c *client) reconnect() error {
 			return nil
 		}
 
-		log.Printf("reconnection failed: %v, retrying in %v", err, c.config.ReconnectDelay)
+		logger.Log.Error("reconnection failed, retrying",
+			zap.Error(err),
+			zap.Duration("delay", c.config.ReconnectDelay))
 		time.Sleep(c.config.ReconnectDelay)
 	}
 }
@@ -159,7 +163,7 @@ func (c *client) pingPongLoop() {
 		}
 
 		if err := conn.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(10*time.Second)); err != nil {
-			log.Printf("ping failed: %v", err)
+			logger.Log.Error("ping failed", zap.Error(err))
 			c.connMu.Lock()
 			conn.Close()
 			c.conn = nil
@@ -167,7 +171,7 @@ func (c *client) pingPongLoop() {
 
 			go func() {
 				if err := c.reconnect(); err != nil {
-					log.Printf("reconnection failed: %v", err)
+					logger.Log.Error("reconnection failed", zap.Error(err))
 				}
 			}()
 			return
@@ -194,7 +198,7 @@ func (c *client) readMessages() {
 				return
 			}
 
-			log.Printf("read error: %v", err)
+			logger.Log.Error("read error", zap.Error(err))
 			c.connMu.Lock()
 			conn.Close()
 			c.conn = nil
@@ -202,7 +206,7 @@ func (c *client) readMessages() {
 
 			go func() {
 				if err := c.reconnect(); err != nil {
-					log.Printf("reconnection failed: %v", err)
+					logger.Log.Error("reconnection failed", zap.Error(err))
 				}
 			}()
 			continue
@@ -210,12 +214,12 @@ func (c *client) readMessages() {
 
 		msg, err := unmarshalMessage(data)
 		if err != nil {
-			log.Printf("error unmarshaling message: %v", err)
+			logger.Log.Error("error unmarshaling message", zap.Error(err))
 			continue
 		}
 
 		if err := c.handleMessage(msg); err != nil {
-			log.Printf("error handling message: %v", err)
+			logger.Log.Error("error handling message", zap.Error(err))
 			c.sendException(msg.Id, err)
 		}
 	}
@@ -252,7 +256,7 @@ func (c *client) sendEnqueuedMessagesLoop() {
 				for _, msg := range messageBuffer {
 					if err := c.send(msg); err != nil {
 						remainingMessages = append(remainingMessages, msg)
-						log.Printf("error sending message: %v", err)
+						logger.Log.Error("error sending message", zap.Error(err))
 						break
 					}
 					time.Sleep(time.Millisecond)
@@ -279,7 +283,7 @@ func (c *client) send(msg *websocketv1.Message) error {
 func (c *client) Enqueue(id string, payload proto.Message) {
 	msg, err := NewMessage(id, payload)
 	if err != nil {
-		log.Printf("error creating message: %v", err)
+		logger.Log.Error("error creating message", zap.Error(err))
 		return
 	}
 	c.messageQueue <- msg
@@ -317,7 +321,7 @@ func (c *client) Close() error {
 
 	if c.conn != nil {
 		if err := c.conn.Close(); err != nil {
-			log.Printf("error closing connection: %v", err)
+			logger.Log.Error("error closing connection", zap.Error(err))
 			return err
 		}
 		c.conn = nil
