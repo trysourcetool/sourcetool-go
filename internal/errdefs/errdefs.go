@@ -7,8 +7,11 @@ import (
 )
 
 var (
-	ErrInternal = Exception("internal_server_error")
-	ErrRunPage  = Exception("run_page_error")
+	ErrInternal         = Exception("internal_server_error")
+	ErrInvalidParameter = Exception("invalid_parameter")
+	ErrSessionNotFound  = Exception("session_not_found")
+	ErrPageNotFound     = Exception("page_not_found")
+	ErrRunPage          = Exception("run_page_error")
 )
 
 type Meta []any
@@ -67,6 +70,17 @@ func (e *Error) Error() string {
 	}
 
 	return e.Message
+}
+
+func (e *Error) StackTrace() []string {
+	if len(e.Frames) == 0 {
+		return []string{}
+	}
+	strs := make([]string, len(e.Frames))
+	for i, f := range e.Frames {
+		strs[i] = f.String()
+	}
+	return strs
 }
 
 type frame struct {
