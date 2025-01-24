@@ -3,6 +3,7 @@ package websocket
 import (
 	"fmt"
 
+	exceptionv1 "github.com/trysourcetool/sourcetool-proto/go/exception/v1"
 	websocketv1 "github.com/trysourcetool/sourcetool-proto/go/websocket/v1"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
@@ -10,7 +11,7 @@ import (
 
 type MessageHandlerFunc func(*websocketv1.Message) error
 
-func UnmarshalMessage(data []byte) (*websocketv1.Message, error) {
+func unmarshalMessage(data []byte) (*websocketv1.Message, error) {
 	var msg websocketv1.Message
 	if err := protojson.Unmarshal(data, &msg); err != nil {
 		return nil, err
@@ -18,7 +19,7 @@ func UnmarshalMessage(data []byte) (*websocketv1.Message, error) {
 	return &msg, nil
 }
 
-func MarshalMessage(msg *websocketv1.Message) ([]byte, error) {
+func marshalMessage(msg *websocketv1.Message) ([]byte, error) {
 	return protojson.Marshal(msg)
 }
 
@@ -38,6 +39,8 @@ func NewMessage(id string, payload proto.Message) (*websocketv1.Message, error) 
 		msg.Type = &websocketv1.Message_RerunPage{RerunPage: p}
 	case *websocketv1.CloseSession:
 		msg.Type = &websocketv1.Message_CloseSession{CloseSession: p}
+	case *exceptionv1.Exception:
+		msg.Type = &websocketv1.Message_Exception{Exception: p}
 	default:
 		return nil, fmt.Errorf("unsupported message type: %T", payload)
 	}
