@@ -2,6 +2,7 @@ package sourcetool
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"time"
@@ -97,7 +98,10 @@ func (r *runtime) sendInitializeHost(apiKey string, pages map[uuid.UUID]*page) {
 }
 
 func (r *runtime) handleInitializeClient(msg *websocketv1.InitializeClient) error {
-	sessionID, err := uuid.FromString(msg.SessionId)
+	if msg.SessionId == nil {
+		return errors.New("session ID is required")
+	}
+	sessionID, err := uuid.FromString(conv.SafeValue(msg.SessionId))
 	if err != nil {
 		return err
 	}
