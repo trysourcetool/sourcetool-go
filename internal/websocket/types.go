@@ -5,7 +5,6 @@ import (
 
 	exceptionv1 "github.com/trysourcetool/sourcetool-proto/go/exception/v1"
 	websocketv1 "github.com/trysourcetool/sourcetool-proto/go/websocket/v1"
-	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -13,14 +12,14 @@ type MessageHandlerFunc func(*websocketv1.Message) error
 
 func unmarshalMessage(data []byte) (*websocketv1.Message, error) {
 	var msg websocketv1.Message
-	if err := protojson.Unmarshal(data, &msg); err != nil {
+	if err := proto.Unmarshal(data, &msg); err != nil {
 		return nil, err
 	}
 	return &msg, nil
 }
 
 func marshalMessage(msg *websocketv1.Message) ([]byte, error) {
-	return protojson.Marshal(msg)
+	return proto.Marshal(msg)
 }
 
 func NewMessage(id string, payload proto.Message) (*websocketv1.Message, error) {

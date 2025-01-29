@@ -14,7 +14,7 @@ func (c *client) sendException(id string, err error) {
 	}
 
 	exception := &exceptionv1.Exception{
-		Type:       e.Title,
+		Title:      e.Title,
 		Message:    e.Message,
 		StackTrace: e.StackTrace(),
 	}
