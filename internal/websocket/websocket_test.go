@@ -116,7 +116,7 @@ func TestClient_MessageHandling(t *testing.T) {
 		},
 	}
 
-	data, err := MarshalMessage(testMsg)
+	data, err := marshalMessage(testMsg)
 	if err != nil {
 		t.Fatalf("failed to marshal message: %v", err)
 	}
@@ -168,7 +168,7 @@ func TestClient_EnqueueWithResponse(t *testing.T) {
 			return
 		}
 
-		msg, err := UnmarshalMessage(data)
+		msg, err := unmarshalMessage(data)
 		if err != nil {
 			t.Errorf("failed to unmarshal message: %v", err)
 			return
@@ -184,7 +184,7 @@ func TestClient_EnqueueWithResponse(t *testing.T) {
 			},
 		}
 
-		data, err = MarshalMessage(resp)
+		data, err = marshalMessage(resp)
 		if err != nil {
 			t.Errorf("failed to marshal response: %v", err)
 			return

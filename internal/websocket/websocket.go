@@ -208,7 +208,7 @@ func (c *client) readMessages() {
 			continue
 		}
 
-		msg, err := UnmarshalMessage(data)
+		msg, err := unmarshalMessage(data)
 		if err != nil {
 			log.Printf("error unmarshaling message: %v", err)
 			continue
@@ -216,6 +216,7 @@ func (c *client) readMessages() {
 
 		if err := c.handleMessage(msg); err != nil {
 			log.Printf("error handling message: %v", err)
+			c.sendException(msg.Id, err)
 		}
 	}
 }
@@ -268,7 +269,7 @@ func (c *client) sendEnqueuedMessagesLoop() {
 }
 
 func (c *client) send(msg *websocketv1.Message) error {
-	data, err := MarshalMessage(msg)
+	data, err := marshalMessage(msg)
 	if err != nil {
 		return fmt.Errorf("error marshaling message: %w", err)
 	}

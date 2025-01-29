@@ -10,6 +10,7 @@ import (
 	"github.com/gofrs/uuid/v5"
 
 	"github.com/trysourcetool/sourcetool-go/internal/conv"
+	"github.com/trysourcetool/sourcetool-go/internal/errdefs"
 	"github.com/trysourcetool/sourcetool-go/internal/session"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 	pagev1 "github.com/trysourcetool/sourcetool-proto/go/page/v1"
@@ -99,7 +100,7 @@ func (r *runtime) sendInitializeHost(apiKey string, pages map[uuid.UUID]*page) {
 
 func (r *runtime) handleInitializeClient(msg *websocketv1.InitializeClient) error {
 	if msg.SessionId == nil {
-		return errors.New("session ID is required")
+		return errdefs.ErrInvalidParameter(errors.New("session id is required"))
 	}
 	sessionID, err := uuid.FromString(conv.SafeValue(msg.SessionId))
 	if err != nil {
@@ -110,13 +111,12 @@ func (r *runtime) handleInitializeClient(msg *websocketv1.InitializeClient) erro
 		return err
 	}
 
-	log.Println("Creating new session with ID:", sessionID)
 	session := session.New(sessionID, pageID)
 	r.sessionManager.SetSession(session)
 
 	page := r.pageManager.getPage(pageID)
 	if page == nil {
-		return fmt.Errorf("page not found: %s", pageID)
+		return errdefs.ErrInternal(fmt.Errorf("page not found: %s", pageID))
 	}
 
 	ui := &uiBuilder{
@@ -128,7 +128,7 @@ func (r *runtime) handleInitializeClient(msg *websocketv1.InitializeClient) erro
 	}
 
 	if err := page.run(ui); err != nil {
-		return fmt.Errorf("failed to run page: %v", err)
+		return errdefs.ErrRunPage(fmt.Errorf("failed to run page: %v", err))
 	}
 
 	return nil
@@ -137,20 +137,20 @@ func (r *runtime) handleInitializeClient(msg *websocketv1.InitializeClient) erro
 func (r *runtime) handleRerunPage(msg *websocketv1.RerunPage) error {
 	sessionID, err := uuid.FromString(msg.SessionId)
 	if err != nil {
-		return err
+		return errdefs.ErrInvalidParameter(err)
 	}
 	sess := r.sessionManager.GetSession(sessionID)
 	if sess == nil {
-		return fmt.Errorf("session not found: %s", sessionID)
+		return errdefs.ErrSessionNotFound(fmt.Errorf("session not found: %s", sessionID))
 	}
 
 	pageID, err := uuid.FromString(msg.PageId)
 	if err != nil {
-		return err
+		return errdefs.ErrInvalidParameter(err)
 	}
 	page := r.pageManager.getPage(pageID)
 	if page == nil {
-		return fmt.Errorf("page not found: %s", pageID)
+		return errdefs.ErrPageNotFound(fmt.Errorf("page not found: %s", pageID))
 	}
 
 	if sess.PageID != pageID {
@@ -163,119 +163,119 @@ func (r *runtime) handleRerunPage(msg *websocketv1.RerunPage) error {
 		case *widgetv1.Widget_TextInput:
 			id, err := uuid.FromString(widget.Id)
 			if err != nil {
-				return err
+				return errdefs.ErrInvalidParameter(err)
 			}
 			newWidgetStates[id] = convertTextInputProtoToState(id, t.TextInput)
 		case *widgetv1.Widget_NumberInput:
 			id, err := uuid.FromString(widget.Id)
 			if err != nil {
-				return err
+				return errdefs.ErrInvalidParameter(err)
 			}
 			newWidgetStates[id] = convertNumberInputProtoToState(id, t.NumberInput)
 		case *widgetv1.Widget_DateInput:
 			id, err := uuid.FromString(widget.Id)
 			if err != nil {
-				return err
+				return errdefs.ErrInvalidParameter(err)
 			}
 			state, err := convertDateInputProtoToState(id, t.DateInput, time.Local)
 			if err != nil {
-				return err
+				return errdefs.ErrInvalidParameter(err)
 			}
 			newWidgetStates[id] = state
 		case *widgetv1.Widget_DateTimeInput:
 			id, err := uuid.FromString(widget.Id)
 			if err != nil {
-				return err
+				return errdefs.ErrInvalidParameter(err)
 			}
 			state, err := convertDateTimeInputProtoToState(id, t.DateTimeInput, time.Local)
 			if err != nil {
-				return err
+				return errdefs.ErrInvalidParameter(err)
 			}
 			newWidgetStates[id] = state
 		case *widgetv1.Widget_TimeInput:
 			id, err := uuid.FromString(widget.Id)
 			if err != nil {
-				return err
+				return errdefs.ErrInvalidParameter(err)
 			}
 			state, err := convertTimeInputProtoToState(id, t.TimeInput, time.Local)
 			if err != nil {
-				return err
+				return errdefs.ErrInvalidParameter(err)
 			}
 			newWidgetStates[id] = state
 		case *widgetv1.Widget_Form:
 			id, err := uuid.FromString(widget.Id)
 			if err != nil {
-				return err
+				return errdefs.ErrInvalidParameter(err)
 			}
 			newWidgetStates[id] = convertFormProtoToState(id, t.Form)
 		case *widgetv1.Widget_Button:
 			id, err := uuid.FromString(widget.Id)
 			if err != nil {
-				return err
+				return errdefs.ErrInvalidParameter(err)
 			}
 			newWidgetStates[id] = convertButtonProtoToState(id, t.Button)
 		case *widgetv1.Widget_Markdown:
 			id, err := uuid.FromString(widget.Id)
 			if err != nil {
-				return err
+				return errdefs.ErrInvalidParameter(err)
 			}
 			newWidgetStates[id] = convertMarkdownProtoToState(id, t.Markdown)
 		case *widgetv1.Widget_Columns:
 			id, err := uuid.FromString(widget.Id)
 			if err != nil {
-				return err
+				return errdefs.ErrInvalidParameter(err)
 			}
 			newWidgetStates[id] = convertColumnsProtoToState(id, t.Columns)
 		case *widgetv1.Widget_ColumnItem:
 			id, err := uuid.FromString(widget.Id)
 			if err != nil {
-				return err
+				return errdefs.ErrInvalidParameter(err)
 			}
 			newWidgetStates[id] = convertColumnItemProtoToState(id, t.ColumnItem)
 		case *widgetv1.Widget_Table:
 			id, err := uuid.FromString(widget.Id)
 			if err != nil {
-				return err
+				return errdefs.ErrInvalidParameter(err)
 			}
 			newWidgetStates[id] = convertTableProtoToState(id, t.Table)
 		case *widgetv1.Widget_Selectbox:
 			id, err := uuid.FromString(widget.Id)
 			if err != nil {
-				return err
+				return errdefs.ErrInvalidParameter(err)
 			}
 			newWidgetStates[id] = convertSelectboxProtoToState(id, t.Selectbox)
 		case *widgetv1.Widget_MultiSelect:
 			id, err := uuid.FromString(widget.Id)
 			if err != nil {
-				return err
+				return errdefs.ErrInvalidParameter(err)
 			}
 			newWidgetStates[id] = convertMultiSelectProtoToState(id, t.MultiSelect)
 		case *widgetv1.Widget_Checkbox:
 			id, err := uuid.FromString(widget.Id)
 			if err != nil {
-				return err
+				return errdefs.ErrInvalidParameter(err)
 			}
 			newWidgetStates[id] = convertCheckboxProtoToState(id, t.Checkbox)
 		case *widgetv1.Widget_CheckboxGroup:
 			id, err := uuid.FromString(widget.Id)
 			if err != nil {
-				return err
+				return errdefs.ErrInvalidParameter(err)
 			}
 			newWidgetStates[id] = convertCheckboxGroupProtoToState(id, t.CheckboxGroup)
 		case *widgetv1.Widget_Radio:
 			id, err := uuid.FromString(widget.Id)
 			if err != nil {
-				return err
+				return errdefs.ErrInvalidParameter(err)
 			}
 			newWidgetStates[id] = convertRadioProtoToState(id, t.Radio)
 		case *widgetv1.Widget_TextArea:
 			id, err := uuid.FromString(widget.Id)
 			if err != nil {
-				return err
+				return errdefs.ErrInvalidParameter(err)
 			}
 			newWidgetStates[id] = convertTextAreaProtoToState(id, t.TextArea)
 		default:
-			return fmt.Errorf("unknown widget type: %T", t)
+			return errdefs.ErrInvalidParameter(fmt.Errorf("unknown widget type: %T", t))
 		}
 	}
 
@@ -290,7 +290,7 @@ func (r *runtime) handleRerunPage(msg *websocketv1.RerunPage) error {
 	}
 
 	if err := page.run(ui); err != nil {
-		return fmt.Errorf("failed to run page: %v", err)
+		return errdefs.ErrRunPage(fmt.Errorf("failed to run page: %v", err))
 	}
 
 	sess.State.ResetButtons()
@@ -301,7 +301,7 @@ func (r *runtime) handleRerunPage(msg *websocketv1.RerunPage) error {
 func (r *runtime) handleCloseSession(msg *websocketv1.CloseSession) error {
 	sessionID, err := uuid.FromString(msg.SessionId)
 	if err != nil {
-		return err
+		return errdefs.ErrInvalidParameter(err)
 	}
 
 	r.sessionManager.DeleteSession(sessionID)
