@@ -273,7 +273,7 @@ func (c *client) send(msg *websocketv1.Message) error {
 	if err != nil {
 		return fmt.Errorf("error marshaling message: %w", err)
 	}
-	return c.conn.WriteMessage(websocket.TextMessage, data)
+	return c.conn.WriteMessage(websocket.BinaryMessage, data)
 }
 
 func (c *client) Enqueue(id string, payload proto.Message) {
