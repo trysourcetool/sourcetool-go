@@ -1,8 +1,6 @@
 package sourcetool
 
 import (
-	"log"
-
 	"github.com/gofrs/uuid/v5"
 
 	"github.com/trysourcetool/sourcetool-go/internal/conv"
@@ -41,10 +39,6 @@ func (b *uiBuilder) NumberInput(label string, opts ...numberinput.Option) *float
 		return nil
 	}
 	path := cursor.getPath()
-
-	log.Printf("Session ID: %s", sess.ID.String())
-	log.Printf("Page ID: %s", page.id.String())
-	log.Printf("Path: %v\n", path)
 
 	widgetID := b.generateNumberInputID(label, path)
 	numberInputState := sess.State.GetNumberInput(widgetID)

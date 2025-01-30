@@ -1,8 +1,6 @@
 package sourcetool
 
 import (
-	"log"
-
 	"github.com/gofrs/uuid/v5"
 
 	"github.com/trysourcetool/sourcetool-go/internal/conv"
@@ -39,10 +37,6 @@ func (b *uiBuilder) Radio(label string, opts ...radio.Option) *radio.Value {
 		return nil
 	}
 	path := cursor.getPath()
-
-	log.Printf("Session ID: %s", sess.ID.String())
-	log.Printf("Page ID: %s", page.id.String())
-	log.Printf("Path: %v\n", path)
 
 	var defaultVal *int32
 	if radioOpts.DefaultValue != nil {

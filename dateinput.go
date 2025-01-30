@@ -2,7 +2,6 @@ package sourcetool
 
 import (
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/gofrs/uuid/v5"
@@ -45,10 +44,6 @@ func (b *uiBuilder) DateInput(label string, opts ...dateinput.Option) *time.Time
 		return nil
 	}
 	path := cursor.getPath()
-
-	log.Printf("Session ID: %s", sess.ID.String())
-	log.Printf("Page ID: %s", page.id.String())
-	log.Printf("Path: %v\n", path)
 
 	widgetID := b.generateDateInputID(label, path)
 	dateInputState := sess.State.GetDateInput(widgetID)

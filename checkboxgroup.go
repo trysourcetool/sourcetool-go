@@ -1,8 +1,6 @@
 package sourcetool
 
 import (
-	"log"
-
 	"github.com/gofrs/uuid/v5"
 
 	"github.com/trysourcetool/sourcetool-go/checkboxgroup"
@@ -38,10 +36,6 @@ func (b *uiBuilder) CheckboxGroup(label string, opts ...checkboxgroup.Option) *c
 		return nil
 	}
 	path := cursor.getPath()
-
-	log.Printf("Session ID: %s", sess.ID.String())
-	log.Printf("Page ID: %s", page.id.String())
-	log.Printf("Path: %v\n", path)
 
 	var defaultVal []int32
 	if len(checkboxGroupOpts.DefaultValue) != 0 {

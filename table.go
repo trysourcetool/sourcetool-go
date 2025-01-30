@@ -2,7 +2,6 @@ package sourcetool
 
 import (
 	"encoding/json"
-	"log"
 
 	"github.com/gofrs/uuid/v5"
 
@@ -36,10 +35,6 @@ func (b *uiBuilder) Table(data any, opts ...table.Option) table.Value {
 		return table.Value{}
 	}
 	path := cursor.getPath()
-
-	log.Printf("Session ID: %s", sess.ID.String())
-	log.Printf("Page ID: %s", page.id.String())
-	log.Printf("Path: %v\n", path)
 
 	widgetID := b.generateTableID(path)
 	tableState := sess.State.GetTable(widgetID)

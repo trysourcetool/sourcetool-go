@@ -1,8 +1,6 @@
 package sourcetool
 
 import (
-	"log"
-
 	"github.com/gofrs/uuid/v5"
 
 	"github.com/trysourcetool/sourcetool-go/button"
@@ -35,10 +33,6 @@ func (b *uiBuilder) Button(label string, opts ...button.Option) bool {
 		return false
 	}
 	path := cursor.getPath()
-
-	log.Printf("Session ID: %s", sess.ID.String())
-	log.Printf("Page ID: %s", page.id.String())
-	log.Printf("Path: %v\n", path)
 
 	widgetID := b.generateButtonInputID(label, path)
 	buttonState := sess.State.GetButton(widgetID)

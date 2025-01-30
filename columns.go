@@ -1,8 +1,6 @@
 package sourcetool
 
 import (
-	"log"
-
 	"github.com/gofrs/uuid/v5"
 
 	"github.com/trysourcetool/sourcetool-go/columns"
@@ -30,8 +28,6 @@ func (b *uiBuilder) Columns(cols int, opts ...columns.Option) []UIBuilder {
 		return nil
 	}
 	path := cursor.getPath()
-
-	log.Printf("Path: %v\n", path)
 
 	columnsOpts := &options.ColumnsOptions{
 		Columns: cols,
@@ -96,13 +92,11 @@ func (b *uiBuilder) Columns(cols int, opts ...columns.Option) []UIBuilder {
 		}
 		sess.State.Set(widgetID, columnItemState)
 
-		log.Printf("Path: %v\n", columnPath)
-
 		columnItem := convertStateToColumnItemProto(columnItemState)
 		b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), &websocketv1.RenderWidget{
 			SessionId: sess.ID.String(),
 			PageId:    page.id.String(),
-			Path:      convertPathToInt32Slice(path),
+			Path:      convertPathToInt32Slice(columnPath),
 			Widget: &widgetv1.Widget{
 				Id: widgetID.String(),
 				Type: &widgetv1.Widget_ColumnItem{
