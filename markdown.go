@@ -7,7 +7,8 @@ import (
 
 	"github.com/trysourcetool/sourcetool-go/internal/options"
 	"github.com/trysourcetool/sourcetool-go/internal/session/state"
-	"github.com/trysourcetool/sourcetool-go/internal/websocket"
+	websocketv1 "github.com/trysourcetool/sourcetool-proto/go/websocket/v1"
+	widgetv1 "github.com/trysourcetool/sourcetool-proto/go/widget/v1"
 )
 
 func (b *uiBuilder) Markdown(body string) {
@@ -43,13 +44,17 @@ func (b *uiBuilder) Markdown(body string) {
 	markdownState.Body = markdownOpts.Body
 	sess.State.Set(widgetID, markdownState)
 
-	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), websocket.MessageMethodRenderWidget, &websocket.RenderWidgetPayload{
-		SessionID:  sess.ID.String(),
-		PageID:     page.id.String(),
-		WidgetID:   widgetID.String(),
-		WidgetType: state.WidgetTypeMarkdown.String(),
-		Path:       path,
-		Data:       convertStateToMarkdownData(markdownState),
+	markdown := convertStateToMarkdownProto(markdownState)
+	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), &websocketv1.RenderWidget{
+		SessionId: sess.ID.String(),
+		PageId:    page.id.String(),
+		Path:      convertPathToInt32Slice(path),
+		Widget: &widgetv1.Widget{
+			Id: widgetID.String(),
+			Type: &widgetv1.Widget_Markdown{
+				Markdown: markdown,
+			},
+		},
 	})
 
 	cursor.next()
@@ -63,14 +68,15 @@ func (b *uiBuilder) generateMarkdownID(body string, path path) uuid.UUID {
 	return uuid.NewV5(page.id, state.WidgetTypeMarkdown.String()+"-"+body+"-"+path.String())
 }
 
-func convertStateToMarkdownData(state *state.MarkdownState) *websocket.MarkdownData {
-	return &websocket.MarkdownData{
+func convertStateToMarkdownProto(state *state.MarkdownState) *widgetv1.Markdown {
+	return &widgetv1.Markdown{
 		Body: state.Body,
 	}
 }
 
-func convertMarkdownDataToState(data *websocket.MarkdownData) *state.MarkdownState {
+func convertMarkdownProtoToState(id uuid.UUID, data *widgetv1.Markdown) *state.MarkdownState {
 	return &state.MarkdownState{
+		ID:   id,
 		Body: data.Body,
 	}
 }

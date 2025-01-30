@@ -5,17 +5,27 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 
+	"github.com/trysourcetool/sourcetool-go/internal/conv"
 	"github.com/trysourcetool/sourcetool-go/internal/options"
 	"github.com/trysourcetool/sourcetool-go/internal/session/state"
-	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 	"github.com/trysourcetool/sourcetool-go/textinput"
+	websocketv1 "github.com/trysourcetool/sourcetool-proto/go/websocket/v1"
+	widgetv1 "github.com/trysourcetool/sourcetool-proto/go/widget/v1"
 )
+
+func convertPathToInt32Slice(p path) []int32 {
+	result := make([]int32, len(p))
+	for i, v := range p {
+		result[i] = int32(v)
+	}
+	return result
+}
 
 func (b *uiBuilder) TextInput(label string, opts ...textinput.Option) string {
 	textInputOpts := &options.TextInputOptions{
 		Label:        label,
 		Placeholder:  "",
-		DefaultValue: "",
+		DefaultValue: nil,
 		Required:     false,
 		Disabled:     false,
 		MaxLength:    nil,
@@ -61,18 +71,22 @@ func (b *uiBuilder) TextInput(label string, opts ...textinput.Option) string {
 	textInputState.MinLength = textInputOpts.MinLength
 	sess.State.Set(widgetID, textInputState)
 
-	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), websocket.MessageMethodRenderWidget, &websocket.RenderWidgetPayload{
-		SessionID:  sess.ID.String(),
-		PageID:     page.id.String(),
-		WidgetID:   widgetID.String(),
-		WidgetType: state.WidgetTypeTextInput.String(),
-		Path:       path,
-		Data:       convertStateToTextInputData(textInputState),
+	textInput := convertStateToTextInputProto(textInputState)
+	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), &websocketv1.RenderWidget{
+		SessionId: sess.ID.String(),
+		PageId:    page.id.String(),
+		Path:      convertPathToInt32Slice(path),
+		Widget: &widgetv1.Widget{
+			Id: widgetID.String(),
+			Type: &widgetv1.Widget_TextInput{
+				TextInput: textInput,
+			},
+		},
 	})
 
 	cursor.next()
 
-	return textInputState.Value
+	return conv.SafeValue(textInputState.Value)
 }
 
 func (b *uiBuilder) generateTextInputID(label string, path path) uuid.UUID {
@@ -83,11 +97,11 @@ func (b *uiBuilder) generateTextInputID(label string, path path) uuid.UUID {
 	return uuid.NewV5(page.id, state.WidgetTypeTextInput.String()+"-"+label+"-"+path.String())
 }
 
-func convertStateToTextInputData(state *state.TextInputState) *websocket.TextInputData {
+func convertStateToTextInputProto(state *state.TextInputState) *widgetv1.TextInput {
 	if state == nil {
 		return nil
 	}
-	return &websocket.TextInputData{
+	return &widgetv1.TextInput{
 		Value:        state.Value,
 		Label:        state.Label,
 		Placeholder:  state.Placeholder,
@@ -99,7 +113,7 @@ func convertStateToTextInputData(state *state.TextInputState) *websocket.TextInp
 	}
 }
 
-func convertTextInputDataToState(id uuid.UUID, data *websocket.TextInputData) *state.TextInputState {
+func convertTextInputProtoToState(id uuid.UUID, data *widgetv1.TextInput) *state.TextInputState {
 	if data == nil {
 		return nil
 	}

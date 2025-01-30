@@ -9,11 +9,11 @@ import (
 	"github.com/trysourcetool/sourcetool-go/button"
 	"github.com/trysourcetool/sourcetool-go/internal/session"
 	"github.com/trysourcetool/sourcetool-go/internal/session/state"
-	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket/mock"
+	widgetv1 "github.com/trysourcetool/sourcetool-proto/go/widget/v1"
 )
 
-func TestConvertStateToButtonData(t *testing.T) {
+func TestConvertStateToButtonProto(t *testing.T) {
 	id := uuid.Must(uuid.NewV4())
 
 	buttonState := &state.ButtonState{
@@ -23,10 +23,10 @@ func TestConvertStateToButtonData(t *testing.T) {
 		Disabled: true,
 	}
 
-	data := convertStateToButtonData(buttonState)
+	data := convertStateToButtonProto(buttonState)
 
 	if data == nil {
-		t.Fatal("convertStateToButtonData returned nil")
+		t.Fatal("convertStateToButtonProto returned nil")
 	}
 
 	tests := []struct {
@@ -48,17 +48,17 @@ func TestConvertStateToButtonData(t *testing.T) {
 	}
 }
 
-func TestConvertButtonDataToState(t *testing.T) {
-	data := &websocket.ButtonData{
+func TestConvertButtonProtoToState(t *testing.T) {
+	data := &widgetv1.Button{
 		Label:    "Test Button",
 		Value:    true,
 		Disabled: true,
 	}
 
-	state := convertButtonDataToState(data)
+	state := convertButtonProtoToState(uuid.Must(uuid.NewV4()), data)
 
 	if state == nil {
-		t.Fatal("convertButtonDataToState returned nil")
+		t.Fatal("convertButtonProtoToState returned nil")
 	}
 
 	tests := []struct {
@@ -85,7 +85,7 @@ func TestButton(t *testing.T) {
 	pageID := uuid.Must(uuid.NewV4())
 	sess := session.New(sessionID, pageID)
 
-	mockWS := mock.NewMockWebSocketClient()
+	mockWS := mock.NewClient()
 
 	builder := &uiBuilder{
 		context: context.Background(),
@@ -101,26 +101,23 @@ func TestButton(t *testing.T) {
 
 	label := "Test Button"
 
-	// Create Button component with all options
 	value := builder.Button(label,
 		button.Disabled(true),
 	)
 
-	// Verify return value
 	if value {
 		t.Error("Button value = true, want false")
 	}
 
-	// Verify WebSocket message
-	if len(mockWS.Messages) != 1 {
-		t.Errorf("WebSocket messages count = %d, want 1", len(mockWS.Messages))
+	messages := mockWS.Messages()
+	if len(messages) != 1 {
+		t.Errorf("WebSocket messages count = %d, want 1", len(messages))
 	}
-	msg := mockWS.Messages[0]
-	if msg.Method != websocket.MessageMethodRenderWidget {
-		t.Errorf("WebSocket message method = %v, want %v", msg.Method, websocket.MessageMethodRenderWidget)
+	msg := messages[0]
+	if v := msg.GetRenderWidget(); v == nil {
+		t.Fatal("WebSocket message type = nil, want RenderWidget")
 	}
 
-	// Verify state
 	widgetID := builder.generateButtonInputID(label, []int{0})
 	state := sess.State.GetButton(widgetID)
 	if state == nil {
@@ -151,7 +148,7 @@ func TestButton_DefaultState(t *testing.T) {
 	pageID := uuid.Must(uuid.NewV4())
 	sess := session.New(sessionID, pageID)
 
-	mockWS := mock.NewMockWebSocketClient()
+	mockWS := mock.NewClient()
 
 	builder := &uiBuilder{
 		context: context.Background(),
@@ -167,17 +164,14 @@ func TestButton_DefaultState(t *testing.T) {
 
 	label := "Test Button"
 
-	// Create Button component without options
 	builder.Button(label)
 
-	// Verify state
 	widgetID := builder.generateButtonInputID(label, []int{0})
 	state := sess.State.GetButton(widgetID)
 	if state == nil {
 		t.Fatal("Button state not found")
 	}
 
-	// Verify default values
 	if state.Value {
 		t.Error("Default Value = true, want false")
 	}

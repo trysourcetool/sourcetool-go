@@ -7,10 +7,12 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 
+	"github.com/trysourcetool/sourcetool-go/internal/conv"
 	"github.com/trysourcetool/sourcetool-go/internal/options"
 	"github.com/trysourcetool/sourcetool-go/internal/session/state"
-	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 	"github.com/trysourcetool/sourcetool-go/timeinput"
+	websocketv1 "github.com/trysourcetool/sourcetool-proto/go/websocket/v1"
+	widgetv1 "github.com/trysourcetool/sourcetool-proto/go/widget/v1"
 )
 
 func (b *uiBuilder) TimeInput(label string, opts ...timeinput.Option) *time.Time {
@@ -61,13 +63,17 @@ func (b *uiBuilder) TimeInput(label string, opts ...timeinput.Option) *time.Time
 	timeInputState.Location = timeInputOpts.Location
 	sess.State.Set(widgetID, timeInputState)
 
-	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), websocket.MessageMethodRenderWidget, &websocket.RenderWidgetPayload{
-		SessionID:  sess.ID.String(),
-		PageID:     page.id.String(),
-		WidgetID:   widgetID.String(),
-		WidgetType: state.WidgetTypeTimeInput.String(),
-		Path:       path,
-		Data:       convertStateToTimeInputData(timeInputState),
+	timeInput := convertStateToTimeInputProto(timeInputState)
+	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), &websocketv1.RenderWidget{
+		SessionId: sess.ID.String(),
+		PageId:    page.id.String(),
+		Path:      convertPathToInt32Slice(path),
+		Widget: &widgetv1.Widget{
+			Id: widgetID.String(),
+			Type: &widgetv1.Widget_TimeInput{
+				TimeInput: timeInput,
+			},
+		},
 	})
 
 	cursor.next()
@@ -83,7 +89,7 @@ func (b *uiBuilder) generateTimeInputID(label string, path path) uuid.UUID {
 	return uuid.NewV5(page.id, state.WidgetTypeTimeInput.String()+"-"+label+"-"+path.String())
 }
 
-func convertTimeInputDataToState(id uuid.UUID, data *websocket.TimeInputData, location *time.Location) (*state.TimeInputState, error) {
+func convertTimeInputProtoToState(id uuid.UUID, data *widgetv1.TimeInput, location *time.Location) (*state.TimeInputState, error) {
 	if data == nil {
 		return nil, nil
 	}
@@ -99,12 +105,12 @@ func convertTimeInputDataToState(id uuid.UUID, data *websocket.TimeInputData, lo
 		return &t, nil
 	}
 
-	value, err := parseTime(data.Value)
+	value, err := parseTime(conv.SafeValue(data.Value))
 	if err != nil {
 		return nil, err
 	}
 
-	defaultValue, err := parseTime(data.DefaultValue)
+	defaultValue, err := parseTime(conv.SafeValue(data.DefaultValue))
 	if err != nil {
 		return nil, err
 	}
@@ -121,7 +127,7 @@ func convertTimeInputDataToState(id uuid.UUID, data *websocket.TimeInputData, lo
 	}, nil
 }
 
-func convertStateToTimeInputData(state *state.TimeInputState) *websocket.TimeInputData {
+func convertStateToTimeInputProto(state *state.TimeInputState) *widgetv1.TimeInput {
 	if state == nil {
 		return nil
 	}
@@ -132,11 +138,11 @@ func convertStateToTimeInputData(state *state.TimeInputState) *websocket.TimeInp
 	if state.DefaultValue != nil {
 		defaultValue = state.DefaultValue.Format(time.TimeOnly)
 	}
-	return &websocket.TimeInputData{
-		Value:        value,
+	return &widgetv1.TimeInput{
+		Value:        conv.NilValue(value),
 		Label:        state.Label,
 		Placeholder:  state.Placeholder,
-		DefaultValue: defaultValue,
+		DefaultValue: conv.NilValue(defaultValue),
 		Required:     state.Required,
 		Disabled:     state.Disabled,
 	}

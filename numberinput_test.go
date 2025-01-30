@@ -8,12 +8,12 @@ import (
 
 	"github.com/trysourcetool/sourcetool-go/internal/session"
 	"github.com/trysourcetool/sourcetool-go/internal/session/state"
-	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket/mock"
 	"github.com/trysourcetool/sourcetool-go/numberinput"
+	widgetv1 "github.com/trysourcetool/sourcetool-proto/go/widget/v1"
 )
 
-func TestConvertStateToNumberInputData(t *testing.T) {
+func TestConvertStateToNumberInputProto(t *testing.T) {
 	id := uuid.Must(uuid.NewV4())
 	value := 42.5
 	defaultValue := 0.0
@@ -32,10 +32,10 @@ func TestConvertStateToNumberInputData(t *testing.T) {
 		MinValue:     &minValue,
 	}
 
-	data := convertStateToNumberInputData(numberInputState)
+	data := convertStateToNumberInputProto(numberInputState)
 
 	if data == nil {
-		t.Fatal("convertStateToNumberInputData returned nil")
+		t.Fatal("convertStateToNumberInputProto returned nil")
 	}
 
 	tests := []struct {
@@ -62,13 +62,13 @@ func TestConvertStateToNumberInputData(t *testing.T) {
 	}
 }
 
-func TestConvertNumberInputDataToState(t *testing.T) {
+func TestConvertNumberInputProtoToState(t *testing.T) {
 	value := 42.5
 	defaultValue := 0.0
 	maxValue := 100.0
 	minValue := 0.0
 
-	data := &websocket.NumberInputData{
+	data := &widgetv1.NumberInput{
 		Label:        "Test NumberInput",
 		Value:        &value,
 		Placeholder:  "Enter number",
@@ -79,10 +79,10 @@ func TestConvertNumberInputDataToState(t *testing.T) {
 		MinValue:     &minValue,
 	}
 
-	state := convertNumberInputDataToState(data)
+	state := convertNumberInputProtoToState(uuid.Must(uuid.NewV4()), data)
 
 	if state == nil {
-		t.Fatal("convertNumberInputDataToState returned nil")
+		t.Fatal("convertNumberInputProtoToState returned nil")
 	}
 
 	tests := []struct {
@@ -114,7 +114,7 @@ func TestNumberInput(t *testing.T) {
 	pageID := uuid.Must(uuid.NewV4())
 	sess := session.New(sessionID, pageID)
 
-	mockWS := mock.NewMockWebSocketClient()
+	mockWS := mock.NewClient()
 
 	builder := &uiBuilder{
 		context: context.Background(),
@@ -134,7 +134,6 @@ func TestNumberInput(t *testing.T) {
 	maxValue := 100.0
 	minValue := 0.0
 
-	// Create NumberInput component with all options
 	value := builder.NumberInput(label,
 		numberinput.DefaultValue(defaultValue),
 		numberinput.Placeholder(placeholder),
@@ -144,7 +143,6 @@ func TestNumberInput(t *testing.T) {
 		numberinput.MinValue(minValue),
 	)
 
-	// Verify return value
 	if value == nil {
 		t.Fatal("NumberInput returned nil")
 	}
@@ -152,16 +150,15 @@ func TestNumberInput(t *testing.T) {
 		t.Errorf("NumberInput value = %v, want %v", *value, defaultValue)
 	}
 
-	// Verify WebSocket message
-	if len(mockWS.Messages) != 1 {
-		t.Errorf("WebSocket messages count = %d, want 1", len(mockWS.Messages))
+	messages := mockWS.Messages()
+	if len(messages) != 1 {
+		t.Errorf("WebSocket messages count = %d, want 1", len(messages))
 	}
-	msg := mockWS.Messages[0]
-	if msg.Method != websocket.MessageMethodRenderWidget {
-		t.Errorf("WebSocket message method = %v, want %v", msg.Method, websocket.MessageMethodRenderWidget)
+	msg := messages[0]
+	if v := msg.GetRenderWidget(); v == nil {
+		t.Fatal("WebSocket message type = nil, want RenderWidget")
 	}
 
-	// Verify state
 	widgetID := builder.generateNumberInputID(label, []int{0})
 	state := sess.State.GetNumberInput(widgetID)
 	if state == nil {

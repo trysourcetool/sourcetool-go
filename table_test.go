@@ -2,17 +2,17 @@ package sourcetool
 
 import (
 	"context"
+	"encoding/json"
 	"reflect"
 	"testing"
 
 	"github.com/gofrs/uuid/v5"
 
-	"github.com/trysourcetool/sourcetool-go/internal/conv"
 	"github.com/trysourcetool/sourcetool-go/internal/session"
 	"github.com/trysourcetool/sourcetool-go/internal/session/state"
-	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket/mock"
 	"github.com/trysourcetool/sourcetool-go/table"
+	widgetv1 "github.com/trysourcetool/sourcetool-proto/go/widget/v1"
 )
 
 type testData struct {
@@ -20,7 +20,7 @@ type testData struct {
 	Name string `json:"name"`
 }
 
-func TestConvertStateToTableData(t *testing.T) {
+func TestConvertStateToTableProto(t *testing.T) {
 	id := uuid.Must(uuid.NewV4())
 	data := []testData{
 		{ID: 1, Name: "Test 1"},
@@ -28,25 +28,28 @@ func TestConvertStateToTableData(t *testing.T) {
 	}
 	selection := &state.TableStateValueSelection{
 		Row:  0,
-		Rows: []int{0},
+		Rows: []int32{0},
 	}
 
 	tableState := &state.TableState{
 		ID:           id,
 		Data:         data,
-		Header:       conv.NilValue("Test Table"),
-		Description:  conv.NilValue("Test Description"),
-		OnSelect:     conv.NilValue(table.SelectionBehaviorRerun.String()),
-		RowSelection: conv.NilValue(table.SelectionModeSingle.String()),
+		Header:       "Test Table",
+		Description:  "Test Description",
+		OnSelect:     table.SelectionBehaviorRerun.String(),
+		RowSelection: table.SelectionModeSingle.String(),
 		Value: state.TableStateValue{
 			Selection: selection,
 		},
 	}
 
-	tableData := convertStateToTableData(tableState)
+	tableData, err := convertStateToTableProto(tableState)
+	if err != nil {
+		t.Fatalf("convertStateToTableProto returned error: %v", err)
+	}
 
 	if tableData == nil {
-		t.Fatal("convertStateToTableData returned nil")
+		t.Fatal("convertStateToTableProto returned nil")
 	}
 
 	tests := []struct {
@@ -54,9 +57,9 @@ func TestConvertStateToTableData(t *testing.T) {
 		got  any
 		want any
 	}{
-		{"Header", conv.SafeValue(tableData.Header), conv.SafeValue(tableState.Header)},
-		{"Description", conv.SafeValue(tableData.Description), conv.SafeValue(tableState.Description)},
-		{"OnSelect", conv.SafeValue(tableData.OnSelect), conv.SafeValue(tableState.OnSelect)},
+		{"Header", tableData.Header, tableState.Header},
+		{"Description", tableData.Description, tableState.Description},
+		{"OnSelect", tableData.OnSelect, tableState.OnSelect},
 		{"RowSelection", tableData.RowSelection, tableState.RowSelection},
 		{"Selection.Row", tableData.Value.Selection.Row, tableState.Value.Selection.Row},
 		{"Selection.Rows", tableData.Value.Selection.Rows, tableState.Value.Selection.Rows},
@@ -70,38 +73,46 @@ func TestConvertStateToTableData(t *testing.T) {
 		})
 	}
 
-	// Verify data separately since it's an any
-	if !reflect.DeepEqual(tableData.Data, data) {
+	dataBytes, err := json.Marshal(data)
+	if err != nil {
+		t.Fatalf("json.Marshal returned error: %v", err)
+	}
+	if !reflect.DeepEqual(tableData.Data, dataBytes) {
 		t.Errorf("Data = %v, want %v", tableData.Data, data)
 	}
 }
 
-func TestConvertTableDataToState(t *testing.T) {
+func TestConvertTableProtoToState(t *testing.T) {
 	id := uuid.Must(uuid.NewV4())
 	data := []testData{
 		{ID: 1, Name: "Test 1"},
 		{ID: 2, Name: "Test 2"},
 	}
-	selection := &websocket.TableDataValueSelection{
+	selection := &widgetv1.TableValueSelection{
 		Row:  0,
-		Rows: []int{0},
+		Rows: []int32{0},
 	}
 
-	tableData := &websocket.TableData{
-		Data:         data,
-		Header:       conv.NilValue("Test Table"),
-		Description:  conv.NilValue("Test Description"),
-		OnSelect:     conv.NilValue(table.SelectionBehaviorRerun.String()),
-		RowSelection: conv.NilValue(table.SelectionModeSingle.String()),
-		Value: websocket.TableDataValue{
+	dataBytes, err := json.Marshal(data)
+	if err != nil {
+		t.Fatalf("json.Marshal returned error: %v", err)
+	}
+
+	tableData := &widgetv1.Table{
+		Data:         dataBytes,
+		Header:       "Test Table",
+		Description:  "Test Description",
+		OnSelect:     table.SelectionBehaviorRerun.String(),
+		RowSelection: table.SelectionModeSingle.String(),
+		Value: &widgetv1.TableValue{
 			Selection: selection,
 		},
 	}
 
-	state := convertTableDataToState(id, tableData)
+	state := convertTableProtoToState(id, tableData)
 
 	if state == nil {
-		t.Fatal("convertTableDataToState returned nil")
+		t.Fatal("convertTableProtoToState returned nil")
 	}
 
 	tests := []struct {
@@ -126,8 +137,11 @@ func TestConvertTableDataToState(t *testing.T) {
 		})
 	}
 
-	// Verify data separately since it's an any
-	if !reflect.DeepEqual(state.Data, data) {
+	dataBytes, err = json.Marshal(data)
+	if err != nil {
+		t.Fatalf("json.Marshal returned error: %v", err)
+	}
+	if !reflect.DeepEqual(state.Data, dataBytes) {
 		t.Errorf("Data = %v, want %v", state.Data, data)
 	}
 }
@@ -137,7 +151,7 @@ func TestTable(t *testing.T) {
 	pageID := uuid.Must(uuid.NewV4())
 	sess := session.New(sessionID, pageID)
 
-	mockWS := mock.NewMockWebSocketClient()
+	mockWS := mock.NewClient()
 
 	builder := &uiBuilder{
 		context: context.Background(),
@@ -158,7 +172,6 @@ func TestTable(t *testing.T) {
 	header := "Test Table"
 	description := "Test Description"
 
-	// Create Table component with all options
 	builder.Table(data,
 		table.Header(header),
 		table.Description(description),
@@ -166,16 +179,15 @@ func TestTable(t *testing.T) {
 		table.RowSelection(table.SelectionModeSingle),
 	)
 
-	// Verify WebSocket message
-	if len(mockWS.Messages) != 1 {
-		t.Errorf("WebSocket messages count = %d, want 1", len(mockWS.Messages))
+	messages := mockWS.Messages()
+	if len(messages) != 1 {
+		t.Errorf("WebSocket messages count = %d, want 1", len(messages))
 	}
-	msg := mockWS.Messages[0]
-	if msg.Method != websocket.MessageMethodRenderWidget {
-		t.Errorf("WebSocket message method = %v, want %v", msg.Method, websocket.MessageMethodRenderWidget)
+	msg := messages[0]
+	if v := msg.GetRenderWidget(); v == nil {
+		t.Fatal("WebSocket message type = nil, want RenderWidget")
 	}
 
-	// Verify state
 	widgetID := builder.generateTableID([]int{0})
 	state := sess.State.GetTable(widgetID)
 	if state == nil {
@@ -187,10 +199,10 @@ func TestTable(t *testing.T) {
 		got  any
 		want any
 	}{
-		{"Header", conv.SafeValue(state.Header), header},
-		{"Description", conv.SafeValue(state.Description), description},
-		{"OnSelect", conv.SafeValue(state.OnSelect), table.SelectionBehaviorRerun.String()},
-		{"RowSelection", conv.SafeValue(state.RowSelection), table.SelectionModeSingle.String()},
+		{"Header", state.Header, header},
+		{"Description", state.Description, description},
+		{"OnSelect", state.OnSelect, table.SelectionBehaviorRerun.String()},
+		{"RowSelection", state.RowSelection, table.SelectionModeSingle.String()},
 	}
 
 	for _, tt := range tests {
@@ -201,7 +213,6 @@ func TestTable(t *testing.T) {
 		})
 	}
 
-	// Verify data separately since it's an any
 	if !reflect.DeepEqual(state.Data, data) {
 		t.Errorf("Data = %v, want %v", state.Data, data)
 	}
@@ -212,7 +223,7 @@ func TestTable_DefaultValues(t *testing.T) {
 	pageID := uuid.Must(uuid.NewV4())
 	sess := session.New(sessionID, pageID)
 
-	mockWS := mock.NewMockWebSocketClient()
+	mockWS := mock.NewClient()
 
 	builder := &uiBuilder{
 		context: context.Background(),
@@ -231,27 +242,24 @@ func TestTable_DefaultValues(t *testing.T) {
 		{ID: 2, Name: "Test 2"},
 	}
 
-	// Create Table component without options
 	builder.Table(data)
 
-	// Verify state
 	widgetID := builder.generateTableID([]int{0})
 	state := sess.State.GetTable(widgetID)
 	if state == nil {
 		t.Fatal("Table state not found")
 	}
 
-	// Verify default values
-	if conv.SafeValue(state.OnSelect) != table.SelectionBehaviorIgnore.String() {
-		t.Errorf("Default OnSelect = %v, want %v", conv.SafeValue(state.OnSelect), table.SelectionBehaviorIgnore)
+	if state.OnSelect != table.SelectionBehaviorIgnore.String() {
+		t.Errorf("Default OnSelect = %v, want %v", state.OnSelect, table.SelectionBehaviorIgnore)
 	}
-	if conv.SafeValue(state.RowSelection) != table.SelectionModeSingle.String() {
-		t.Errorf("Default RowSelection = %v, want %v", conv.SafeValue(state.RowSelection), table.SelectionModeSingle)
+	if state.RowSelection != table.SelectionModeSingle.String() {
+		t.Errorf("Default RowSelection = %v, want %v", state.RowSelection, table.SelectionModeSingle)
 	}
-	if state.Header != nil {
+	if state.Header != "" {
 		t.Errorf("Default Header = %v, want empty string", state.Header)
 	}
-	if state.Description != nil {
+	if state.Description != "" {
 		t.Errorf("Default Description = %v, want empty string", state.Description)
 	}
 }

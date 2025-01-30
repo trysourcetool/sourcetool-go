@@ -8,7 +8,8 @@ import (
 	"github.com/trysourcetool/sourcetool-go/checkboxgroup"
 	"github.com/trysourcetool/sourcetool-go/internal/options"
 	"github.com/trysourcetool/sourcetool-go/internal/session/state"
-	"github.com/trysourcetool/sourcetool-go/internal/websocket"
+	websocketv1 "github.com/trysourcetool/sourcetool-proto/go/websocket/v1"
+	widgetv1 "github.com/trysourcetool/sourcetool-proto/go/widget/v1"
 )
 
 func (b *uiBuilder) CheckboxGroup(label string, opts ...checkboxgroup.Option) *checkboxgroup.Value {
@@ -42,12 +43,12 @@ func (b *uiBuilder) CheckboxGroup(label string, opts ...checkboxgroup.Option) *c
 	log.Printf("Page ID: %s", page.id.String())
 	log.Printf("Path: %v\n", path)
 
-	var defaultVal []int
+	var defaultVal []int32
 	if len(checkboxGroupOpts.DefaultValue) != 0 {
 		for _, o := range checkboxGroupOpts.DefaultValue {
 			for i, opt := range checkboxGroupOpts.Options {
 				if opt == o {
-					defaultVal = append(defaultVal, i)
+					defaultVal = append(defaultVal, int32(i))
 					break
 				}
 			}
@@ -80,13 +81,17 @@ func (b *uiBuilder) CheckboxGroup(label string, opts ...checkboxgroup.Option) *c
 	checkboxGroupState.Disabled = checkboxGroupOpts.Disabled
 	sess.State.Set(widgetID, checkboxGroupState)
 
-	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), websocket.MessageMethodRenderWidget, &websocket.RenderWidgetPayload{
-		SessionID:  sess.ID.String(),
-		PageID:     page.id.String(),
-		WidgetID:   widgetID.String(),
-		WidgetType: state.WidgetTypeCheckboxGroup.String(),
-		Path:       path,
-		Data:       convertStateToCheckboxGroupData(checkboxGroupState),
+	checkboxGroupProto := convertStateToCheckboxGroupProto(checkboxGroupState)
+	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), &websocketv1.RenderWidget{
+		SessionId: sess.ID.String(),
+		PageId:    page.id.String(),
+		Path:      convertPathToInt32Slice(path),
+		Widget: &widgetv1.Widget{
+			Id: widgetID.String(),
+			Type: &widgetv1.Widget_CheckboxGroup{
+				CheckboxGroup: checkboxGroupProto,
+			},
+		},
 	})
 
 	cursor.next()
@@ -99,7 +104,7 @@ func (b *uiBuilder) CheckboxGroup(label string, opts ...checkboxgroup.Option) *c
 		}
 		for i, idx := range checkboxGroupState.Value {
 			value.Values[i] = checkboxGroupOpts.Options[idx]
-			value.Indexes[i] = idx
+			value.Indexes[i] = int(idx)
 		}
 	}
 
@@ -114,11 +119,11 @@ func (b *uiBuilder) generateCheckboxGroupID(label string, path path) uuid.UUID {
 	return uuid.NewV5(page.id, state.WidgetTypeCheckboxGroup.String()+"-"+label+"-"+path.String())
 }
 
-func convertStateToCheckboxGroupData(state *state.CheckboxGroupState) *websocket.CheckboxGroupData {
+func convertStateToCheckboxGroupProto(state *state.CheckboxGroupState) *widgetv1.CheckboxGroup {
 	if state == nil {
 		return nil
 	}
-	return &websocket.CheckboxGroupData{
+	return &widgetv1.CheckboxGroup{
 		Label:        state.Label,
 		Value:        state.Value,
 		Options:      state.Options,
@@ -128,7 +133,7 @@ func convertStateToCheckboxGroupData(state *state.CheckboxGroupState) *websocket
 	}
 }
 
-func convertCheckboxGroupDataToState(id uuid.UUID, data *websocket.CheckboxGroupData) *state.CheckboxGroupState {
+func convertCheckboxGroupProtoToState(id uuid.UUID, data *widgetv1.CheckboxGroup) *state.CheckboxGroupState {
 	if data == nil {
 		return nil
 	}

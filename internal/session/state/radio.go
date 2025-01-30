@@ -7,9 +7,9 @@ const WidgetTypeRadio WidgetType = "radio"
 type RadioState struct {
 	ID           uuid.UUID
 	Label        string
-	Value        *int
+	Value        *int32
 	Options      []string
-	DefaultValue *int
+	DefaultValue *int32
 	Required     bool
 	Disabled     bool
 }

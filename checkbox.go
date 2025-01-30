@@ -8,7 +8,8 @@ import (
 	"github.com/trysourcetool/sourcetool-go/checkbox"
 	"github.com/trysourcetool/sourcetool-go/internal/options"
 	"github.com/trysourcetool/sourcetool-go/internal/session/state"
-	"github.com/trysourcetool/sourcetool-go/internal/websocket"
+	websocketv1 "github.com/trysourcetool/sourcetool-proto/go/websocket/v1"
+	widgetv1 "github.com/trysourcetool/sourcetool-proto/go/widget/v1"
 )
 
 func (b *uiBuilder) Checkbox(label string, opts ...checkbox.Option) bool {
@@ -55,13 +56,17 @@ func (b *uiBuilder) Checkbox(label string, opts ...checkbox.Option) bool {
 	checkboxState.Disabled = checkboxOpts.Disabled
 	sess.State.Set(widgetID, checkboxState)
 
-	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), websocket.MessageMethodRenderWidget, &websocket.RenderWidgetPayload{
-		SessionID:  sess.ID.String(),
-		PageID:     page.id.String(),
-		WidgetID:   widgetID.String(),
-		WidgetType: state.WidgetTypeCheckbox.String(),
-		Path:       path,
-		Data:       convertStateToCheckboxData(checkboxState),
+	checkboxProto := convertStateToCheckboxProto(checkboxState)
+	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), &websocketv1.RenderWidget{
+		SessionId: sess.ID.String(),
+		PageId:    page.id.String(),
+		Path:      convertPathToInt32Slice(path),
+		Widget: &widgetv1.Widget{
+			Id: widgetID.String(),
+			Type: &widgetv1.Widget_Checkbox{
+				Checkbox: checkboxProto,
+			},
+		},
 	})
 
 	cursor.next()
@@ -77,11 +82,11 @@ func (b *uiBuilder) generateCheckboxID(label string, path path) uuid.UUID {
 	return uuid.NewV5(page.id, state.WidgetTypeCheckbox.String()+"-"+label+"-"+path.String())
 }
 
-func convertStateToCheckboxData(state *state.CheckboxState) *websocket.CheckboxData {
+func convertStateToCheckboxProto(state *state.CheckboxState) *widgetv1.Checkbox {
 	if state == nil {
 		return nil
 	}
-	return &websocket.CheckboxData{
+	return &widgetv1.Checkbox{
 		Value:        state.Value,
 		Label:        state.Label,
 		DefaultValue: state.DefaultValue,
@@ -90,7 +95,7 @@ func convertStateToCheckboxData(state *state.CheckboxState) *websocket.CheckboxD
 	}
 }
 
-func convertCheckboxDataToState(id uuid.UUID, data *websocket.CheckboxData) *state.CheckboxState {
+func convertCheckboxProtoToState(id uuid.UUID, data *widgetv1.Checkbox) *state.CheckboxState {
 	if data == nil {
 		return nil
 	}

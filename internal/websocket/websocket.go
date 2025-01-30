@@ -1,7 +1,6 @@
 package websocket
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -10,14 +9,14 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 	"github.com/gorilla/websocket"
+	websocketv1 "github.com/trysourcetool/sourcetool-proto/go/websocket/v1"
+	"google.golang.org/protobuf/proto"
 )
 
 type Client interface {
-	RegisterHandler(MessageMethod, MessageHandlerFunc)
-
-	Enqueue(string, MessageMethod, any)
-	EnqueueWithResponse(string, MessageMethod, any) (*Message, error)
-
+	RegisterHandler(MessageHandlerFunc)
+	Enqueue(string, proto.Message)
+	EnqueueWithResponse(string, proto.Message) (*websocketv1.Message, error)
 	Close() error
 	Wait() error
 }
@@ -39,13 +38,13 @@ type client struct {
 	conn   *websocket.Conn
 	connMu sync.RWMutex
 
-	messageQueue chan *Message
+	messageQueue chan *websocketv1.Message
 	done         chan error
 
-	responses map[string]chan *Message
+	responses map[string]chan *websocketv1.Message
 	respMu    sync.RWMutex
 
-	handlers  map[MessageMethod]MessageHandlerFunc
+	handler   MessageHandlerFunc
 	handlerMu sync.RWMutex
 }
 
@@ -59,11 +58,10 @@ func NewClient(config Config) (Client, error) {
 
 	c := &client{
 		config:       config,
-		messageQueue: make(chan *Message, 100),
+		messageQueue: make(chan *websocketv1.Message, 100),
 		done:         make(chan error, 1),
 		dialer:       websocket.DefaultDialer,
-		responses:    make(map[string]chan *Message),
-		handlers:     make(map[MessageMethod]MessageHandlerFunc),
+		responses:    make(map[string]chan *websocketv1.Message),
 	}
 
 	if err := c.connect(); err != nil {
@@ -77,32 +75,30 @@ func NewClient(config Config) (Client, error) {
 	return c, nil
 }
 
-func (c *client) RegisterHandler(method MessageMethod, handler MessageHandlerFunc) {
+func (c *client) RegisterHandler(handler MessageHandlerFunc) {
 	c.handlerMu.Lock()
 	defer c.handlerMu.Unlock()
-	c.handlers[method] = handler
+	c.handler = handler
 }
 
-func (c *client) handleMessage(msg *Message) error {
+func (c *client) handleMessage(msg *websocketv1.Message) error {
 	// Handle responses
-	if msg.Kind == MessageKindResponse {
-		c.respMu.RLock()
-		respChan, exists := c.responses[msg.ID]
-		c.respMu.RUnlock()
+	c.respMu.RLock()
+	respChan, exists := c.responses[msg.Id]
+	c.respMu.RUnlock()
 
-		if exists {
-			respChan <- msg
-			return nil
-		}
+	if exists {
+		respChan <- msg
+		return nil
 	}
 
 	// Handle calls
 	c.handlerMu.RLock()
-	handler, exists := c.handlers[msg.Method]
+	handler := c.handler
 	c.handlerMu.RUnlock()
 
-	if !exists {
-		return fmt.Errorf("unknown method: %s", msg.Method)
+	if handler == nil {
+		return fmt.Errorf("no message handler registered")
 	}
 
 	return handler(msg)
@@ -181,7 +177,7 @@ func (c *client) pingPongLoop() {
 
 func (c *client) readMessages() {
 	for {
-		var msg *Message
+		var data []byte
 		c.connMu.RLock()
 		conn := c.conn
 		c.connMu.RUnlock()
@@ -191,7 +187,7 @@ func (c *client) readMessages() {
 			continue
 		}
 
-		err := conn.ReadJSON(&msg)
+		_, data, err := conn.ReadMessage()
 		if err != nil {
 			if websocket.IsCloseError(err, websocket.CloseNormalClosure, websocket.CloseGoingAway) {
 				c.done <- nil
@@ -212,13 +208,15 @@ func (c *client) readMessages() {
 			continue
 		}
 
-		if msg == nil {
-			log.Printf("received nil message")
+		msg, err := unmarshalMessage(data)
+		if err != nil {
+			log.Printf("error unmarshaling message: %v", err)
 			continue
 		}
 
 		if err := c.handleMessage(msg); err != nil {
 			log.Printf("error handling message: %v", err)
+			c.sendException(msg.Id, err)
 		}
 	}
 }
@@ -227,7 +225,7 @@ func (c *client) sendEnqueuedMessagesLoop() {
 	defer close(c.messageQueue)
 
 	const batchInterval = 10 * time.Millisecond
-	var messageBuffer []*Message
+	var messageBuffer []*websocketv1.Message
 
 	for {
 		select {
@@ -250,7 +248,7 @@ func (c *client) sendEnqueuedMessagesLoop() {
 					continue
 				}
 
-				var remainingMessages []*Message
+				var remainingMessages []*websocketv1.Message
 				for _, msg := range messageBuffer {
 					if err := c.send(msg); err != nil {
 						remainingMessages = append(remainingMessages, msg)
@@ -270,27 +268,25 @@ func (c *client) sendEnqueuedMessagesLoop() {
 	}
 }
 
-func (c *client) send(msg *Message) error {
-	return c.conn.WriteJSON(msg)
+func (c *client) send(msg *websocketv1.Message) error {
+	data, err := marshalMessage(msg)
+	if err != nil {
+		return fmt.Errorf("error marshaling message: %w", err)
+	}
+	return c.conn.WriteMessage(websocket.BinaryMessage, data)
 }
 
-func (c *client) Enqueue(id string, method MessageMethod, data any) {
-	b, err := json.Marshal(data)
+func (c *client) Enqueue(id string, payload proto.Message) {
+	msg, err := NewMessage(id, payload)
 	if err != nil {
-		log.Printf("error marshalling data: %v", err)
+		log.Printf("error creating message: %v", err)
 		return
 	}
-
-	c.messageQueue <- &Message{
-		ID:      id,
-		Kind:    MessageKindCall,
-		Method:  method,
-		Payload: b,
-	}
+	c.messageQueue <- msg
 }
 
-func (c *client) EnqueueWithResponse(id string, method MessageMethod, data any) (*Message, error) {
-	respChan := make(chan *Message, 1)
+func (c *client) EnqueueWithResponse(id string, payload proto.Message) (*websocketv1.Message, error) {
+	respChan := make(chan *websocketv1.Message, 1)
 	c.respMu.Lock()
 	c.responses[id] = respChan
 	c.respMu.Unlock()
@@ -301,7 +297,7 @@ func (c *client) EnqueueWithResponse(id string, method MessageMethod, data any) 
 		c.respMu.Unlock()
 	}()
 
-	c.Enqueue(id, method, data)
+	c.Enqueue(id, payload)
 
 	select {
 	case resp := <-respChan:

@@ -8,10 +8,10 @@ type TableState struct {
 	ID           uuid.UUID
 	Data         any
 	Value        TableStateValue
-	Header       *string
-	Description  *string
-	OnSelect     *string
-	RowSelection *string
+	Header       string
+	Description  string
+	OnSelect     string
+	RowSelection string
 }
 
 type TableStateValue struct {
@@ -19,8 +19,8 @@ type TableStateValue struct {
 }
 
 type TableStateValueSelection struct {
-	Row  int
-	Rows []int
+	Row  int32
+	Rows []int32
 }
 
 func (s *TableState) IsWidgetState()      {}

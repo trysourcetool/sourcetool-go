@@ -8,15 +8,15 @@ import (
 
 	"github.com/trysourcetool/sourcetool-go/internal/session"
 	"github.com/trysourcetool/sourcetool-go/internal/session/state"
-	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket/mock"
 	"github.com/trysourcetool/sourcetool-go/radio"
+	widgetv1 "github.com/trysourcetool/sourcetool-proto/go/widget/v1"
 )
 
-func TestConvertStateToRadioData(t *testing.T) {
+func TestConvertStateToRadioProto(t *testing.T) {
 	id := uuid.Must(uuid.NewV4())
-	value := 1
-	defaultValue := 0
+	value := int32(1)
+	defaultValue := int32(0)
 	options := []string{"Option 1", "Option 2"}
 
 	radioState := &state.RadioState{
@@ -29,10 +29,10 @@ func TestConvertStateToRadioData(t *testing.T) {
 		Disabled:     false,
 	}
 
-	data := convertStateToRadioData(radioState)
+	data := convertStateToRadioProto(radioState)
 
 	if data == nil {
-		t.Fatal("convertStateToRadioData returned nil")
+		t.Fatal("convertStateToRadioProto returned nil")
 	}
 
 	tests := []struct {
@@ -57,13 +57,12 @@ func TestConvertStateToRadioData(t *testing.T) {
 	}
 }
 
-func TestConvertRadioDataToState(t *testing.T) {
-	id := uuid.Must(uuid.NewV4())
-	value := 1
-	defaultValue := 0
+func TestConvertRadioProtoToState(t *testing.T) {
+	value := int32(1)
+	defaultValue := int32(0)
 	options := []string{"Option 1", "Option 2"}
 
-	data := &websocket.RadioData{
+	data := &widgetv1.Radio{
 		Label:        "Test Radio",
 		Value:        &value,
 		Options:      options,
@@ -72,10 +71,10 @@ func TestConvertRadioDataToState(t *testing.T) {
 		Disabled:     false,
 	}
 
-	state := convertRadioDataToState(id, data)
+	state := convertRadioProtoToState(uuid.Must(uuid.NewV4()), data)
 
 	if state == nil {
-		t.Fatal("convertRadioDataToState returned nil")
+		t.Fatal("convertRadioProtoToState returned nil")
 	}
 
 	tests := []struct {
@@ -83,7 +82,7 @@ func TestConvertRadioDataToState(t *testing.T) {
 		got  any
 		want any
 	}{
-		{"ID", state.ID, id},
+		{"ID", state.ID, state.ID},
 		{"Label", state.Label, data.Label},
 		{"Value", *state.Value, *data.Value},
 		{"Options length", len(state.Options), len(data.Options)},
@@ -106,7 +105,7 @@ func TestRadio(t *testing.T) {
 	pageID := uuid.Must(uuid.NewV4())
 	sess := session.New(sessionID, pageID)
 
-	mockWS := mock.NewMockWebSocketClient()
+	mockWS := mock.NewClient()
 
 	builder := &uiBuilder{
 		context: context.Background(),
@@ -124,14 +123,12 @@ func TestRadio(t *testing.T) {
 	options := []string{"Option 1", "Option 2"}
 	defaultValue := "Option 1"
 
-	// Create Radio component
 	value := builder.Radio(label,
 		radio.Options(options...),
 		radio.DefaultValue(defaultValue),
 		radio.Required(true),
 	)
 
-	// Verify return value
 	if value == nil {
 		t.Fatal("Radio returned nil")
 	}
@@ -142,16 +139,15 @@ func TestRadio(t *testing.T) {
 		t.Errorf("Radio index = %v, want 0", value.Index)
 	}
 
-	// Verify WebSocket message
-	if len(mockWS.Messages) != 1 {
-		t.Errorf("WebSocket messages count = %d, want 1", len(mockWS.Messages))
+	messages := mockWS.Messages()
+	if len(messages) != 1 {
+		t.Errorf("WebSocket messages count = %d, want 1", len(messages))
 	}
-	msg := mockWS.Messages[0]
-	if msg.Method != websocket.MessageMethodRenderWidget {
-		t.Errorf("WebSocket message method = %v, want %v", msg.Method, websocket.MessageMethodRenderWidget)
+	msg := messages[0]
+	if v := msg.GetRenderWidget(); v == nil {
+		t.Fatal("WebSocket message type = nil, want RenderWidget")
 	}
 
-	// Verify state
 	widgetID := builder.generateRadioID(label, []int{0})
 	state := sess.State.GetRadio(widgetID)
 	if state == nil {
@@ -183,7 +179,7 @@ func TestRadio_WithFormatFunc(t *testing.T) {
 	pageID := uuid.Must(uuid.NewV4())
 	sess := session.New(sessionID, pageID)
 
-	mockWS := mock.NewMockWebSocketClient()
+	mockWS := mock.NewClient()
 
 	builder := &uiBuilder{
 		context: context.Background(),
@@ -208,7 +204,6 @@ func TestRadio_WithFormatFunc(t *testing.T) {
 		radio.FormatFunc(formatFunc),
 	)
 
-	// Verify that format function is applied
 	widgetID := builder.generateRadioID(label, []int{0})
 	state := sess.State.GetRadio(widgetID)
 	if state == nil {

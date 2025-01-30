@@ -7,10 +7,10 @@ const WidgetTypeSelectbox WidgetType = "selectbox"
 type SelectboxState struct {
 	ID           uuid.UUID
 	Label        string
-	Value        *int
+	Value        *int32
 	Options      []string
 	Placeholder  string
-	DefaultValue *int
+	DefaultValue *int32
 	Required     bool
 	Disabled     bool
 }

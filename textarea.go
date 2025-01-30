@@ -5,18 +5,20 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 
+	"github.com/trysourcetool/sourcetool-go/internal/conv"
 	"github.com/trysourcetool/sourcetool-go/internal/options"
 	"github.com/trysourcetool/sourcetool-go/internal/session/state"
-	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 	"github.com/trysourcetool/sourcetool-go/textarea"
+	websocketv1 "github.com/trysourcetool/sourcetool-proto/go/websocket/v1"
+	widgetv1 "github.com/trysourcetool/sourcetool-proto/go/widget/v1"
 )
 
 func (b *uiBuilder) TextArea(label string, opts ...textarea.Option) string {
-	defaultMinLines := 2
+	defaultMinLines := int32(2)
 	textAreaOpts := &options.TextAreaOptions{
 		Label:        label,
 		Placeholder:  "",
-		DefaultValue: "",
+		DefaultValue: nil,
 		Required:     false,
 		Disabled:     false,
 		MaxLength:    nil,
@@ -68,18 +70,22 @@ func (b *uiBuilder) TextArea(label string, opts ...textarea.Option) string {
 	textAreaState.AutoResize = textAreaOpts.AutoResize
 	sess.State.Set(widgetID, textAreaState)
 
-	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), websocket.MessageMethodRenderWidget, &websocket.RenderWidgetPayload{
-		SessionID:  sess.ID.String(),
-		PageID:     page.id.String(),
-		WidgetID:   widgetID.String(),
-		WidgetType: state.WidgetTypeTextArea.String(),
-		Path:       path,
-		Data:       convertStateToTextAreaData(textAreaState),
+	textAreaProto := convertStateToTextAreaProto(textAreaState)
+	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), &websocketv1.RenderWidget{
+		SessionId: sess.ID.String(),
+		PageId:    page.id.String(),
+		Path:      convertPathToInt32Slice(path),
+		Widget: &widgetv1.Widget{
+			Id: widgetID.String(),
+			Type: &widgetv1.Widget_TextArea{
+				TextArea: textAreaProto,
+			},
+		},
 	})
 
 	cursor.next()
 
-	return textAreaState.Value
+	return conv.SafeValue(textAreaState.Value)
 }
 
 func (b *uiBuilder) generateTextAreaID(label string, path path) uuid.UUID {
@@ -90,11 +96,11 @@ func (b *uiBuilder) generateTextAreaID(label string, path path) uuid.UUID {
 	return uuid.NewV5(page.id, state.WidgetTypeTextArea.String()+"-"+label+"-"+path.String())
 }
 
-func convertStateToTextAreaData(state *state.TextAreaState) *websocket.TextAreaData {
+func convertStateToTextAreaProto(state *state.TextAreaState) *widgetv1.TextArea {
 	if state == nil {
 		return nil
 	}
-	return &websocket.TextAreaData{
+	return &widgetv1.TextArea{
 		Value:        state.Value,
 		Label:        state.Label,
 		Placeholder:  state.Placeholder,
@@ -109,7 +115,7 @@ func convertStateToTextAreaData(state *state.TextAreaState) *websocket.TextAreaD
 	}
 }
 
-func convertTextAreaDataToState(id uuid.UUID, data *websocket.TextAreaData) *state.TextAreaState {
+func convertTextAreaProtoToState(id uuid.UUID, data *widgetv1.TextArea) *state.TextAreaState {
 	if data == nil {
 		return nil
 	}

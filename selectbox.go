@@ -8,8 +8,9 @@ import (
 	"github.com/trysourcetool/sourcetool-go/internal/conv"
 	"github.com/trysourcetool/sourcetool-go/internal/options"
 	"github.com/trysourcetool/sourcetool-go/internal/session/state"
-	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 	"github.com/trysourcetool/sourcetool-go/selectbox"
+	websocketv1 "github.com/trysourcetool/sourcetool-proto/go/websocket/v1"
+	widgetv1 "github.com/trysourcetool/sourcetool-proto/go/widget/v1"
 )
 
 func (b *uiBuilder) Selectbox(label string, opts ...selectbox.Option) *selectbox.Value {
@@ -44,11 +45,12 @@ func (b *uiBuilder) Selectbox(label string, opts ...selectbox.Option) *selectbox
 	log.Printf("Page ID: %s", page.id.String())
 	log.Printf("Path: %v\n", path)
 
-	var defaultVal *int
+	var defaultVal *int32
 	if selectboxOpts.DefaultValue != nil {
 		for i, o := range selectboxOpts.Options {
 			if conv.SafeValue(selectboxOpts.DefaultValue) == o {
-				defaultVal = &i
+				v := int32(i)
+				defaultVal = &v
 				break
 			}
 		}
@@ -83,13 +85,17 @@ func (b *uiBuilder) Selectbox(label string, opts ...selectbox.Option) *selectbox
 	selectboxState.Disabled = selectboxOpts.Disabled
 	sess.State.Set(widgetID, selectboxState)
 
-	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), websocket.MessageMethodRenderWidget, &websocket.RenderWidgetPayload{
-		SessionID:  sess.ID.String(),
-		PageID:     page.id.String(),
-		WidgetID:   widgetID.String(),
-		WidgetType: state.WidgetTypeSelectbox.String(),
-		Path:       path,
-		Data:       convertStateToSelectboxData(selectboxState),
+	selectboxProto := convertStateToSelectboxProto(selectboxState)
+	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), &websocketv1.RenderWidget{
+		SessionId: sess.ID.String(),
+		PageId:    page.id.String(),
+		Path:      convertPathToInt32Slice(path),
+		Widget: &widgetv1.Widget{
+			Id: widgetID.String(),
+			Type: &widgetv1.Widget_Selectbox{
+				Selectbox: selectboxProto,
+			},
+		},
 	})
 
 	cursor.next()
@@ -98,7 +104,7 @@ func (b *uiBuilder) Selectbox(label string, opts ...selectbox.Option) *selectbox
 	if selectboxState.Value != nil {
 		value = &selectbox.Value{
 			Value: selectboxOpts.Options[*selectboxState.Value],
-			Index: conv.SafeValue(selectboxState.Value),
+			Index: int(conv.SafeValue(selectboxState.Value)),
 		}
 	}
 
@@ -113,11 +119,11 @@ func (b *uiBuilder) generateSelectboxID(label string, path path) uuid.UUID {
 	return uuid.NewV5(page.id, state.WidgetTypeSelectbox.String()+"-"+label+"-"+path.String())
 }
 
-func convertStateToSelectboxData(state *state.SelectboxState) *websocket.SelectboxData {
+func convertStateToSelectboxProto(state *state.SelectboxState) *widgetv1.Selectbox {
 	if state == nil {
 		return nil
 	}
-	return &websocket.SelectboxData{
+	return &widgetv1.Selectbox{
 		Label:        state.Label,
 		Value:        state.Value,
 		Options:      state.Options,
@@ -128,7 +134,7 @@ func convertStateToSelectboxData(state *state.SelectboxState) *websocket.Selectb
 	}
 }
 
-func convertSelectboxDataToState(id uuid.UUID, data *websocket.SelectboxData) *state.SelectboxState {
+func convertSelectboxProtoToState(id uuid.UUID, data *widgetv1.Selectbox) *state.SelectboxState {
 	if data == nil {
 		return nil
 	}

@@ -6,26 +6,27 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 
+	"github.com/trysourcetool/sourcetool-go/internal/conv"
 	"github.com/trysourcetool/sourcetool-go/internal/session"
 	"github.com/trysourcetool/sourcetool-go/internal/session/state"
-	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket/mock"
 	"github.com/trysourcetool/sourcetool-go/textarea"
+	widgetv1 "github.com/trysourcetool/sourcetool-proto/go/widget/v1"
 )
 
-func TestConvertStateToTextAreaData(t *testing.T) {
+func TestConvertStateToTextAreaProto(t *testing.T) {
 	id := uuid.Must(uuid.NewV4())
-	maxLength := 1000
-	minLength := 10
-	maxLines := 10
-	minLines := 3
+	maxLength := int32(1000)
+	minLength := int32(10)
+	maxLines := int32(10)
+	minLines := int32(3)
 
 	textAreaState := &state.TextAreaState{
 		ID:           id,
 		Label:        "Test TextArea",
-		Value:        "test value",
+		Value:        conv.NilValue("test value"),
 		Placeholder:  "Enter text",
-		DefaultValue: "default",
+		DefaultValue: conv.NilValue("default"),
 		Required:     true,
 		Disabled:     false,
 		MaxLength:    &maxLength,
@@ -35,10 +36,10 @@ func TestConvertStateToTextAreaData(t *testing.T) {
 		AutoResize:   true,
 	}
 
-	data := convertStateToTextAreaData(textAreaState)
+	data := convertStateToTextAreaProto(textAreaState)
 
 	if data == nil {
-		t.Fatal("convertStateToTextAreaData returned nil")
+		t.Fatal("convertStateToTextAreaProto returned nil")
 	}
 
 	tests := []struct {
@@ -68,18 +69,18 @@ func TestConvertStateToTextAreaData(t *testing.T) {
 	}
 }
 
-func TestConvertTextAreaDataToState(t *testing.T) {
+func TestConvertTextAreaProtoToState(t *testing.T) {
 	id := uuid.Must(uuid.NewV4())
-	maxLength := 1000
-	minLength := 10
-	maxLines := 10
-	minLines := 3
+	maxLength := int32(1000)
+	minLength := int32(10)
+	maxLines := int32(10)
+	minLines := int32(3)
 
-	data := &websocket.TextAreaData{
+	data := &widgetv1.TextArea{
 		Label:        "Test TextArea",
-		Value:        "test value",
+		Value:        conv.NilValue("test value"),
 		Placeholder:  "Enter text",
-		DefaultValue: "default",
+		DefaultValue: conv.NilValue("default"),
 		Required:     true,
 		Disabled:     false,
 		MaxLength:    &maxLength,
@@ -89,10 +90,10 @@ func TestConvertTextAreaDataToState(t *testing.T) {
 		AutoResize:   true,
 	}
 
-	state := convertTextAreaDataToState(id, data)
+	state := convertTextAreaProtoToState(id, data)
 
 	if state == nil {
-		t.Fatal("convertTextAreaDataToState returned nil")
+		t.Fatal("convertTextAreaProtoToState returned nil")
 	}
 
 	tests := []struct {
@@ -128,7 +129,7 @@ func TestTextArea(t *testing.T) {
 	pageID := uuid.Must(uuid.NewV4())
 	sess := session.New(sessionID, pageID)
 
-	mockWS := mock.NewMockWebSocketClient()
+	mockWS := mock.NewClient()
 
 	builder := &uiBuilder{
 		context: context.Background(),
@@ -145,12 +146,11 @@ func TestTextArea(t *testing.T) {
 	label := "Test TextArea"
 	defaultValue := "default value"
 	placeholder := "Enter text"
-	maxLength := 1000
-	minLength := 10
-	maxLines := 10
-	minLines := 3
+	maxLength := int32(1000)
+	minLength := int32(10)
+	maxLines := int32(10)
+	minLines := int32(3)
 
-	// Create TextArea component with all options
 	value := builder.TextArea(label,
 		textarea.DefaultValue(defaultValue),
 		textarea.Placeholder(placeholder),
@@ -163,21 +163,19 @@ func TestTextArea(t *testing.T) {
 		textarea.AutoResize(false),
 	)
 
-	// Verify return value
 	if value != defaultValue {
 		t.Errorf("TextArea value = %v, want %v", value, defaultValue)
 	}
 
-	// Verify WebSocket message
-	if len(mockWS.Messages) != 1 {
-		t.Errorf("WebSocket messages count = %d, want 1", len(mockWS.Messages))
+	messages := mockWS.Messages()
+	if len(messages) != 1 {
+		t.Errorf("WebSocket messages count = %d, want 1", len(messages))
 	}
-	msg := mockWS.Messages[0]
-	if msg.Method != websocket.MessageMethodRenderWidget {
-		t.Errorf("WebSocket message method = %v, want %v", msg.Method, websocket.MessageMethodRenderWidget)
+	msg := messages[0]
+	if v := msg.GetRenderWidget(); v == nil {
+		t.Fatal("WebSocket message type = nil, want RenderWidget")
 	}
 
-	// Verify state
 	widgetID := builder.generateTextAreaID(label, []int{0})
 	state := sess.State.GetTextArea(widgetID)
 	if state == nil {
@@ -190,9 +188,9 @@ func TestTextArea(t *testing.T) {
 		want any
 	}{
 		{"Label", state.Label, label},
-		{"Value", state.Value, defaultValue},
+		{"Value", conv.SafeValue(state.Value), defaultValue},
 		{"Placeholder", state.Placeholder, placeholder},
-		{"DefaultValue", state.DefaultValue, defaultValue},
+		{"DefaultValue", conv.SafeValue(state.DefaultValue), defaultValue},
 		{"Required", state.Required, true},
 		{"Disabled", state.Disabled, true},
 		{"MaxLength", *state.MaxLength, maxLength},
@@ -216,7 +214,7 @@ func TestTextArea_DefaultMinLines(t *testing.T) {
 	pageID := uuid.Must(uuid.NewV4())
 	sess := session.New(sessionID, pageID)
 
-	mockWS := mock.NewMockWebSocketClient()
+	mockWS := mock.NewClient()
 
 	builder := &uiBuilder{
 		context: context.Background(),
@@ -232,17 +230,14 @@ func TestTextArea_DefaultMinLines(t *testing.T) {
 
 	label := "Test TextArea"
 
-	// Create TextArea component without options
 	builder.TextArea(label)
 
-	// Verify state
 	widgetID := builder.generateTextAreaID(label, []int{0})
 	state := sess.State.GetTextArea(widgetID)
 	if state == nil {
 		t.Fatal("TextArea state not found")
 	}
 
-	// Verify default MinLines value
 	if state.MinLines == nil {
 		t.Fatal("MinLines is nil, want 2")
 	}

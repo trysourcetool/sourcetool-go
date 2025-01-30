@@ -8,21 +8,21 @@ import (
 
 	"github.com/trysourcetool/sourcetool-go/internal/session"
 	"github.com/trysourcetool/sourcetool-go/internal/session/state"
-	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket/mock"
+	widgetv1 "github.com/trysourcetool/sourcetool-proto/go/widget/v1"
 )
 
-func TestConvertStateToMarkdownData(t *testing.T) {
+func TestConvertStateToMarkdownProto(t *testing.T) {
 	id := uuid.Must(uuid.NewV4())
 	markdownState := &state.MarkdownState{
 		ID:   id,
 		Body: "# Test Markdown",
 	}
 
-	data := convertStateToMarkdownData(markdownState)
+	data := convertStateToMarkdownProto(markdownState)
 
 	if data == nil {
-		t.Fatal("convertStateToMarkdownData returned nil")
+		t.Fatal("convertStateToMarkdownProto returned nil")
 	}
 
 	if data.Body != markdownState.Body {
@@ -30,15 +30,15 @@ func TestConvertStateToMarkdownData(t *testing.T) {
 	}
 }
 
-func TestConvertMarkdownDataToState(t *testing.T) {
-	data := &websocket.MarkdownData{
+func TestConvertMarkdownProtoToState(t *testing.T) {
+	data := &widgetv1.Markdown{
 		Body: "# Test Markdown",
 	}
 
-	state := convertMarkdownDataToState(data)
+	state := convertMarkdownProtoToState(uuid.Must(uuid.NewV4()), data)
 
 	if state == nil {
-		t.Fatal("convertMarkdownDataToState returned nil")
+		t.Fatal("convertMarkdownProtoToState returned nil")
 	}
 
 	if state.Body != data.Body {
@@ -51,7 +51,7 @@ func TestMarkdown(t *testing.T) {
 	pageID := uuid.Must(uuid.NewV4())
 	sess := session.New(sessionID, pageID)
 
-	mockWS := mock.NewMockWebSocketClient()
+	mockWS := mock.NewClient()
 
 	builder := &uiBuilder{
 		context: context.Background(),
@@ -68,16 +68,15 @@ func TestMarkdown(t *testing.T) {
 	body := "# Test Markdown"
 	builder.Markdown(body)
 
-	// Verify WebSocket message
-	if len(mockWS.Messages) != 1 {
-		t.Errorf("WebSocket messages count = %d, want 1", len(mockWS.Messages))
+	messages := mockWS.Messages()
+	if len(messages) != 1 {
+		t.Errorf("WebSocket messages count = %d, want 1", len(messages))
 	}
-	msg := mockWS.Messages[0]
-	if msg.Method != websocket.MessageMethodRenderWidget {
-		t.Errorf("WebSocket message method = %v, want %v", msg.Method, websocket.MessageMethodRenderWidget)
+	msg := messages[0]
+	if v := msg.GetRenderWidget(); v == nil {
+		t.Fatal("WebSocket message type = nil, want RenderWidget")
 	}
 
-	// Verify markdown state
 	widgetID := builder.generateMarkdownID(body, []int{0})
 	state := sess.State.GetMarkdown(widgetID)
 	if state == nil {

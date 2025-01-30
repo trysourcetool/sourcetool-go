@@ -1,13 +1,13 @@
 package sourcetool
 
 import (
-	"encoding/json"
 	"testing"
 
 	"github.com/gofrs/uuid/v5"
+	websocketv1 "github.com/trysourcetool/sourcetool-proto/go/websocket/v1"
 
+	"github.com/trysourcetool/sourcetool-go/internal/conv"
 	"github.com/trysourcetool/sourcetool-go/internal/session"
-	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket/mock"
 )
 
@@ -27,34 +27,31 @@ func TestRuntime_HandleInitializeClient(t *testing.T) {
 	}
 	pages[pageID] = testPage
 
+	mockClient := mock.NewClient()
 	r := &runtime{
-		wsClient:       mock.NewMockWebSocketClient(),
+		wsClient:       mockClient,
 		sessionManager: session.NewSessionManager(),
 		pageManager:    newPageManager(pages),
 	}
 
 	// Create test message
 	sessionID := uuid.Must(uuid.NewV4())
-	payload := websocket.InitializeClientPayload{
-		SessionID: sessionID.String(),
-		PageID:    pageID.String(),
-	}
-	payloadBytes, err := json.Marshal(payload)
-	if err != nil {
-		t.Fatalf("failed to marshal payload: %v", err)
+	initClient := &websocketv1.InitializeClient{
+		SessionId: conv.NilValue(sessionID.String()),
+		PageId:    pageID.String(),
 	}
 
-	msg := &websocket.Message{
-		ID:      uuid.Must(uuid.NewV4()).String(),
-		Kind:    websocket.MessageKindCall,
-		Method:  websocket.MessageMethodInitializeClient,
-		Payload: payloadBytes,
-	}
+	// Register handler
+	mockClient.RegisterHandler(func(msg *websocketv1.Message) error {
+		switch m := msg.Type.(type) {
+		case *websocketv1.Message_InitializeClient:
+			return r.handleInitializeClient(m.InitializeClient)
+		}
+		return nil
+	})
 
-	// Execute handler
-	if err := r.handleInitializeCilent(msg); err != nil {
-		t.Fatalf("handleInitializeClient failed: %v", err)
-	}
+	// Send message
+	mockClient.Enqueue(uuid.Must(uuid.NewV4()).String(), initClient)
 
 	// Verify that session was created
 	sess := r.sessionManager.GetSession(sessionID)
@@ -85,8 +82,9 @@ func TestRuntime_HandleRerunPage(t *testing.T) {
 	}
 	pages[pageID] = testPage
 
+	mockClient := mock.NewClient()
 	r := &runtime{
-		wsClient:       mock.NewMockWebSocketClient(),
+		wsClient:       mockClient,
 		sessionManager: session.NewSessionManager(),
 		pageManager:    newPageManager(pages),
 	}
@@ -96,37 +94,30 @@ func TestRuntime_HandleRerunPage(t *testing.T) {
 	r.sessionManager.SetSession(sess)
 
 	// Create test message
-	payload := websocket.RerunPagePayload{
-		SessionID: sessionID.String(),
-		PageID:    pageID.String(),
-		State:     json.RawMessage("{}"),
-	}
-	payloadBytes, err := json.Marshal(payload)
-	if err != nil {
-		t.Fatalf("failed to marshal payload: %v", err)
+	rerunPage := &websocketv1.RerunPage{
+		SessionId: sessionID.String(),
+		PageId:    pageID.String(),
 	}
 
-	msg := &websocket.Message{
-		ID:      uuid.Must(uuid.NewV4()).String(),
-		Kind:    websocket.MessageKindCall,
-		Method:  websocket.MessageMethodRerunPage,
-		Payload: payloadBytes,
-	}
+	// Register handler
+	mockClient.RegisterHandler(func(msg *websocketv1.Message) error {
+		switch m := msg.Type.(type) {
+		case *websocketv1.Message_RerunPage:
+			return r.handleRerunPage(m.RerunPage)
+		}
+		return nil
+	})
 
-	// Execute handler
-	if err := r.handleRerunPage(msg); err != nil {
-		t.Fatalf("handleRerunPage failed: %v", err)
-	}
+	// Send message
+	mockClient.Enqueue(uuid.Must(uuid.NewV4()).String(), rerunPage)
 
 	// Verify that page handler was called
 	if handlerCallCount != 1 {
 		t.Errorf("page handler call count = %d, want 1", handlerCallCount)
 	}
 
-	// Execute again
-	if err := r.handleRerunPage(msg); err != nil {
-		t.Fatalf("second handleRerunPage failed: %v", err)
-	}
+	// Send message again
+	mockClient.Enqueue(uuid.Must(uuid.NewV4()).String(), rerunPage)
 
 	// Verify that page handler was called again
 	if handlerCallCount != 2 {
@@ -138,8 +129,9 @@ func TestRuntime_HandleCloseSession(t *testing.T) {
 	sessionID := uuid.Must(uuid.NewV4())
 	pageID := uuid.Must(uuid.NewV4())
 
+	mockClient := mock.NewClient()
 	r := &runtime{
-		wsClient:       mock.NewMockWebSocketClient(),
+		wsClient:       mockClient,
 		sessionManager: session.NewSessionManager(),
 		pageManager:    newPageManager(make(map[uuid.UUID]*page)),
 	}
@@ -149,25 +141,21 @@ func TestRuntime_HandleCloseSession(t *testing.T) {
 	r.sessionManager.SetSession(sess)
 
 	// Create test message
-	payload := websocket.CloseSessionPayload{
-		SessionID: sessionID.String(),
-	}
-	payloadBytes, err := json.Marshal(payload)
-	if err != nil {
-		t.Fatalf("failed to marshal payload: %v", err)
+	closeSession := &websocketv1.CloseSession{
+		SessionId: sessionID.String(),
 	}
 
-	msg := &websocket.Message{
-		ID:      uuid.Must(uuid.NewV4()).String(),
-		Kind:    websocket.MessageKindCall,
-		Method:  websocket.MessageMethodCloseSession,
-		Payload: payloadBytes,
-	}
+	// Register handler
+	mockClient.RegisterHandler(func(msg *websocketv1.Message) error {
+		switch m := msg.Type.(type) {
+		case *websocketv1.Message_CloseSession:
+			return r.handleCloseSession(m.CloseSession)
+		}
+		return nil
+	})
 
-	// Execute handler
-	if err := r.handleCloseSession(msg); err != nil {
-		t.Fatalf("handleCloseSession failed: %v", err)
-	}
+	// Send message
+	mockClient.Enqueue(uuid.Must(uuid.NewV4()).String(), closeSession)
 
 	// Verify that session was deleted
 	if got := r.sessionManager.GetSession(sessionID); got != nil {

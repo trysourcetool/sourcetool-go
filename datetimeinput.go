@@ -8,9 +8,11 @@ import (
 	"github.com/gofrs/uuid/v5"
 
 	"github.com/trysourcetool/sourcetool-go/datetimeinput"
+	"github.com/trysourcetool/sourcetool-go/internal/conv"
 	"github.com/trysourcetool/sourcetool-go/internal/options"
 	"github.com/trysourcetool/sourcetool-go/internal/session/state"
-	"github.com/trysourcetool/sourcetool-go/internal/websocket"
+	websocketv1 "github.com/trysourcetool/sourcetool-proto/go/websocket/v1"
+	widgetv1 "github.com/trysourcetool/sourcetool-proto/go/widget/v1"
 )
 
 func (b *uiBuilder) DateTimeInput(label string, opts ...datetimeinput.Option) *time.Time {
@@ -67,13 +69,17 @@ func (b *uiBuilder) DateTimeInput(label string, opts ...datetimeinput.Option) *t
 	dateTimeInputState.Location = dateTimeInputOpts.Location
 	sess.State.Set(widgetID, dateTimeInputState)
 
-	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), websocket.MessageMethodRenderWidget, &websocket.RenderWidgetPayload{
-		SessionID:  sess.ID.String(),
-		PageID:     page.id.String(),
-		WidgetID:   widgetID.String(),
-		WidgetType: state.WidgetTypeDateTimeInput.String(),
-		Path:       path,
-		Data:       convertStateToDateTimeInputData(dateTimeInputState),
+	dateTimeInput := convertStateToDateTimeInputProto(dateTimeInputState)
+	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), &websocketv1.RenderWidget{
+		SessionId: sess.ID.String(),
+		PageId:    page.id.String(),
+		Path:      convertPathToInt32Slice(path),
+		Widget: &widgetv1.Widget{
+			Id: widgetID.String(),
+			Type: &widgetv1.Widget_DateTimeInput{
+				DateTimeInput: dateTimeInput,
+			},
+		},
 	})
 
 	cursor.next()
@@ -89,7 +95,7 @@ func (b *uiBuilder) generateDateTimeInputID(label string, path path) uuid.UUID {
 	return uuid.NewV5(page.id, state.WidgetTypeDateTimeInput.String()+"-"+label+"-"+path.String())
 }
 
-func convertDateTimeInputDataToState(id uuid.UUID, data *websocket.DateTimeInputData, location *time.Location) (*state.DateTimeInputState, error) {
+func convertDateTimeInputProtoToState(id uuid.UUID, data *widgetv1.DateTimeInput, location *time.Location) (*state.DateTimeInputState, error) {
 	if data == nil {
 		return nil, nil
 	}
@@ -105,12 +111,12 @@ func convertDateTimeInputDataToState(id uuid.UUID, data *websocket.DateTimeInput
 		return &t, nil
 	}
 
-	value, err := parseDate(data.Value)
+	value, err := parseDate(conv.SafeValue(data.Value))
 	if err != nil {
 		return nil, err
 	}
 
-	defaultValue, err := parseDate(data.DefaultValue)
+	defaultValue, err := parseDate(conv.SafeValue(data.DefaultValue))
 	if err != nil {
 		return nil, err
 	}
@@ -140,7 +146,7 @@ func convertDateTimeInputDataToState(id uuid.UUID, data *websocket.DateTimeInput
 	}, nil
 }
 
-func convertStateToDateTimeInputData(state *state.DateTimeInputState) *websocket.DateTimeInputData {
+func convertStateToDateTimeInputProto(state *state.DateTimeInputState) *widgetv1.DateTimeInput {
 	if state == nil {
 		return nil
 	}
@@ -157,11 +163,11 @@ func convertStateToDateTimeInputData(state *state.DateTimeInputState) *websocket
 	if state.MinValue != nil {
 		minValue = state.MinValue.Format(time.DateTime)
 	}
-	return &websocket.DateTimeInputData{
-		Value:        value,
+	return &widgetv1.DateTimeInput{
+		Value:        conv.NilValue(value),
 		Label:        state.Label,
 		Placeholder:  state.Placeholder,
-		DefaultValue: defaultValue,
+		DefaultValue: conv.NilValue(defaultValue),
 		Required:     state.Required,
 		Disabled:     state.Disabled,
 		Format:       state.Format,

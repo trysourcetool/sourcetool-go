@@ -8,7 +8,8 @@ import (
 	"github.com/trysourcetool/sourcetool-go/columns"
 	"github.com/trysourcetool/sourcetool-go/internal/options"
 	"github.com/trysourcetool/sourcetool-go/internal/session/state"
-	"github.com/trysourcetool/sourcetool-go/internal/websocket"
+	websocketv1 "github.com/trysourcetool/sourcetool-proto/go/websocket/v1"
+	widgetv1 "github.com/trysourcetool/sourcetool-proto/go/widget/v1"
 )
 
 func (b *uiBuilder) Columns(cols int, opts ...columns.Option) []UIBuilder {
@@ -69,13 +70,17 @@ func (b *uiBuilder) Columns(cols int, opts ...columns.Option) []UIBuilder {
 	}
 	sess.State.Set(widgetID, columnsState)
 
-	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), websocket.MessageMethodRenderWidget, &websocket.RenderWidgetPayload{
-		SessionID:  sess.ID.String(),
-		PageID:     page.id.String(),
-		WidgetID:   widgetID.String(),
-		WidgetType: state.WidgetTypeColumns.String(),
-		Path:       path,
-		Data:       convertStateToColumnsData(columnsState),
+	columns := convertStateToColumnsProto(columnsState)
+	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), &websocketv1.RenderWidget{
+		SessionId: sess.ID.String(),
+		PageId:    page.id.String(),
+		Path:      convertPathToInt32Slice(path),
+		Widget: &widgetv1.Widget{
+			Id: widgetID.String(),
+			Type: &widgetv1.Widget_Columns{
+				Columns: columns,
+			},
+		},
 	})
 
 	builders := make([]UIBuilder, cols)
@@ -93,13 +98,17 @@ func (b *uiBuilder) Columns(cols int, opts ...columns.Option) []UIBuilder {
 
 		log.Printf("Path: %v\n", columnPath)
 
-		b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), websocket.MessageMethodRenderWidget, &websocket.RenderWidgetPayload{
-			SessionID:  sess.ID.String(),
-			PageID:     page.id.String(),
-			WidgetID:   widgetID.String(),
-			WidgetType: state.WidgetTypeColumnItem.String(),
-			Path:       columnPath,
-			Data:       convertStateToColumnItemData(columnItemState),
+		columnItem := convertStateToColumnItemProto(columnItemState)
+		b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), &websocketv1.RenderWidget{
+			SessionId: sess.ID.String(),
+			PageId:    page.id.String(),
+			Path:      convertPathToInt32Slice(path),
+			Widget: &widgetv1.Widget{
+				Id: widgetID.String(),
+				Type: &widgetv1.Widget_ColumnItem{
+					ColumnItem: columnItem,
+				},
+			},
 		})
 
 		builders[i] = &uiBuilder{
@@ -132,26 +141,28 @@ func (b *uiBuilder) generateColumnItemID(path path) uuid.UUID {
 	return uuid.NewV5(page.id, state.WidgetTypeColumnItem.String()+"-"+path.String())
 }
 
-func convertStateToColumnsData(state *state.ColumnsState) *websocket.ColumnsData {
-	return &websocket.ColumnsData{
-		Columns: state.Columns,
+func convertStateToColumnsProto(state *state.ColumnsState) *widgetv1.Columns {
+	return &widgetv1.Columns{
+		Columns: int32(state.Columns),
 	}
 }
 
-func convertColumnsDataToState(data *websocket.ColumnsData) *state.ColumnsState {
+func convertColumnsProtoToState(id uuid.UUID, data *widgetv1.Columns) *state.ColumnsState {
 	return &state.ColumnsState{
-		Columns: data.Columns,
+		ID:      id,
+		Columns: int(data.Columns),
 	}
 }
 
-func convertStateToColumnItemData(state *state.ColumnItemState) *websocket.ColumnItemData {
-	return &websocket.ColumnItemData{
+func convertStateToColumnItemProto(state *state.ColumnItemState) *widgetv1.ColumnItem {
+	return &widgetv1.ColumnItem{
 		Weight: state.Weight,
 	}
 }
 
-func convertColumnItemDataToState(data *websocket.ColumnItemData) *state.ColumnItemState {
+func convertColumnItemProtoToState(id uuid.UUID, data *widgetv1.ColumnItem) *state.ColumnItemState {
 	return &state.ColumnItemState{
+		ID:     id,
 		Weight: data.Weight,
 	}
 }

@@ -10,14 +10,14 @@ import (
 	"github.com/trysourcetool/sourcetool-go/checkboxgroup"
 	"github.com/trysourcetool/sourcetool-go/internal/session"
 	"github.com/trysourcetool/sourcetool-go/internal/session/state"
-	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket/mock"
+	widgetv1 "github.com/trysourcetool/sourcetool-proto/go/widget/v1"
 )
 
-func TestConvertStateToCheckboxGroupData(t *testing.T) {
+func TestConvertStateToCheckboxGroupProto(t *testing.T) {
 	id := uuid.Must(uuid.NewV4())
-	value := []int{0, 2}
-	defaultValue := []int{0}
+	value := []int32{0, 2}
+	defaultValue := []int32{0}
 	options := []string{"Option 1", "Option 2", "Option 3"}
 
 	checkboxGroupState := &state.CheckboxGroupState{
@@ -30,10 +30,10 @@ func TestConvertStateToCheckboxGroupData(t *testing.T) {
 		Disabled:     false,
 	}
 
-	data := convertStateToCheckboxGroupData(checkboxGroupState)
+	data := convertStateToCheckboxGroupProto(checkboxGroupState)
 
 	if data == nil {
-		t.Fatal("convertStateToCheckboxGroupData returned nil")
+		t.Fatal("convertStateToCheckboxGroupProto returned nil")
 	}
 
 	tests := []struct {
@@ -58,13 +58,13 @@ func TestConvertStateToCheckboxGroupData(t *testing.T) {
 	}
 }
 
-func TestConvertCheckboxGroupDataToState(t *testing.T) {
+func TestConvertCheckboxGroupProtoToState(t *testing.T) {
 	id := uuid.Must(uuid.NewV4())
-	value := []int{0, 2}
-	defaultValue := []int{0}
+	value := []int32{0, 2}
+	defaultValue := []int32{0}
 	options := []string{"Option 1", "Option 2", "Option 3"}
 
-	data := &websocket.CheckboxGroupData{
+	data := &widgetv1.CheckboxGroup{
 		Label:        "Test CheckboxGroup",
 		Value:        value,
 		Options:      options,
@@ -73,10 +73,10 @@ func TestConvertCheckboxGroupDataToState(t *testing.T) {
 		Disabled:     false,
 	}
 
-	state := convertCheckboxGroupDataToState(id, data)
+	state := convertCheckboxGroupProtoToState(id, data)
 
 	if state == nil {
-		t.Fatal("convertCheckboxGroupDataToState returned nil")
+		t.Fatal("convertCheckboxGroupProtoToState returned nil")
 	}
 
 	tests := []struct {
@@ -107,7 +107,7 @@ func TestCheckboxGroup(t *testing.T) {
 	pageID := uuid.Must(uuid.NewV4())
 	sess := session.New(sessionID, pageID)
 
-	mockWS := mock.NewMockWebSocketClient()
+	mockWS := mock.NewClient()
 
 	builder := &uiBuilder{
 		context: context.Background(),
@@ -125,7 +125,6 @@ func TestCheckboxGroup(t *testing.T) {
 	options := []string{"Option 1", "Option 2", "Option 3"}
 	defaultValue := []string{"Option 1", "Option 3"}
 
-	// Create CheckboxGroup component with all options
 	value := builder.CheckboxGroup(label,
 		checkboxgroup.Options(options...),
 		checkboxgroup.DefaultValue(defaultValue...),
@@ -133,7 +132,6 @@ func TestCheckboxGroup(t *testing.T) {
 		checkboxgroup.Disabled(true),
 	)
 
-	// Verify return value
 	if value == nil {
 		t.Fatal("CheckboxGroup returned nil")
 	}
@@ -145,16 +143,15 @@ func TestCheckboxGroup(t *testing.T) {
 		t.Errorf("CheckboxGroup indexes = %v, want %v", value.Indexes, expectedIndexes)
 	}
 
-	// Verify WebSocket message
-	if len(mockWS.Messages) != 1 {
-		t.Errorf("WebSocket messages count = %d, want 1", len(mockWS.Messages))
+	messages := mockWS.Messages()
+	if len(messages) != 1 {
+		t.Errorf("WebSocket messages count = %d, want 1", len(messages))
 	}
-	msg := mockWS.Messages[0]
-	if msg.Method != websocket.MessageMethodRenderWidget {
-		t.Errorf("WebSocket message method = %v, want %v", msg.Method, websocket.MessageMethodRenderWidget)
+	msg := messages[0]
+	if v := msg.GetRenderWidget(); v == nil {
+		t.Fatal("WebSocket message type = nil, want RenderWidget")
 	}
 
-	// Verify state
 	widgetID := builder.generateCheckboxGroupID(label, []int{0})
 	state := sess.State.GetCheckboxGroup(widgetID)
 	if state == nil {
@@ -186,7 +183,7 @@ func TestCheckboxGroup_WithFormatFunc(t *testing.T) {
 	pageID := uuid.Must(uuid.NewV4())
 	sess := session.New(sessionID, pageID)
 
-	mockWS := mock.NewMockWebSocketClient()
+	mockWS := mock.NewClient()
 
 	builder := &uiBuilder{
 		context: context.Background(),
@@ -211,7 +208,6 @@ func TestCheckboxGroup_WithFormatFunc(t *testing.T) {
 		checkboxgroup.FormatFunc(formatFunc),
 	)
 
-	// Verify that format function is applied
 	widgetID := builder.generateCheckboxGroupID(label, []int{0})
 	state := sess.State.GetCheckboxGroup(widgetID)
 	if state == nil {

@@ -8,8 +8,9 @@ import (
 	"github.com/trysourcetool/sourcetool-go/internal/conv"
 	"github.com/trysourcetool/sourcetool-go/internal/options"
 	"github.com/trysourcetool/sourcetool-go/internal/session/state"
-	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 	"github.com/trysourcetool/sourcetool-go/radio"
+	websocketv1 "github.com/trysourcetool/sourcetool-proto/go/websocket/v1"
+	widgetv1 "github.com/trysourcetool/sourcetool-proto/go/widget/v1"
 )
 
 func (b *uiBuilder) Radio(label string, opts ...radio.Option) *radio.Value {
@@ -43,11 +44,12 @@ func (b *uiBuilder) Radio(label string, opts ...radio.Option) *radio.Value {
 	log.Printf("Page ID: %s", page.id.String())
 	log.Printf("Path: %v\n", path)
 
-	var defaultVal *int
+	var defaultVal *int32
 	if radioOpts.DefaultValue != nil {
 		for i, o := range radioOpts.Options {
 			if conv.SafeValue(radioOpts.DefaultValue) == o {
-				defaultVal = &i
+				v := int32(i)
+				defaultVal = &v
 				break
 			}
 		}
@@ -81,13 +83,17 @@ func (b *uiBuilder) Radio(label string, opts ...radio.Option) *radio.Value {
 	radioState.Disabled = radioOpts.Disabled
 	sess.State.Set(widgetID, radioState)
 
-	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), websocket.MessageMethodRenderWidget, &websocket.RenderWidgetPayload{
-		SessionID:  sess.ID.String(),
-		PageID:     page.id.String(),
-		WidgetID:   widgetID.String(),
-		WidgetType: state.WidgetTypeRadio.String(),
-		Path:       path,
-		Data:       convertStateToRadioData(radioState),
+	radioProto := convertStateToRadioProto(radioState)
+	b.runtime.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), &websocketv1.RenderWidget{
+		SessionId: sess.ID.String(),
+		PageId:    page.id.String(),
+		Path:      convertPathToInt32Slice(path),
+		Widget: &widgetv1.Widget{
+			Id: widgetID.String(),
+			Type: &widgetv1.Widget_Radio{
+				Radio: radioProto,
+			},
+		},
 	})
 
 	cursor.next()
@@ -96,7 +102,7 @@ func (b *uiBuilder) Radio(label string, opts ...radio.Option) *radio.Value {
 	if radioState.Value != nil {
 		value = &radio.Value{
 			Value: radioOpts.Options[*radioState.Value],
-			Index: conv.SafeValue(radioState.Value),
+			Index: int(conv.SafeValue(radioState.Value)),
 		}
 	}
 
@@ -111,11 +117,11 @@ func (b *uiBuilder) generateRadioID(label string, path path) uuid.UUID {
 	return uuid.NewV5(page.id, state.WidgetTypeRadio.String()+"-"+label+"-"+path.String())
 }
 
-func convertStateToRadioData(state *state.RadioState) *websocket.RadioData {
+func convertStateToRadioProto(state *state.RadioState) *widgetv1.Radio {
 	if state == nil {
 		return nil
 	}
-	return &websocket.RadioData{
+	return &widgetv1.Radio{
 		Label:        state.Label,
 		Value:        state.Value,
 		Options:      state.Options,
@@ -125,7 +131,7 @@ func convertStateToRadioData(state *state.RadioState) *websocket.RadioData {
 	}
 }
 
-func convertRadioDataToState(id uuid.UUID, data *websocket.RadioData) *state.RadioState {
+func convertRadioProtoToState(id uuid.UUID, data *widgetv1.Radio) *state.RadioState {
 	if data == nil {
 		return nil
 	}

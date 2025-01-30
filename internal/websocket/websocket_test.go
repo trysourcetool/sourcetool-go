@@ -1,14 +1,16 @@
 package websocket
 
 import (
-	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/gofrs/uuid/v5"
 	"github.com/gorilla/websocket"
+	"github.com/trysourcetool/sourcetool-go/internal/conv"
+	websocketv1 "github.com/trysourcetool/sourcetool-proto/go/websocket/v1"
 )
 
 var upgrader = websocket.Upgrader{
@@ -97,35 +99,40 @@ func TestClient_MessageHandling(t *testing.T) {
 	}
 
 	// Test message handler
-	receivedCh := make(chan *Message, 1)
-	client.RegisterHandler(MessageMethodInitializeClient, func(msg *Message) error {
+	receivedCh := make(chan *websocketv1.Message, 1)
+	client.RegisterHandler(func(msg *websocketv1.Message) error {
 		receivedCh <- msg
 		return nil
 	})
 
 	// Send test message
-	testMsg := &Message{
-		ID:     "test_id",
-		Kind:   MessageKindCall,
-		Method: MessageMethodInitializeClient,
-		Payload: json.RawMessage(`{
-			"sessionId": "test_session",
-			"pageId": "test_page"
-		}`),
+	testMsg := &websocketv1.Message{
+		Id: "test_id",
+		Type: &websocketv1.Message_InitializeClient{
+			InitializeClient: &websocketv1.InitializeClient{
+				SessionId: conv.NilValue("test_session"),
+				PageId:    "test_page",
+			},
+		},
 	}
 
-	if err := conn.WriteJSON(testMsg); err != nil {
+	data, err := marshalMessage(testMsg)
+	if err != nil {
+		t.Fatalf("failed to marshal message: %v", err)
+	}
+
+	if err := conn.WriteMessage(websocket.TextMessage, data); err != nil {
 		t.Fatalf("failed to write message: %v", err)
 	}
 
 	// Wait for message reception
 	select {
 	case msg := <-receivedCh:
-		if msg.ID != testMsg.ID {
-			t.Errorf("message ID = %v, want %v", msg.ID, testMsg.ID)
+		if msg.Id != testMsg.Id {
+			t.Errorf("message ID = %v, want %v", msg.Id, testMsg.Id)
 		}
-		if msg.Method != testMsg.Method {
-			t.Errorf("message Method = %v, want %v", msg.Method, testMsg.Method)
+		if _, ok := msg.Type.(*websocketv1.Message_InitializeClient); !ok {
+			t.Errorf("unexpected message type: %T", msg.Type)
 		}
 	case <-time.After(time.Second):
 		t.Fatal("timeout waiting for message")
@@ -137,9 +144,11 @@ func TestClient_EnqueueWithResponse(t *testing.T) {
 	defer s.Close()
 
 	wsURL := "ws" + strings.TrimPrefix(s.URL, "http")
+	instanceID := uuid.Must(uuid.NewV4())
 	client, err := NewClient(Config{
-		URL:    wsURL,
-		APIKey: "test_api_key",
+		URL:        wsURL,
+		APIKey:     "test_api_key",
+		InstanceID: instanceID,
 	})
 	if err != nil {
 		t.Fatalf("failed to create client: %v", err)
@@ -153,34 +162,50 @@ func TestClient_EnqueueWithResponse(t *testing.T) {
 
 	// Start goroutine to wait for response
 	go func() {
-		var msg Message
-		if err := conn.ReadJSON(&msg); err != nil {
+		_, data, err := conn.ReadMessage()
+		if err != nil {
 			t.Errorf("failed to read message: %v", err)
 			return
 		}
 
-		// Send response
-		resp := Message{
-			ID:      msg.ID,
-			Kind:    MessageKindResponse,
-			Method:  msg.Method,
-			Payload: json.RawMessage(`{"status":"ok"}`),
+		msg, err := unmarshalMessage(data)
+		if err != nil {
+			t.Errorf("failed to unmarshal message: %v", err)
+			return
 		}
-		if err := conn.WriteJSON(&resp); err != nil {
+
+		// Send response
+		resp := &websocketv1.Message{
+			Id: msg.Id,
+			Type: &websocketv1.Message_InitializeHostCompleted{
+				InitializeHostCompleted: &websocketv1.InitializeHostCompleted{
+					HostInstanceId: "test_host_instance_id",
+				},
+			},
+		}
+
+		data, err = marshalMessage(resp)
+		if err != nil {
+			t.Errorf("failed to marshal response: %v", err)
+			return
+		}
+
+		if err := conn.WriteMessage(websocket.TextMessage, data); err != nil {
 			t.Errorf("failed to write response: %v", err)
 		}
 	}()
 
 	// Send message and wait for response
-	resp, err := client.EnqueueWithResponse("test_id", MessageMethodInitializeHost, map[string]string{
-		"test": "data",
-	})
+	initHost := &websocketv1.InitializeHost{}
+	resp, err := client.EnqueueWithResponse("test_id", initHost)
 	if err != nil {
 		t.Fatalf("failed to get response: %v", err)
 	}
 
-	if resp.Kind != MessageKindResponse {
-		t.Errorf("response Kind = %v, want %v", resp.Kind, MessageKindResponse)
+	if completed, ok := resp.Type.(*websocketv1.Message_InitializeHostCompleted); !ok {
+		t.Errorf("unexpected response type: %T", resp.Type)
+	} else if completed.InitializeHostCompleted.HostInstanceId != "test_host_instance_id" {
+		t.Errorf("unexpected host instance id: got %s, want test_host_instance_id", completed.InitializeHostCompleted.HostInstanceId)
 	}
 }
 
@@ -190,9 +215,11 @@ func TestClient_Reconnection(t *testing.T) {
 
 	reconnected := make(chan struct{})
 	wsURL := "ws" + strings.TrimPrefix(s.URL, "http")
+	instanceID := uuid.Must(uuid.NewV4())
 	client, err := NewClient(Config{
 		URL:            wsURL,
 		APIKey:         "test_api_key",
+		InstanceID:     instanceID,
 		PingInterval:   100 * time.Millisecond,
 		ReconnectDelay: 100 * time.Millisecond,
 		OnReconnected: func() {

@@ -8,15 +8,15 @@ import (
 
 	"github.com/trysourcetool/sourcetool-go/internal/session"
 	"github.com/trysourcetool/sourcetool-go/internal/session/state"
-	"github.com/trysourcetool/sourcetool-go/internal/websocket"
 	"github.com/trysourcetool/sourcetool-go/internal/websocket/mock"
 	"github.com/trysourcetool/sourcetool-go/selectbox"
+	widgetv1 "github.com/trysourcetool/sourcetool-proto/go/widget/v1"
 )
 
-func TestConvertStateToSelectboxData(t *testing.T) {
+func TestConvertStateToSelectboxProto(t *testing.T) {
 	id := uuid.Must(uuid.NewV4())
-	value := 1
-	defaultValue := 0
+	value := int32(1)
+	defaultValue := int32(0)
 	options := []string{"Option 1", "Option 2"}
 	placeholder := "Select an option"
 
@@ -31,10 +31,10 @@ func TestConvertStateToSelectboxData(t *testing.T) {
 		Disabled:     false,
 	}
 
-	data := convertStateToSelectboxData(selectboxState)
+	data := convertStateToSelectboxProto(selectboxState)
 
 	if data == nil {
-		t.Fatal("convertStateToSelectboxData returned nil")
+		t.Fatal("convertStateToSelectboxProto returned nil")
 	}
 
 	tests := []struct {
@@ -60,14 +60,14 @@ func TestConvertStateToSelectboxData(t *testing.T) {
 	}
 }
 
-func TestConvertSelectboxDataToState(t *testing.T) {
+func TestConvertSelectboxProtoToState(t *testing.T) {
 	id := uuid.Must(uuid.NewV4())
-	value := 1
-	defaultValue := 0
+	value := int32(1)
+	defaultValue := int32(0)
 	options := []string{"Option 1", "Option 2"}
 	placeholder := "Select an option"
 
-	data := &websocket.SelectboxData{
+	data := &widgetv1.Selectbox{
 		Label:        "Test Selectbox",
 		Value:        &value,
 		Options:      options,
@@ -77,10 +77,10 @@ func TestConvertSelectboxDataToState(t *testing.T) {
 		Disabled:     false,
 	}
 
-	state := convertSelectboxDataToState(id, data)
+	state := convertSelectboxProtoToState(id, data)
 
 	if state == nil {
-		t.Fatal("convertSelectboxDataToState returned nil")
+		t.Fatal("convertSelectboxProtoToState returned nil")
 	}
 
 	tests := []struct {
@@ -112,7 +112,7 @@ func TestSelectbox(t *testing.T) {
 	pageID := uuid.Must(uuid.NewV4())
 	sess := session.New(sessionID, pageID)
 
-	mockWS := mock.NewMockWebSocketClient()
+	mockWS := mock.NewClient()
 
 	builder := &uiBuilder{
 		context: context.Background(),
@@ -131,7 +131,6 @@ func TestSelectbox(t *testing.T) {
 	defaultValue := "Option 1"
 	placeholder := "Select an option"
 
-	// Create Selectbox component
 	value := builder.Selectbox(label,
 		selectbox.Options(options...),
 		selectbox.DefaultValue(defaultValue),
@@ -139,7 +138,6 @@ func TestSelectbox(t *testing.T) {
 		selectbox.Required(true),
 	)
 
-	// Verify return value
 	if value == nil {
 		t.Fatal("Selectbox returned nil")
 	}
@@ -150,16 +148,15 @@ func TestSelectbox(t *testing.T) {
 		t.Errorf("Selectbox index = %v, want 0", value.Index)
 	}
 
-	// Verify WebSocket message
-	if len(mockWS.Messages) != 1 {
-		t.Errorf("WebSocket messages count = %d, want 1", len(mockWS.Messages))
+	messages := mockWS.Messages()
+	if len(messages) != 1 {
+		t.Errorf("WebSocket messages count = %d, want 1", len(messages))
 	}
-	msg := mockWS.Messages[0]
-	if msg.Method != websocket.MessageMethodRenderWidget {
-		t.Errorf("WebSocket message method = %v, want %v", msg.Method, websocket.MessageMethodRenderWidget)
+	msg := messages[0]
+	if v := msg.GetRenderWidget(); v == nil {
+		t.Fatal("WebSocket message type = nil, want RenderWidget")
 	}
 
-	// Verify state
 	widgetID := builder.generateSelectboxID(label, []int{0})
 	state := sess.State.GetSelectbox(widgetID)
 	if state == nil {
@@ -192,7 +189,7 @@ func TestSelectbox_WithFormatFunc(t *testing.T) {
 	pageID := uuid.Must(uuid.NewV4())
 	sess := session.New(sessionID, pageID)
 
-	mockWS := mock.NewMockWebSocketClient()
+	mockWS := mock.NewClient()
 
 	builder := &uiBuilder{
 		context: context.Background(),
@@ -217,7 +214,6 @@ func TestSelectbox_WithFormatFunc(t *testing.T) {
 		selectbox.FormatFunc(formatFunc),
 	)
 
-	// Verify that format function is applied
 	widgetID := builder.generateSelectboxID(label, []int{0})
 	state := sess.State.GetSelectbox(widgetID)
 	if state == nil {

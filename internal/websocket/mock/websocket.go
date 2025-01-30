@@ -1,30 +1,70 @@
 package mock
 
-import "github.com/trysourcetool/sourcetool-go/internal/websocket"
+import (
+	"sync"
 
-func NewMockWebSocketClient() *mockWebSocketClient {
-	return &mockWebSocketClient{}
+	"github.com/trysourcetool/sourcetool-go/internal/websocket"
+	websocketv1 "github.com/trysourcetool/sourcetool-proto/go/websocket/v1"
+	"google.golang.org/protobuf/proto"
+)
+
+type client struct {
+	handler    websocket.MessageHandlerFunc
+	messages   []*websocketv1.Message
+	messagesMu sync.RWMutex
+	done       chan error
 }
 
-type mockWebSocketClient struct {
-	Messages []*websocket.Message
+func NewClient() *client {
+	return &client{
+		messages: make([]*websocketv1.Message, 0),
+		done:     make(chan error, 1),
+	}
 }
 
-func (m *mockWebSocketClient) Enqueue(id string, method websocket.MessageMethod, data any) {
-	m.Messages = append(m.Messages, &websocket.Message{
-		ID:     id,
-		Method: method,
-		Kind:   websocket.MessageKindCall,
-	})
+func (c *client) RegisterHandler(handler websocket.MessageHandlerFunc) {
+	c.handler = handler
 }
 
-func (m *mockWebSocketClient) EnqueueWithResponse(id string, method websocket.MessageMethod, data any) (*websocket.Message, error) {
-	return nil, nil
+func (c *client) Enqueue(id string, payload proto.Message) {
+	msg, err := websocket.NewMessage(id, payload)
+	if err != nil {
+		return
+	}
+
+	c.messagesMu.Lock()
+	c.messages = append(c.messages, msg)
+	c.messagesMu.Unlock()
+
+	if c.handler != nil {
+		c.handler(msg)
+	}
 }
 
-func (m *mockWebSocketClient) RegisterHandler(method websocket.MessageMethod, handler websocket.MessageHandlerFunc) {
+func (c *client) EnqueueWithResponse(id string, payload proto.Message) (*websocketv1.Message, error) {
+	msg, err := websocket.NewMessage(id, payload)
+	if err != nil {
+		return nil, err
+	}
+
+	c.messagesMu.Lock()
+	c.messages = append(c.messages, msg)
+	c.messagesMu.Unlock()
+
+	return msg, nil
 }
 
-func (m *mockWebSocketClient) Close() error { return nil }
+func (c *client) Messages() []*websocketv1.Message {
+	c.messagesMu.RLock()
+	defer c.messagesMu.RUnlock()
+	return c.messages
+}
 
-func (m *mockWebSocketClient) Wait() error { return nil }
+func (c *client) Close() error {
+	c.done <- nil
+	return nil
+}
+
+func (c *client) Wait() error {
+	return <-c.done
+}
