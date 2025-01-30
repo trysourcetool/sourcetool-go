@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/gofrs/uuid/v5"
+	"github.com/trysourcetool/sourcetool-go/internal/logger"
 )
 
 type Sourcetool struct {
@@ -36,6 +37,11 @@ func (s *Sourcetool) Listen() error {
 	if err := s.validatePages(); err != nil {
 		return err
 	}
+
+	if err := logger.Init(); err != nil {
+		return fmt.Errorf("failed to initialize logger: %v", err)
+	}
+	defer logger.Sync()
 
 	s.mu.RLock()
 	r, err := startRuntime(s.apiKey, s.endpoint, s.pages)
