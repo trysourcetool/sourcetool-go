@@ -170,120 +170,56 @@ func (r *runtime) handleRerunPage(msg *websocketv1.RerunPage) error {
 
 	newWidgetStates := make(map[uuid.UUID]session.WidgetState)
 	for _, widget := range msg.States {
+		id, err := uuid.FromString(widget.Id)
+		if err != nil {
+			return errdefs.ErrInvalidParameter(err)
+		}
 		switch t := widget.Type.(type) {
 		case *widgetv1.Widget_TextInput:
-			id, err := uuid.FromString(widget.Id)
-			if err != nil {
-				return errdefs.ErrInvalidParameter(err)
-			}
 			newWidgetStates[id] = convertTextInputProtoToState(id, t.TextInput)
 		case *widgetv1.Widget_NumberInput:
-			id, err := uuid.FromString(widget.Id)
-			if err != nil {
-				return errdefs.ErrInvalidParameter(err)
-			}
 			newWidgetStates[id] = convertNumberInputProtoToState(id, t.NumberInput)
 		case *widgetv1.Widget_DateInput:
-			id, err := uuid.FromString(widget.Id)
-			if err != nil {
-				return errdefs.ErrInvalidParameter(err)
-			}
 			state, err := convertDateInputProtoToState(id, t.DateInput, time.Local)
 			if err != nil {
 				return errdefs.ErrInvalidParameter(err)
 			}
 			newWidgetStates[id] = state
 		case *widgetv1.Widget_DateTimeInput:
-			id, err := uuid.FromString(widget.Id)
-			if err != nil {
-				return errdefs.ErrInvalidParameter(err)
-			}
 			state, err := convertDateTimeInputProtoToState(id, t.DateTimeInput, time.Local)
 			if err != nil {
 				return errdefs.ErrInvalidParameter(err)
 			}
 			newWidgetStates[id] = state
 		case *widgetv1.Widget_TimeInput:
-			id, err := uuid.FromString(widget.Id)
-			if err != nil {
-				return errdefs.ErrInvalidParameter(err)
-			}
 			state, err := convertTimeInputProtoToState(id, t.TimeInput, time.Local)
 			if err != nil {
 				return errdefs.ErrInvalidParameter(err)
 			}
 			newWidgetStates[id] = state
 		case *widgetv1.Widget_Form:
-			id, err := uuid.FromString(widget.Id)
-			if err != nil {
-				return errdefs.ErrInvalidParameter(err)
-			}
 			newWidgetStates[id] = convertFormProtoToState(id, t.Form)
 		case *widgetv1.Widget_Button:
-			id, err := uuid.FromString(widget.Id)
-			if err != nil {
-				return errdefs.ErrInvalidParameter(err)
-			}
 			newWidgetStates[id] = convertButtonProtoToState(id, t.Button)
 		case *widgetv1.Widget_Markdown:
-			id, err := uuid.FromString(widget.Id)
-			if err != nil {
-				return errdefs.ErrInvalidParameter(err)
-			}
 			newWidgetStates[id] = convertMarkdownProtoToState(id, t.Markdown)
 		case *widgetv1.Widget_Columns:
-			id, err := uuid.FromString(widget.Id)
-			if err != nil {
-				return errdefs.ErrInvalidParameter(err)
-			}
 			newWidgetStates[id] = convertColumnsProtoToState(id, t.Columns)
 		case *widgetv1.Widget_ColumnItem:
-			id, err := uuid.FromString(widget.Id)
-			if err != nil {
-				return errdefs.ErrInvalidParameter(err)
-			}
 			newWidgetStates[id] = convertColumnItemProtoToState(id, t.ColumnItem)
 		case *widgetv1.Widget_Table:
-			id, err := uuid.FromString(widget.Id)
-			if err != nil {
-				return errdefs.ErrInvalidParameter(err)
-			}
 			newWidgetStates[id] = convertTableProtoToState(id, t.Table)
 		case *widgetv1.Widget_Selectbox:
-			id, err := uuid.FromString(widget.Id)
-			if err != nil {
-				return errdefs.ErrInvalidParameter(err)
-			}
 			newWidgetStates[id] = convertSelectboxProtoToState(id, t.Selectbox)
 		case *widgetv1.Widget_MultiSelect:
-			id, err := uuid.FromString(widget.Id)
-			if err != nil {
-				return errdefs.ErrInvalidParameter(err)
-			}
 			newWidgetStates[id] = convertMultiSelectProtoToState(id, t.MultiSelect)
 		case *widgetv1.Widget_Checkbox:
-			id, err := uuid.FromString(widget.Id)
-			if err != nil {
-				return errdefs.ErrInvalidParameter(err)
-			}
 			newWidgetStates[id] = convertCheckboxProtoToState(id, t.Checkbox)
 		case *widgetv1.Widget_CheckboxGroup:
-			id, err := uuid.FromString(widget.Id)
-			if err != nil {
-				return errdefs.ErrInvalidParameter(err)
-			}
 			newWidgetStates[id] = convertCheckboxGroupProtoToState(id, t.CheckboxGroup)
 		case *widgetv1.Widget_Radio:
-			id, err := uuid.FromString(widget.Id)
-			if err != nil {
-				return errdefs.ErrInvalidParameter(err)
-			}
 			newWidgetStates[id] = convertRadioProtoToState(id, t.Radio)
 		case *widgetv1.Widget_TextArea:
-			id, err := uuid.FromString(widget.Id)
-			if err != nil {
-				return errdefs.ErrInvalidParameter(err)
-			}
 			newWidgetStates[id] = convertTextAreaProtoToState(id, t.TextArea)
 		default:
 			return errdefs.ErrInvalidParameter(fmt.Errorf("unknown widget type: %T", t))
