@@ -38,6 +38,8 @@ func NewMessage(id string, payload proto.Message) (*websocketv1.Message, error) 
 		msg.Type = &websocketv1.Message_RerunPage{RerunPage: p}
 	case *websocketv1.CloseSession:
 		msg.Type = &websocketv1.Message_CloseSession{CloseSession: p}
+	case *websocketv1.ScriptFinished:
+		msg.Type = &websocketv1.Message_ScriptFinished{ScriptFinished: p}
 	case *exceptionv1.Exception:
 		msg.Type = &websocketv1.Message_Exception{Exception: p}
 	default:

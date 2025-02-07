@@ -129,8 +129,18 @@ func (r *runtime) handleInitializeClient(msg *websocketv1.InitializeClient) erro
 	}
 
 	if err := page.run(ui); err != nil {
+		r.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), &websocketv1.ScriptFinished{
+			SessionId: sessionID.String(),
+			Status:    websocketv1.ScriptFinished_STATUS_FAILURE,
+		})
+
 		return errdefs.ErrRunPage(fmt.Errorf("failed to run page: %v", err))
 	}
+
+	r.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), &websocketv1.ScriptFinished{
+		SessionId: sessionID.String(),
+		Status:    websocketv1.ScriptFinished_STATUS_SUCCESS,
+	})
 
 	return nil
 }
@@ -291,8 +301,18 @@ func (r *runtime) handleRerunPage(msg *websocketv1.RerunPage) error {
 	}
 
 	if err := page.run(ui); err != nil {
+		r.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), &websocketv1.ScriptFinished{
+			SessionId: sessionID.String(),
+			Status:    websocketv1.ScriptFinished_STATUS_FAILURE,
+		})
+
 		return errdefs.ErrRunPage(fmt.Errorf("failed to run page: %v", err))
 	}
+
+	r.wsClient.Enqueue(uuid.Must(uuid.NewV4()).String(), &websocketv1.ScriptFinished{
+		SessionId: sessionID.String(),
+		Status:    websocketv1.ScriptFinished_STATUS_SUCCESS,
+	})
 
 	sess.State.ResetButtons()
 
