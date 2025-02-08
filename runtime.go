@@ -261,7 +261,7 @@ func (r *runtime) handleCloseSession(msg *websocketv1.CloseSession) error {
 		return errdefs.ErrInvalidParameter(err)
 	}
 
-	r.sessionManager.DeleteSession(sessionID)
+	r.sessionManager.DisconnectSession(sessionID)
 
 	return nil
 }
