@@ -1,6 +1,6 @@
 module github.com/trysourcetool/sourcetool-go
 
-go 1.22.1
+go 1.22
 
 replace github.com/trysourcetool/sourcetool-proto => ../sourcetool-proto
 
