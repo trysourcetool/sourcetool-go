@@ -36,6 +36,16 @@ func Height(height int32) Option {
 	return heightOption(height)
 }
 
+type columnOrderOption []string
+
+func (c columnOrderOption) Apply(opts *options.TableOptions) {
+	opts.ColumnOrder = c
+}
+
+func ColumnOrder(order []string) Option {
+	return columnOrderOption(order)
+}
+
 type onSelectOption SelectionBehavior
 
 func (o onSelectOption) Apply(opts *options.TableOptions) {

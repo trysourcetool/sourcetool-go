@@ -48,6 +48,7 @@ func (b *uiBuilder) Table(data any, opts ...table.Option) table.Value {
 	tableState.Header = tableOpts.Header
 	tableState.Description = tableOpts.Description
 	tableState.Height = tableOpts.Height
+	tableState.ColumnOrder = tableOpts.ColumnOrder
 	tableState.OnSelect = tableOpts.OnSelect
 	tableState.RowSelection = tableOpts.RowSelection
 	sess.State.Set(widgetID, tableState)
@@ -106,6 +107,7 @@ func convertStateToTableProto(state *state.TableState) (*widgetv1.Table, error) 
 		Header:       state.Header,
 		Description:  state.Description,
 		Height:       state.Height,
+		ColumnOrder:  state.ColumnOrder,
 		OnSelect:     state.OnSelect,
 		RowSelection: state.RowSelection,
 		Value:        &widgetv1.TableValue{},
@@ -129,6 +131,7 @@ func convertTableProtoToState(id uuid.UUID, data *widgetv1.Table) *state.TableSt
 		Header:       data.Header,
 		Description:  data.Description,
 		Height:       data.Height,
+		ColumnOrder:  data.ColumnOrder,
 		OnSelect:     data.OnSelect,
 		RowSelection: data.RowSelection,
 		Value:        state.TableStateValue{},

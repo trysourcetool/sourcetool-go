@@ -11,6 +11,7 @@ type TableState struct {
 	Header       string
 	Description  string
 	Height       *int32
+	ColumnOrder  []string
 	OnSelect     string
 	RowSelection string
 }
