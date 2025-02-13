@@ -3,6 +3,7 @@ package websocket
 import (
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -10,8 +11,16 @@ import (
 	"github.com/gofrs/uuid/v5"
 	"github.com/gorilla/websocket"
 	"github.com/trysourcetool/sourcetool-go/internal/conv"
+	"github.com/trysourcetool/sourcetool-go/internal/logger"
 	websocketv1 "github.com/trysourcetool/sourcetool-proto/go/websocket/v1"
 )
+
+func TestMain(m *testing.M) {
+	if err := logger.Init(); err != nil {
+		os.Exit(1)
+	}
+	os.Exit(m.Run())
+}
 
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool { return true },
