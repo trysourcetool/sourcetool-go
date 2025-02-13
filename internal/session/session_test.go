@@ -41,8 +41,8 @@ func TestSessionManager_GetSetDelete(t *testing.T) {
 		t.Errorf("GetSession(%v) = %v, want %v", id, got, session)
 	}
 
-	// Test DeleteSession
-	manager.DeleteSession(id)
+	// Test DisconnectSession
+	manager.DisconnectSession(id)
 	got = manager.GetSession(id)
 	if got != nil {
 		t.Errorf("GetSession(%v) after delete = %v, want nil", id, got)
@@ -67,7 +67,7 @@ func TestSessionManager_ConcurrentAccess(t *testing.T) {
 			if got != session {
 				t.Errorf("GetSession(%v) = %v, want %v", id, got, session)
 			}
-			manager.DeleteSession(id)
+			manager.DisconnectSession(id)
 		}()
 	}
 

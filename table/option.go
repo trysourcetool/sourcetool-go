@@ -26,6 +26,16 @@ func Description(description string) Option {
 	return descriptionOption(description)
 }
 
+type heightOption int32
+
+func (h heightOption) Apply(opts *options.TableOptions) {
+	opts.Height = (*int32)(&h)
+}
+
+func Height(height int32) Option {
+	return heightOption(height)
+}
+
 type onSelectOption SelectionBehavior
 
 func (o onSelectOption) Apply(opts *options.TableOptions) {

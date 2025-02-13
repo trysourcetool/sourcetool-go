@@ -10,6 +10,7 @@ type TableState struct {
 	Value        TableStateValue
 	Header       string
 	Description  string
+	Height       *int32
 	OnSelect     string
 	RowSelection string
 }
