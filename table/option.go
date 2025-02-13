@@ -39,10 +39,10 @@ func Height(height int32) Option {
 type columnOrderOption []string
 
 func (c columnOrderOption) Apply(opts *options.TableOptions) {
-	opts.ColumnOrder = c
+	opts.ColumnOrder = []string(c)
 }
 
-func ColumnOrder(order []string) Option {
+func ColumnOrder(order ...string) Option {
 	return columnOrderOption(order)
 }
 
