@@ -8,11 +8,11 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 	"github.com/gorilla/websocket"
+	websocketv1 "github.com/trysourcetool/sourcetool/proto/go/websocket/v1"
 	"go.uber.org/zap"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/trysourcetool/sourcetool-go/internal/logger"
-	websocketv1 "github.com/trysourcetool/sourcetool-proto/go/websocket/v1"
-	"google.golang.org/protobuf/proto"
 )
 
 type Client interface {
@@ -220,7 +220,6 @@ func (c *client) readMessages() {
 
 		if err := c.handleMessage(msg); err != nil {
 			logger.Log.Error("error handling message", zap.Error(err))
-			c.sendException(msg.Id, err)
 		}
 	}
 }
